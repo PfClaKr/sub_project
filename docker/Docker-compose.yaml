@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  nextjs:
+    build:
+      context: ../srcs/frontend
+      dockerfile: ../../docker/frontend/Dockerfile
+    volumes:
+      - "../srcs/frontend:/app"
+    restart: always
+    container_name: nextjs
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+
+  dynamodb:
+    image: amazon/dynamodb-local
+    restart: always
+    container_name: dynamodb
+    ports:
+      - "8000:8000"
+
+  golang:
+    build:
+      context: ../srcs/apiserver
+      dockerfile: ../../docker/apiserver/Dockerfile
+    volumes:
+      - "../srcs/apiserver:/app"
+    container_name: golang
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - DYNAMODB_ENDPOINT=http://dynamodb:8000
+      - AWS_REGION=eu-west-3
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+    depends_on:
+      - dynamodb
