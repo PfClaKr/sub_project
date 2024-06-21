@@ -22,7 +22,7 @@ ifneq ($(shell sudo docker volume ls | wc -l), 1)
 	@sudo docker volume prune -f
 endif
 
-#for removing image files
+##for removing image files
 # ifneq ($(shell sudo docker image ls | wc -l), 1)
 # 	@sudo docker image prune -f
 #endif
