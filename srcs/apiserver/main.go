@@ -31,6 +31,7 @@ func init() {
 	}))
 	svc = dynamodb.New(sess)
 	createtable.CreateTables()
+	initElasticsearch()
 }
 
 func listTables(w http.ResponseWriter, r *http.Request) {
@@ -109,12 +110,13 @@ func describeTable(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+
 	r := mux.NewRouter()
 	r.HandleFunc("/tables", listTables).Methods("GET")
 	r.HandleFunc("/tables/{table}", describeTable).Methods("GET")
 	r.HandleFunc("/dummy/{count}", generateDummyData).Methods("GET")
 	r.HandleFunc("/dummydelete", deleteDummyData).Methods("GET")
-	r.HandleFunc("/graphql", graphqlHandler).Methods("GET")
+	r.HandleFunc("/graphql", graphqlHandler).Methods("POST")
 
 	fmt.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))

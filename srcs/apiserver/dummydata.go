@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -63,6 +63,11 @@ func generateDummyData(w http.ResponseWriter, r *http.Request) {
 		_, err := svc.PutItem(input)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to create item: %s", err.Error()), http.StatusInternalServerError)
+			return
+		}
+		err = addItemToElasticsearch(item)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to create item in elasticsearch: %s", err.Error()), http.StatusInternalServerError)
 			return
 		}
 	}
