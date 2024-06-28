@@ -8,12 +8,14 @@ async function getSearchResult(id: string) {
 	return await fetch('http://golang:8080/graphql', {
 		method: 'POST',
 		headers: {
-
+			"Content-Type": "application/json"
 		},
 		body: JSON.stringify({
 			query: `{
-				query { itemSearch(Title: ${id}) } {
-					id
+				itemSearch(Title: \"${id}\") {
+					ItemId
+					UserId
+					Title
 				}
 			}`
 		})
@@ -21,12 +23,16 @@ async function getSearchResult(id: string) {
 }
 
 export default async function SearchResultPage({params: {id}}: {params: {id: string}; }) {
-	const result = await getSearchResult(id);
+	const result = await getSearchResult(decodeURIComponent(id));
 	return (
 		<div>
 			<p>상세페이지</p>
 			<p>"{id}" 검색 결과</p>
-			<p>{result.id}</p>
+			<p>{JSON.stringify(result)}</p>
+			<p>{result.data.itemSearch[0].ItemId}</p>
+			<p>{result.data.itemSearch[0].UserId}</p>
+			<p>{result.data.itemSearch[1].ItemId}</p>
+			<p>{result.data.itemSearch[1].UserId}</p>
 		</div>
 	);
 }

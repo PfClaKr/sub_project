@@ -42,7 +42,7 @@ curl -X PUT "http://localhost:9200/nori_sample" -H 'Content-Type: application/js
   },
   "mappings" : {
     "properties" : {
-      "title": {
+      "Title": {
         "type" : "text",
         "analyzer": "standard",
         "search_analyzer": "standard",
