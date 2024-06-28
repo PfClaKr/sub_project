@@ -25,15 +25,15 @@ async function getProducts() {
 		},
 		body: JSON.stringify({
 			query: `{
-				item(ItemId: \"Item1\") {
-					ItemId
+				product(ProductId: \"Product1\") {
+					ProductId
 					UserId
-					Title
-					Description
-					Price
-					Images
-					Location
-					CreatedAt
+					ProductName
+					ProductDescription
+					ProductPrice
+					ProductImage
+					PreferedLocation
+					ProductCreatedAt
 				}
 			}`,
 		}),
@@ -61,12 +61,12 @@ export default async function HomePage() {
 				<div>
 					<ul>
 						<ProductCard 
-							userid={productsJSON.data.item.UserId}
-							title={productsJSON.data.item.Title}
-							description={productsJSON.data.item.Description}
-							price={productsJSON.data.item.Price}
-							images={productsJSON.data.item.Images}
-							location={productsJSON.data.item.Location}
+							userid={productsJSON.data.product.UserId}
+							title={productsJSON.data.product.ProductName}
+							description={productsJSON.data.product.ProductDescription}
+							price={productsJSON.data.product.ProductPrice}
+							images={productsJSON.data.product.ProductImage}
+							location={productsJSON.data.product.PreferedLocation}
 						/>
 					</ul>
 				</div>

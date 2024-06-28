@@ -1,9 +1,9 @@
 package createtable
 
 import (
-	"os"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -57,20 +57,20 @@ func CreateTables() {
 			},
 		},
 		{
-			name: "Items",
+			name: "Product",
 			schema: []*dynamodb.KeySchemaElement{
-				{AttributeName: aws.String("ItemId"), KeyType: aws.String("HASH")},
+				{AttributeName: aws.String("ProductId"), KeyType: aws.String("HASH")},
 			},
 			attribs: []*dynamodb.AttributeDefinition{
-				{AttributeName: aws.String("ItemId"), AttributeType: aws.String("S")},
-				{AttributeName: aws.String("Title"), AttributeType: aws.String("S")},
+				{AttributeName: aws.String("ProductId"), AttributeType: aws.String("S")},
+				{AttributeName: aws.String("ProductName"), AttributeType: aws.String("S")},
 			},
 			indexes: []*dynamodb.GlobalSecondaryIndex{
 				{
-					IndexName: aws.String("ItemTitleIndex"),
+					IndexName: aws.String("ProductNameIndex"),
 					KeySchema: []*dynamodb.KeySchemaElement{
-						{AttributeName: aws.String("Title"), KeyType: aws.String("HASH")},
-						{AttributeName: aws.String("ItemId"), KeyType: aws.String("RANGE")},
+						{AttributeName: aws.String("ProductName"), KeyType: aws.String("HASH")},
+						{AttributeName: aws.String("ProductId"), KeyType: aws.String("RANGE")},
 					},
 					Projection: &dynamodb.Projection{
 						ProjectionType: aws.String("ALL"),
@@ -94,7 +94,7 @@ func CreateTables() {
 			},
 		},
 		{
-			name: "ItemSearchIndex",
+			name: "ProductSearchIndex",
 			schema: []*dynamodb.KeySchemaElement{
 				{AttributeName: aws.String("Category"), KeyType: aws.String("HASH")},
 				{AttributeName: aws.String("Price#Location"), KeyType: aws.String("RANGE")},

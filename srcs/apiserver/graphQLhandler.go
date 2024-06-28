@@ -13,18 +13,18 @@ import (
 
 var itemType = graphql.NewObject(
 	graphql.ObjectConfig{
-		Name: "Item",
+		Name: "Product",
 		Fields: graphql.Fields{
-			"ItemId":      &graphql.Field{Type: graphql.String},
-			"UserId":      &graphql.Field{Type: graphql.String},
-			"Title":       &graphql.Field{Type: graphql.String},
-			"Description": &graphql.Field{Type: graphql.String},
-			"Price":       &graphql.Field{Type: graphql.Float},
-			"Category":    &graphql.Field{Type: graphql.String},
-			"Images":      &graphql.Field{Type: graphql.NewList(graphql.String)},
-			"Location":    &graphql.Field{Type: graphql.String},
-			"CreatedAt":   &graphql.Field{Type: graphql.Float},
-			"UpdatedAt":   &graphql.Field{Type: graphql.Float},
+			"ProductId":          &graphql.Field{Type: graphql.String},
+			"UserId":             &graphql.Field{Type: graphql.String},
+			"ProductName":        &graphql.Field{Type: graphql.String},
+			"ProductDescription": &graphql.Field{Type: graphql.String},
+			"ProductPrice":       &graphql.Field{Type: graphql.Float},
+			"ProductCategory":    &graphql.Field{Type: graphql.String},
+			"ProductImage":       &graphql.Field{Type: graphql.NewList(graphql.String)},
+			"PreferedLocation":   &graphql.Field{Type: graphql.String},
+			"ProductCreatedAt":   &graphql.Field{Type: graphql.Float},
+			"ProductUpdatedAt":   &graphql.Field{Type: graphql.Float},
 		},
 	},
 )
@@ -33,24 +33,24 @@ var queryType = graphql.NewObject(
 	graphql.ObjectConfig{
 		Name: "Query",
 		Fields: graphql.Fields{
-			"item": &graphql.Field{
+			"product": &graphql.Field{
 				Type: itemType,
 				Args: graphql.FieldConfigArgument{
-					"ItemId": &graphql.ArgumentConfig{
+					"ProductId": &graphql.ArgumentConfig{
 						Type: graphql.String,
 					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					itemId, ok := p.Args["ItemId"].(string)
+					productId, ok := p.Args["ProductId"].(string)
 					if !ok {
-						return nil, fmt.Errorf("missing ItemId argument")
+						return nil, fmt.Errorf("missing ProductId argument")
 					}
 
 					input := &dynamodb.GetItemInput{
-						TableName: aws.String("Items"),
+						TableName: aws.String("Product"),
 						Key: map[string]*dynamodb.AttributeValue{
-							"ItemId": {
-								S: aws.String(itemId),
+							"ProductId": {
+								S: aws.String(productId),
 							},
 						},
 					}
@@ -65,30 +65,30 @@ var queryType = graphql.NewObject(
 					}
 
 					item := map[string]interface{}{
-						"ItemId":      result.Item["ItemId"].S,
-						"UserId":      result.Item["UserId"].S,
-						"Title":       result.Item["Title"].S,
-						"Description": result.Item["Description"].S,
-						"Price":       result.Item["Price"].N,
-						"Category":    result.Item["Category"].S,
-						"Images":      result.Item["Images"].SS,
-						"Location":    result.Item["Location"].S,
-						"CreatedAt":   result.Item["CreatedAt"].N,
-						"UpdatedAt":   result.Item["UpdatedAt"].N,
+						"ProductId":          result.Item["ProductId"].S,
+						"UserId":             result.Item["UserId"].S,
+						"ProductTitle":       result.Item["ProductName"].S,
+						"ProductDescription": result.Item["ProductDescription"].S,
+						"ProductPrice":       result.Item["ProductPrice"].N,
+						"ProductCategory":    result.Item["ProductCategory"].S,
+						"ProductImage":       result.Item["ProductImage"].SS,
+						"PreferedLocation":   result.Item["PreferedLocation"].S,
+						"ProductCreatedAt":   result.Item["ProductCreatedAt"].N,
+						"ProductUpdatedAt":   result.Item["ProductUpdatedAt"].N,
 					}
 
 					return item, nil
 				},
 			},
-			"itemSearch": &graphql.Field{
-                Type: graphql.NewList(itemType),
-                Args: graphql.FieldConfigArgument{
-                    "Title": &graphql.ArgumentConfig{
-                        Type: graphql.String,
-                    },
-                },
-                Resolve: resolveItemSearch,
-            },
+			"productSearch": &graphql.Field{
+				Type: graphql.NewList(itemType),
+				Args: graphql.FieldConfigArgument{
+					"ProductName": &graphql.ArgumentConfig{
+						Type: graphql.String,
+					},
+				},
+				Resolve: resolveItemSearch,
+			},
 		},
 	},
 )
@@ -97,37 +97,37 @@ var mutationType = graphql.NewObject(
 	graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
-			"createItem": &graphql.Field{
+			"createProduct": &graphql.Field{
 				Type: itemType,
 				Args: graphql.FieldConfigArgument{
-					"ItemId":      &graphql.ArgumentConfig{Type: graphql.String},
-					"UserId":      &graphql.ArgumentConfig{Type: graphql.String},
-					"Title":       &graphql.ArgumentConfig{Type: graphql.String},
-					"Description": &graphql.ArgumentConfig{Type: graphql.String},
-					"Price":       &graphql.ArgumentConfig{Type: graphql.Float},
-					"Category":    &graphql.ArgumentConfig{Type: graphql.String},
-					"Images":      &graphql.ArgumentConfig{Type: graphql.NewList(graphql.String)},
-					"Location":    &graphql.ArgumentConfig{Type: graphql.String},
-					"CreatedAt":   &graphql.ArgumentConfig{Type: graphql.Float},
-					"UpdatedAt":   &graphql.ArgumentConfig{Type: graphql.Float},
+					"ProductItemId":      &graphql.ArgumentConfig{Type: graphql.String},
+					"UserId":             &graphql.ArgumentConfig{Type: graphql.String},
+					"ProductName":        &graphql.ArgumentConfig{Type: graphql.String},
+					"ProductDescription": &graphql.ArgumentConfig{Type: graphql.String},
+					"ProductPrice":       &graphql.ArgumentConfig{Type: graphql.Float},
+					"ProductCategory":    &graphql.ArgumentConfig{Type: graphql.String},
+					"ProductImage":       &graphql.ArgumentConfig{Type: graphql.NewList(graphql.String)},
+					"PreferedLocation":   &graphql.ArgumentConfig{Type: graphql.String},
+					"ProductCreatedAt":   &graphql.ArgumentConfig{Type: graphql.Float},
+					"ProductUpdatedAt":   &graphql.ArgumentConfig{Type: graphql.Float},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					// DynamoDB에 아이템 생성
 					item := map[string]*dynamodb.AttributeValue{
-						"ItemId":      {S: aws.String(p.Args["ItemId"].(string))},
-						"UserId":      {S: aws.String(p.Args["UserId"].(string))},
-						"Title":       {S: aws.String(p.Args["Title"].(string))},
-						"Description": {S: aws.String(p.Args["Description"].(string))},
-						"Price":       {N: aws.String(fmt.Sprintf("%f", p.Args["Price"].(float64)))},
-						"Category":    {S: aws.String(p.Args["Category"].(string))},
-						"Images":      {SS: aws.StringSlice(p.Args["Images"].([]string))},
-						"Location":    {S: aws.String(p.Args["Location"].(string))},
-						"CreatedAt":   {N: aws.String(fmt.Sprintf("%f", p.Args["CreatedAt"].(float64)))},
-						"UpdatedAt":   {N: aws.String(fmt.Sprintf("%f", p.Args["UpdatedAt"].(float64)))},
+						"ProductId":          {S: aws.String(p.Args["ProductItemId"].(string))},
+						"UserId":             {S: aws.String(p.Args["UserId"].(string))},
+						"ProductName":        {S: aws.String(p.Args["ProductName"].(string))},
+						"ProductDescription": {S: aws.String(p.Args["ProductDescription"].(string))},
+						"ProductPrice":       {N: aws.String(fmt.Sprintf("%f", p.Args["ProductPrice"].(float64)))},
+						"ProductCategory":    {S: aws.String(p.Args["ProductCategory"].(string))},
+						"ProductImage":       {SS: aws.StringSlice(p.Args["ProductImage"].([]string))},
+						"PreferedLocation":   {S: aws.String(p.Args["PreferedLocation"].(string))},
+						"ProductCreatedAt":   {N: aws.String(fmt.Sprintf("%f", p.Args["ProductCreatedAt"].(float64)))},
+						"ProductUpdatedAt":   {N: aws.String(fmt.Sprintf("%f", p.Args["ProductUpdatedAt"].(float64)))},
 					}
 
 					_, err := svc.PutItem(&dynamodb.PutItemInput{
-						TableName: aws.String("Items"),
+						TableName: aws.String("Product"),
 						Item:      item,
 					})
 					if err != nil {
@@ -143,19 +143,19 @@ var mutationType = graphql.NewObject(
 					return item, nil
 				},
 			},
-			"deleteItem": &graphql.Field{
+			"deleteProduct": &graphql.Field{
 				Type: graphql.Boolean,
 				Args: graphql.FieldConfigArgument{
-					"ItemId": &graphql.ArgumentConfig{Type: graphql.String},
+					"ProductId": &graphql.ArgumentConfig{Type: graphql.String},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					itemId := p.Args["ItemId"].(string)
+					itemId := p.Args["ProductId"].(string)
 
 					// DynamoDB에서 아이템 삭제
 					_, err := svc.DeleteItem(&dynamodb.DeleteItemInput{
-						TableName: aws.String("Items"),
+						TableName: aws.String("Product"),
 						Key: map[string]*dynamodb.AttributeValue{
-							"ItemId": {S: aws.String(itemId)},
+							"ProductId": {S: aws.String(itemId)},
 						},
 					})
 					if err != nil {
