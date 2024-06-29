@@ -38,6 +38,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=dummy
     depends_on:
       - dynamodb
+      - elasticsearch
 
   elasticsearch:
     container_name: elasticsearch
