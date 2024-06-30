@@ -1,14 +1,38 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/graphql/language/ast"
+)
+
+func extractRequestedFields(selectionSet *ast.SelectionSet) []string {
+	fields := []string{}
+	for _, selection := range selectionSet.Selections {
+		switch field := selection.(type) {
+		case *ast.Field:
+			fields = append(fields, field.Name.Value)
+		case *ast.InlineFragment:
+			fields = append(fields, extractRequestedFields(field.SelectionSet)...)
+		}
+	}
+	return fields
+}
+
+var schema, _ = graphql.NewSchema(
+	graphql.SchemaConfig{
+		Query:    queryType,
+		Mutation: mutationType,
+	},
 )
 
 var itemType = graphql.NewObject(
@@ -40,45 +64,7 @@ var queryType = graphql.NewObject(
 						Type: graphql.String,
 					},
 				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					productId, ok := p.Args["ProductId"].(string)
-					if !ok {
-						return nil, fmt.Errorf("missing ProductId argument")
-					}
-
-					input := &dynamodb.GetItemInput{
-						TableName: aws.String("Product"),
-						Key: map[string]*dynamodb.AttributeValue{
-							"ProductId": {
-								S: aws.String(productId),
-							},
-						},
-					}
-
-					result, err := svc.GetItem(input)
-					if err != nil {
-						return nil, err
-					}
-
-					if result.Item == nil {
-						return nil, nil
-					}
-
-					item := map[string]interface{}{
-						"ProductId":          result.Item["ProductId"].S,
-						"UserId":             result.Item["UserId"].S,
-						"ProductTitle":       result.Item["ProductName"].S,
-						"ProductDescription": result.Item["ProductDescription"].S,
-						"ProductPrice":       result.Item["ProductPrice"].N,
-						"ProductCategory":    result.Item["ProductCategory"].S,
-						"ProductImage":       result.Item["ProductImage"].SS,
-						"PreferedLocation":   result.Item["PreferedLocation"].S,
-						"ProductCreatedAt":   result.Item["ProductCreatedAt"].N,
-						"ProductUpdatedAt":   result.Item["ProductUpdatedAt"].N,
-					}
-
-					return item, nil
-				},
+				Resolve: resolveItem,
 			},
 			"productSearch": &graphql.Field{
 				Type: graphql.NewList(itemType),
@@ -112,7 +98,6 @@ var mutationType = graphql.NewObject(
 					"ProductUpdatedAt":   &graphql.ArgumentConfig{Type: graphql.Float},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					// DynamoDB에 아이템 생성
 					item := map[string]*dynamodb.AttributeValue{
 						"ProductId":          {S: aws.String(p.Args["ProductItemId"].(string))},
 						"UserId":             {S: aws.String(p.Args["UserId"].(string))},
@@ -134,7 +119,6 @@ var mutationType = graphql.NewObject(
 						return nil, err
 					}
 
-					// Elasticsearch에 아이템 추가
 					err = addItemToElasticsearch(item)
 					if err != nil {
 						return nil, err
@@ -151,7 +135,6 @@ var mutationType = graphql.NewObject(
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					itemId := p.Args["ProductId"].(string)
 
-					// DynamoDB에서 아이템 삭제
 					_, err := svc.DeleteItem(&dynamodb.DeleteItemInput{
 						TableName: aws.String("Product"),
 						Key: map[string]*dynamodb.AttributeValue{
@@ -162,7 +145,6 @@ var mutationType = graphql.NewObject(
 						return nil, err
 					}
 
-					// Elasticsearch에서 아이템 삭제
 					err = deleteItemFromElasticsearch(itemId)
 					if err != nil {
 						return nil, err
@@ -172,12 +154,6 @@ var mutationType = graphql.NewObject(
 				},
 			},
 		},
-	},
-)
-
-var schema, _ = graphql.NewSchema(
-	graphql.SchemaConfig{
-		Query: queryType,
 	},
 )
 
@@ -192,6 +168,134 @@ func executeQuery(query string, schema graphql.Schema) *graphql.Result {
 	return result
 }
 
+func resolveItem(p graphql.ResolveParams) (interface{}, error) {
+	productId, ok := p.Args["ProductId"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing ProductId argument")
+	}
+
+	fields := extractRequestedFields(p.Info.FieldASTs[0].SelectionSet)
+	projectionExpression := strings.Join(fields, ", ")
+
+	input := &dynamodb.GetItemInput{
+		TableName: aws.String("Product"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"ProductId": {
+				S: aws.String(productId),
+			},
+		},
+		ProjectionExpression: aws.String(projectionExpression),
+	}
+
+	result, err := svc.GetItem(input)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Item == nil {
+		return nil, nil
+	}
+
+	item := map[string]interface{}{}
+	for _, field := range fields {
+		switch field {
+		case "ProductId", "UserId", "ProductName", "ProductDescription", "ProductCategory", "PreferedLocation":
+			item[field] = *result.Item[field].S
+		case "ProductPrice", "ProductCreatedAt", "ProductUpdatedAt":
+			item[field] = *result.Item[field].N
+		case "ProductImage":
+			item[field] = aws.StringValueSlice(result.Item[field].SS)
+		}
+	}
+
+	return item, nil
+}
+
+func resolveItemSearch(p graphql.ResolveParams) (interface{}, error) {
+	productName, ok := p.Args["ProductName"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing ProductName argument")
+	}
+
+	fields := extractRequestedFields(p.Info.FieldASTs[0].SelectionSet)
+	projectionExpression := strings.Join(fields, ", ")
+
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"match": map[string]interface{}{
+				"ProductName.nori": productName,
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		return nil, err
+	}
+
+	res, err := es.Search(
+		es.Search.WithContext(context.Background()),
+		es.Search.WithIndex("nori_sample"),
+		es.Search.WithBody(&buf),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, fmt.Errorf("error searching document: %s", res.String())
+	}
+
+	var searchResult map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
+		return nil, err
+	}
+
+	hits := searchResult["hits"].(map[string]interface{})["hits"].([]interface{})
+	if len(hits) == 0 {
+		return nil, nil
+	}
+
+	var items []map[string]interface{}
+	for _, hit := range hits {
+		source := hit.(map[string]interface{})["_source"].(map[string]interface{})
+		productId := source["ProductId"].(string)
+
+		input := &dynamodb.GetItemInput{
+			TableName: aws.String("Product"),
+			Key: map[string]*dynamodb.AttributeValue{
+				"ProductId": {
+					S: aws.String(productId),
+				},
+			},
+			ProjectionExpression: aws.String(projectionExpression),
+		}
+
+		result, err := svc.GetItem(input)
+		if err != nil {
+			return nil, err
+		}
+
+		if result.Item != nil {
+			item := map[string]interface{}{}
+			for _, field := range fields {
+				switch field {
+				case "ProductId", "UserId", "ProductName", "ProductDescription", "ProductCategory", "PreferedLocation":
+					item[field] = *result.Item[field].S
+				case "ProductPrice", "ProductCreatedAt", "ProductUpdatedAt":
+					item[field] = *result.Item[field].N
+				case "ProductImage":
+					item[field] = aws.StringValueSlice(result.Item[field].SS)
+				}
+			}
+			items = append(items, item)
+		}
+	}
+
+	return items, nil
+}
+
 func graphqlHandler(w http.ResponseWriter, r *http.Request) {
 	var query struct {
 		Query string `json:"query"`
@@ -201,11 +305,23 @@ func graphqlHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := executeQuery(query.Query, schema)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
-}
+	resultChan := make(chan *graphql.Result)
+	errChan := make(chan error)
 
-/*
-	curl -X GET "127.0.0.1:8080/graphql" -H 'Content-Type: application/json' -d '{"query":"{ item(ItemId: \"Item1\") { Title UpdatedAt } }"}'
-*/
+	go func() {
+		result := executeQuery(query.Query, schema)
+		if result.HasErrors() {
+			errChan <- fmt.Errorf("GraphQL query execution failed")
+			return
+		}
+		resultChan <- result
+	}()
+
+	select {
+	case result := <-resultChan:
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(result)
+	case err := <-errChan:
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
