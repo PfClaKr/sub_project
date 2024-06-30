@@ -1,10 +1,11 @@
+import { ProductCard } from "@/components/ProductCard";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Result",
 };
 
-async function getSearchResult(id: string) {
+async function getSearchResult(searchKeyword: string) {
 	return await fetch('http://golang:8080/graphql', {
 		method: 'POST',
 		headers: {
@@ -12,10 +13,13 @@ async function getSearchResult(id: string) {
 		},
 		body: JSON.stringify({
 			query: `{
-				productSearch(ProductName: \"${id}\") {
+				productSearch(ProductName: \"${searchKeyword}\") {
 					ProductId
 					UserId
 					ProductName
+					ProductImage
+					ProductPrice
+					PreferedLocation
 				}
 			}`
 		})
@@ -23,16 +27,27 @@ async function getSearchResult(id: string) {
 }
 
 export default async function SearchResultPage({params: {id}}: {params: {id: string}; }) {
-	const result = await getSearchResult(decodeURIComponent(id));
+	const searchKeyword = decodeURIComponent(id); // to support special characters - in this case korean letters
+	const result = await getSearchResult(searchKeyword);
+	const products = result.data.productSearch ? result.data.productSearch : [];
+	const searchStatus = products ? products.length > 1 ? products.length + " Results" : products.length + " Result" : "Data Not Found";
 	return (
 		<div>
 			<p>상세페이지</p>
-			<p>"{id}" 검색 결과</p>
-			<p>{JSON.stringify(result)}</p>
-			<p>{result.data.productSearch[0].ProductId}</p>
-			<p>{result.data.productSearch[0].UserId}</p>
-			<p>{result.data.productSearch[1].ProductId}</p>
-			<p>{result.data.productSearch[1].UserId}</p>
+			<p>"{searchKeyword}" 검색 결과</p>
+			{searchStatus}
+			{/* {JSON.stringify(result)} use for debugging */}
+			<section>
+				{products.map((product: any) =>
+					<ProductCard
+						productImage={product.ProductImage}
+						productName={product.ProductName}
+						productPrice={product.ProductPrice}
+						userId={product.UserId}
+						preferedLocation={product.PreferedLocation}
+					/>
+				)}
+			</section>
 		</div>
 	);
 }

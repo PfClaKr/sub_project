@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { ChatButton } from "../../../../components/chatButton";
+import { ChatButton } from "../../../../components/ChatButton";
 
 export const metadata: Metadata = {
 	title: "Product",

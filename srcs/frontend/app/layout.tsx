@@ -1,6 +1,6 @@
 import { Metadata } from "next";
-import Navigation from "../components/navigation";
-import Footer from "../components/footer";
+import Navigation from "../components/Navigation";
+import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
   title: {

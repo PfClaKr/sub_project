@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { SearchInput } from "../../components/searchInput";
+import { SearchInput } from "../../components/SearchInput";
 
 export const metadata: Metadata = {
 	title: "Search",

@@ -1,6 +1,6 @@
 import { Metadata } from "next";
-import { SearchInput } from "../../components/searchInput";
-import { ProductCard } from "../../components/productCard";
+import { SearchInput } from "../../components/SearchInput";
+import { ProductCard } from "../../components/ProductCard";
 import { resourceLimits } from "worker_threads";
 
 export const metadata: Metadata = {
@@ -47,6 +47,7 @@ async function getProducts() {
 
 export default async function HomePage() {
 	const productsJSON = await getProducts();
+	const product = productsJSON.data.product;
 	// const products = JSON.stringify(productsJSON.data.item);
 	return (
 		<div>
@@ -60,13 +61,12 @@ export default async function HomePage() {
 				<p><strong>최근</strong>에 올라온거 뭐<strong>있냥</strong>?</p>
 				<div>
 					<ul>
-						<ProductCard 
-							userid={productsJSON.data.product.UserId}
-							title={productsJSON.data.product.ProductName}
-							description={productsJSON.data.product.ProductDescription}
-							price={productsJSON.data.product.ProductPrice}
-							images={productsJSON.data.product.ProductImage}
-							location={productsJSON.data.product.PreferedLocation}
+						<ProductCard
+							productImage={product.ProductImage}
+							productName={product.ProductName}
+							productPrice={product.ProductPrice}
+							userId={product.UserId}
+							preferedLocation={product.PreferedLocation}
 						/>
 					</ul>
 				</div>
