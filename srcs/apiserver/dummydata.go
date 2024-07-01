@@ -38,7 +38,7 @@ func generateUserDummyData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	names := []string{"김철수", "이영희", "박민수", "최지혜", "홍길동"}
+	names := []string{"김철수", "이영희", "박민수", "최지혜", "홍길동", "전유건", "송채훈", "이동빈"}
 	emails := []string{"example1@test.com", "example2@test.com", "example3@test.com", "example4@test.com", "example5@test.com"}
 	profileImages := []string{"profile1.jpg", "profile2.jpg", "profile3.jpg", "profile4.jpg", "profile5.jpg"}
 

@@ -223,7 +223,7 @@ func resolveUser(p graphql.ResolveParams) (interface{}, error) {
 	item := map[string]interface{}{}
 	for _, field := range fields {
 		switch field {
-		case "UserId", "Email", "PasswordHash", "UserNickName", "ProfileImage":
+		case "UserId", "Email", "PasswordHash", "UserNickname", "ProfileImage":
 			item[field] = *result.Item[field].S
 		case "PublishedQuantity", "CreatedAt":
 			item[field] = *result.Item[field].N
