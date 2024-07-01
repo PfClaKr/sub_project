@@ -53,6 +53,21 @@ var itemType = graphql.NewObject(
 	},
 )
 
+var userType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "User",
+		Fields: graphql.Fields{
+			"UserId":            &graphql.Field{Type: graphql.String},
+			"Email":             &graphql.Field{Type: graphql.String},
+			"PasswordHash":      &graphql.Field{Type: graphql.String},
+			"UserNickname":      &graphql.Field{Type: graphql.String},
+			"ProfileImage":      &graphql.Field{Type: graphql.String},
+			"PublishedQuantity": &graphql.Field{Type: graphql.Float},
+			"CreatedAt":         &graphql.Field{Type: graphql.Float},
+		},
+	},
+)
+
 var queryType = graphql.NewObject(
 	graphql.ObjectConfig{
 		Name: "Query",
@@ -74,6 +89,15 @@ var queryType = graphql.NewObject(
 					},
 				},
 				Resolve: resolveItemSearch,
+			},
+			"user": &graphql.Field{
+				Type: userType,
+				Args: graphql.FieldConfigArgument{
+					"UserId": &graphql.ArgumentConfig{
+						Type: graphql.String,
+					},
+				},
+				Resolve: resolveUser,
 			},
 		},
 	},
@@ -166,6 +190,47 @@ func executeQuery(query string, schema graphql.Schema) *graphql.Result {
 		log.Printf("errors: %v", result.Errors)
 	}
 	return result
+}
+
+func resolveUser(p graphql.ResolveParams) (interface{}, error) {
+	userid, ok := p.Args["UserId"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing UserId argument")
+	}
+
+	fields := extractRequestedFields(p.Info.FieldASTs[0].SelectionSet)
+	projectionExpression := strings.Join(fields, ", ")
+
+	input := &dynamodb.GetItemInput{
+		TableName: aws.String("Users"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"UserId": {
+				S: aws.String(userid),
+			},
+		},
+		ProjectionExpression: aws.String(projectionExpression),
+	}
+
+	result, err := svc.GetItem(input)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Item == nil {
+		return nil, nil
+	}
+
+	item := map[string]interface{}{}
+	for _, field := range fields {
+		switch field {
+		case "UserId", "Email", "PasswordHash", "UserNickName", "ProfileImage":
+			item[field] = *result.Item[field].S
+		case "PublishedQuantity", "CreatedAt":
+			item[field] = *result.Item[field].N
+		}
+	}
+
+	return item, nil
 }
 
 func resolveItem(p graphql.ResolveParams) (interface{}, error) {
