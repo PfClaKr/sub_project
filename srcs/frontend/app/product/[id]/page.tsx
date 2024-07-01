@@ -1,7 +1,7 @@
 import { Metadata } from "next";
-import { ProductDetail } from "../../../../components/ProductDetail";
-import { UserInformation } from "../../../../components/UserInformation";
-import { ProductDescription } from "../../../../components/ProductDescription";
+import { ProductDetail } from "../../../components/ProductDetail";
+import { UserInformation } from "../../../components/UserInformation";
+import { ProductDescription } from "../../../components/ProductDescription";
 
 export const metadata: Metadata = {
 	title: "Product",
@@ -62,6 +62,7 @@ export default async function ProductDetailPage({params: {id}}: {params: {id: st
 					productImage={productResult.data.product.ProductImage}
 					productName={productResult.data.product.ProductName}
 					productPrice={productResult.data.product.ProductPrice}
+					productCategory={productResult.data.product.ProductCategory}
 					preferedLocation={productResult.data.product.PreferedLocation}
 					productCreatedAt={productResult.data.product.ProductCreatedAt}
 				/>
