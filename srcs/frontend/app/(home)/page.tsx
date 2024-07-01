@@ -1,19 +1,10 @@
 import { Metadata } from "next";
 import { SearchInput } from "../../components/SearchInput";
-import { ProductCard } from "../../components/ProductCard";
-import { resourceLimits } from "worker_threads";
+import ProductCard from "../../components/ProductCard";
 
 export const metadata: Metadata = {
 	title: "Home",
 };
-
-// const TEST_PRODUCT_DATA = {
-// 	img: "productcard_image.png",
-// 	productTitle: "버리긴 아깝고 쓸데없는 물건",
-// 	productPrice: "28.5",
-// 	userNickname: "82sien",
-// 	meetLocation: "75004 Paris",
-// };
 
 const URL = "http://golang:8080/graphql";
 

@@ -1,5 +1,5 @@
-import { ProductCard } from "@/components/ProductCard";
 import { Metadata } from "next";
+import DisplayTray from "@/components/DisplayTray";
 
 export const metadata: Metadata = {
 	title: "Result",
@@ -38,15 +38,9 @@ export default async function SearchResultPage({params: {id}}: {params: {id: str
 			{searchStatus}
 			{/* {JSON.stringify(result)} use for debugging */}
 			<section>
-				{products.map((product: any) =>
-					<ProductCard
-						productImage={product.ProductImage}
-						productName={product.ProductName}
-						productPrice={product.ProductPrice}
-						userId={product.UserId}
-						preferedLocation={product.PreferedLocation}
-					/>
-				)}
+				<DisplayTray
+					products={products}
+				/>
 			</section>
 		</div>
 	);

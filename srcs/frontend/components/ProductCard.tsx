@@ -1,13 +1,30 @@
-export function ProductCard(props: any) {
+'use client';
+
+import {
+	Thumb,
+	ThumbContainer,
+	Title,
+	Price,
+	Subtitle,
+	InfoContainer,
+	Card,
+ } from "@/styles/styledProduct"
+
+export default function ProductCard(props: any) {
 	return (
-		<div>
-			<img src={props.productImage[0]} />
-			<div>
-				<p>{props.productName}</p>
-				<p>&euro; {props.productPrice}</p>
-				<p>{props.userId}</p>
-				<p>{props.preferedLocation}</p>
-			</div>
-		</div>
+		<Card>
+			<ThumbContainer>
+				<Thumb />
+			</ThumbContainer>
+			{/* <img src={props.productImage[0]} /> */}
+			<InfoContainer>
+				<Title>{props.productName}</Title>
+				<Price>&euro; {props.productPrice}</Price>
+				<Subtitle>
+					<div>{props.userId}</div>
+					<div>{props.preferedLocation}</div>
+				</Subtitle>
+			</InfoContainer>
+		</Card>
 	);
 }
