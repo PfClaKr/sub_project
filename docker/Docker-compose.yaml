@@ -52,13 +52,13 @@ services:
       - "discovery.type=single-node"
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
 
-  kibana:
-    container_name: kibana
-    build: ./kibana
-    ports:
-      - "5601:5601"
-    restart: always
-    environment:
-      - ELASTIC_PASSWORD="1"
-    depends_on:
-      - elasticsearch
+  # kibana:
+  #   container_name: kibana
+  #   build: ./kibana
+  #   ports:
+  #     - "5601:5601"
+  #   restart: always
+  #   environment:
+  #     - ELASTIC_PASSWORD="1"
+  #   depends_on:
+  #     - elasticsearch
