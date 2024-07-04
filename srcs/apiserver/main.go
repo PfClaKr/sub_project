@@ -118,6 +118,9 @@ func main() {
 	r.HandleFunc("/dummydelete", deleteDummyData).Methods("GET")
 	r.HandleFunc("/graphql", graphqlHandler).Methods("POST")
 
+	r.HandleFunc("/getjwt/{UserId}", getjwt).Methods("GET")
+	r.Handle("/testjwt", jwtMiddleware(http.HandlerFunc(showjwt))).Methods("GET")
+
 	fmt.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
