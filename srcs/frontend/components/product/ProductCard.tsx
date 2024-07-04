@@ -8,15 +8,14 @@ import {
 	Subtitle,
 	InfoContainer,
 	Card,
- } from "@/styles/styledProduct"
+ } from "@/styles/styledProductCard"
 
 export default function ProductCard(props: any) {
 	return (
 		<Card>
 			<ThumbContainer>
-				<Thumb />
+				<Thumb src={props.productImage} />
 			</ThumbContainer>
-			{/* <img src={props.productImage[0]} /> */}
 			<InfoContainer>
 				<Title>{props.productName}</Title>
 				<Price>&euro; {props.productPrice}</Price>

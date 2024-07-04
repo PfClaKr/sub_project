@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import DisplayTray from "@/components/DisplayTray";
+import DisplayTray from "@/components/product/DisplayTray";
 
 export const metadata: Metadata = {
 	title: "Result",
@@ -7,6 +7,7 @@ export const metadata: Metadata = {
 
 async function getSearchResult(searchKeyword: string) {
 	return await fetch('http://golang:8080/graphql', {
+		signal: AbortSignal.timeout(5000), // prevent infinite loading
 		method: 'POST',
 		headers: {
 			"Content-Type": "application/json"

@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 export const Thumb = styled.img`
 	position: absolute;
-	background-image: url('https://thumbs.wbm.im/pw/small/81f2cf06ad84e265142998786f466b98.jpg');
+	background-image: url('');
 	background-repeat: no-repeat;
 	width: 100%;
 	height: 100%;
@@ -59,7 +59,6 @@ export const Card = styled.div`
 	display: flex;
 	flex-direction: column;
 	align-content: space-between;
-	margin: 20px 20px;
 	width: 332px;
 	height: 476px;
 	border-radius: 4px;

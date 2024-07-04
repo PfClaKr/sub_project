@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
 	title: "login"
@@ -13,7 +14,7 @@ export default function LoginPage() {
 			<input placeholder="Password"></input>
 			<p>Forgot your password?</p>
 			<button>Sign In</button>
-			<p>Don't have an Account? Create Account</p>
+			<p>Don't have an Account? <Link href="/account/sign-up">Create Account</Link></p>
 		</div>
 	);
 }

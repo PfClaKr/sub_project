@@ -1,7 +1,7 @@
 import { Metadata } from "next";
-import { ProductDetail } from "../../../components/ProductDetail";
-import { UserInformation } from "../../../components/UserInformation";
-import { ProductDescription } from "../../../components/ProductDescription";
+import { ProductDetail } from "@/components/product/detail/ProductDetail";
+import { UserCard } from "@/components/UserCard";
+import { ProductDescription } from "@/components/product/detail/ProductDescription";
 
 export const metadata: Metadata = {
 	title: "Product",
@@ -51,6 +51,8 @@ async function getUserInfo(searchKeyword: string) {
 export default async function ProductDetailPage({params: {id}}: {params: {id: string}; }) {
 	const productResult = await getProductInfo(id);
 	const userResult = await getUserInfo(productResult.data.product.UserId);
+	const productData = productResult.data.product;
+	const userdata = userResult.data.user;
 	return (
 		<div>
 			<div>
@@ -59,25 +61,25 @@ export default async function ProductDetailPage({params: {id}}: {params: {id: st
 			</div>
 			<div>
 				<ProductDetail
-					productImage={productResult.data.product.ProductImage}
-					productName={productResult.data.product.ProductName}
-					productPrice={productResult.data.product.ProductPrice}
-					productCategory={productResult.data.product.ProductCategory}
-					preferedLocation={productResult.data.product.PreferedLocation}
-					productCreatedAt={productResult.data.product.ProductCreatedAt}
+					productImage={productData.ProductImage}
+					productName={productData.ProductName}
+					productPrice={productData.ProductPrice}
+					productCategory={productData.ProductCategory}
+					preferedLocation={productData.PreferedLocation}
+					productCreatedAt={productData.ProductCreatedAt}
 				/>
 			</div>
 			<div>
-				<UserInformation
-					profileImage={userResult.data.user.ProfileImage}
-					userNickname={userResult.data.user.UserNickname}
-					publishedQuantity={userResult.data.user.PublishedQuantity}
+				<UserCard
+					profileImage={userdata.ProfileImage}
+					userNickname={userdata.UserNickname}
+					publishedQuantity={userdata.PublishedQuantity}
 				/>
 			</div>
 			<div>
 				<ProductDescription
-					productDescription={productResult.data.product.ProductDescription}
-					preferedLocation={productResult.data.product.PreferedLocation}
+					productDescription={productData.ProductDescription}
+					preferedLocation={productData.PreferedLocation}
 				/>
 			</div>
 			{/* <div>

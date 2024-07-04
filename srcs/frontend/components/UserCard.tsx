@@ -1,4 +1,4 @@
-export function UserInformation(props: any) {
+export function UserCard(props: any) {
     return (
         <div>
             <p>판매자 정보</p>

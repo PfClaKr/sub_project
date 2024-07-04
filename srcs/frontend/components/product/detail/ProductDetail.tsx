@@ -1,4 +1,4 @@
-import { ChatButton } from "./ChatButton"
+import { ChatButton } from "../../ChatButton"
 
 export function convertUnixToParisTime(unixTime: number) {
   const date = new Date(unixTime * 1000);

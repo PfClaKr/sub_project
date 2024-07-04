@@ -1,11 +1,12 @@
 import { Metadata } from "next";
 import { SearchInput } from "../../components/SearchInput";
-import ProductCard from "../../components/ProductCard";
+import DisplayTray from "@/components/product/DisplayTray";
 
 export const metadata: Metadata = {
 	title: "Home",
 };
 
+// debug purpose
 const URL = "http://golang:8080/graphql";
 
 async function getProducts() {
@@ -15,6 +16,7 @@ async function getProducts() {
 			'Content-Type': 'application/json',
 		},
 		body: JSON.stringify({
+			// need to change to newest products and separate files
 			query: `{
 				product(ProductId: \"Product1\") {
 					ProductId
@@ -39,7 +41,6 @@ async function getProducts() {
 export default async function HomePage() {
 	const productsJSON = await getProducts();
 	const product = productsJSON.data.product;
-	// const products = JSON.stringify(productsJSON.data.item);
 	return (
 		<div>
 			<div>
@@ -52,13 +53,10 @@ export default async function HomePage() {
 				<p><strong>최근</strong>에 올라온거 뭐<strong>있냥</strong>?</p>
 				<div>
 					<ul>
-						<ProductCard
-							productImage={product.ProductImage}
-							productName={product.ProductName}
-							productPrice={product.ProductPrice}
-							userId={product.UserId}
-							preferedLocation={product.PreferedLocation}
-						/>
+						{/* test */}
+						{/* <DisplayTray
+							product={product}
+						/> */}
 					</ul>
 				</div>
 			</div>

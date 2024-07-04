@@ -1,4 +1,7 @@
+'use client';
+
 import Link from "next/link";
+import { StyledNavbar } from "@/styles/styledLink";
 
 export default function Navigation() {
 	return (
@@ -8,19 +11,19 @@ export default function Navigation() {
 					<div>itnyang</div>
 				</li>
 				<li>
-					<Link href="/">메인홈페이지</Link>
+					<StyledNavbar href="/">메인홈페이지</StyledNavbar>
 				</li>
 				<li>
-					<Link href="/search">상품페이지</Link>
+					<StyledNavbar href="/search">상품페이지</StyledNavbar>
 				</li>
 				<li>
-					<Link href="/login">로그인</Link>
+					<StyledNavbar href="/login">로그인</StyledNavbar>
 				</li>
 				<li>
-					<Link href="/myaccount">로그인후페이지</Link>
+					<StyledNavbar href="/myaccount">로그인후페이지</StyledNavbar>
 				</li>
 				<li>
-					<Link href="/wishlist">찜목록페이지</Link>
+					<StyledNavbar href="/wishlist">찜목록페이지</StyledNavbar>
 				</li>
 			</ul>
 		</nav>
