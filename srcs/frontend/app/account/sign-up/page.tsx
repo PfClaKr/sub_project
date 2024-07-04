@@ -13,8 +13,8 @@ export default function AccountSignUpPage() {
 			<input placeholder="Email Address"></input><br/>
 			<input placeholder="Password"></input><br/>
 			<input placeholder="Password"></input><br/>
-			{/* <button>Sign Up</button> */}
-			<Link href="/account/whoami" style={{backgroundColor: '#f6f7fb'}}>Sign Up</Link>
+			<button>Sign Up</button>
+			{/* <Link href="/account/whoami" style={{backgroundColor: '#f6f7fb'}}>Sign Up</Link> */}
 			<p>Already have an Account? <Link href="/login">Log In</Link></p>
 		</div>
 	);

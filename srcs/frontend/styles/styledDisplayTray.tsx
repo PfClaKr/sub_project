@@ -7,3 +7,9 @@ export const DisplayTrayContainer = styled.div`
 	flex-flow: row wrap;
 	justify-content: flex-start;
 `;
+
+export const Container = styled.div`
+	margin: auto;
+	padding: 30px;
+`;
+

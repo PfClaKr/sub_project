@@ -37,7 +37,6 @@ export default async function SearchResultPage({params: {id}}: {params: {id: str
 			<p>상세페이지</p>
 			<p>"{searchKeyword}" 검색 결과</p>
 			{searchStatus}
-			{/* {JSON.stringify(result)} use for debugging */}
 			<section>
 				<DisplayTray
 					products={products}

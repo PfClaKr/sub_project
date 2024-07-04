@@ -14,7 +14,7 @@ export default function ProductCard(props: any) {
 	return (
 		<Card>
 			<ThumbContainer>
-				<Thumb src={props.productImage} />
+				<Thumb src={props.productImage[0]} />
 			</ThumbContainer>
 			<InfoContainer>
 				<Title>{props.productName}</Title>
