@@ -8,9 +8,11 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/google/uuid"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 )
@@ -107,6 +109,35 @@ var mutationType = graphql.NewObject(
 	graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
+			"createUser": &graphql.Field{
+				Type: userType,
+				Args: graphql.FieldConfigArgument{
+					"Email":        &graphql.ArgumentConfig{Type: graphql.String},
+					"PasswordHash": &graphql.ArgumentConfig{Type: graphql.String},
+					"UserNickname": &graphql.ArgumentConfig{Type: graphql.String},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					item := map[string]*dynamodb.AttributeValue{
+						"UserId":            {S: aws.String(uuid.NewString())},
+						"Email":             {S: aws.String(p.Args["Email"].(string))},
+						"PasswordHash":      {S: aws.String(p.Args["PasswordHash"].(string))},
+						"UserNickname":      {S: aws.String(p.Args["UserNickname"].(string))},
+						"ProfileImage":      {S: aws.String("https://cdn.icon-icons.com/icons2/1378/PNG/512/avatardefault_92824.png")},
+						"PublishedQuantity": {N: aws.String("0")},
+						"CreatedAt":         {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
+					}
+
+					_, err := svc.PutItem(&dynamodb.PutItemInput{
+						TableName: aws.String("Users"),
+						Item:      item,
+					})
+					if err != nil {
+						return nil, err
+					}
+
+					return item, nil
+				},
+			},
 			"createProduct": &graphql.Field{
 				Type: itemType,
 				Args: graphql.FieldConfigArgument{
@@ -376,7 +407,11 @@ func graphqlHandler(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		result := executeQuery(query.Query, schema)
 		if result.HasErrors() {
-			errChan <- fmt.Errorf("GraphQL query execution failed")
+			var errMessages []string
+			for _, err := range result.Errors {
+				errMessages = append(errMessages, err.Message)
+			}
+			errChan <- fmt.Errorf("GraphQL query execution failed: %v", errMessages)
 			return
 		}
 		resultChan <- result
@@ -387,6 +422,7 @@ func graphqlHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(result)
 	case err := <-errChan:
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(err)
 	}
 }
