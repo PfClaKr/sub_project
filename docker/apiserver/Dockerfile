@@ -5,7 +5,7 @@
 #CMD ["/something-files-for-execute"]
 
 # golang/Dockerfile
-FROM golang:1.20-alpine
+FROM golang:1.22-rc-alpine
 
 WORKDIR /app
 

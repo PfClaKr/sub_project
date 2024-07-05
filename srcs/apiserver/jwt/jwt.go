@@ -1,4 +1,4 @@
-package main
+package jwt
 
 import (
 	"context"
@@ -17,7 +17,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func generateJWT(username string) (string, error) {
+func GenerateJWT(username string) (string, error) {
 	expirationTime := time.Now().Add(5 * time.Minute)
 	claims := &Claims{
 		Username: username,
@@ -35,7 +35,7 @@ func generateJWT(username string) (string, error) {
 	return tokenString, nil
 }
 
-func jwtMiddleware(next http.Handler) http.Handler {
+func JwtMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("token")
 		if err != nil {
@@ -81,7 +81,7 @@ func getjwt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenString, err := generateJWT(userID)
+	tokenString, err := GenerateJWT(userID)
 	if err != nil {
 		http.Error(w, "Error generating token", http.StatusInternalServerError)
 		return
@@ -102,7 +102,7 @@ func getjwt(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func showjwt(w http.ResponseWriter, r *http.Request) {
+func Showjwt(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("claims").(*Claims)
 	if !ok {
 		http.Error(w, "No claims found in context", http.StatusInternalServerError)

@@ -1,4 +1,4 @@
-package main
+package loginhandler
 
 import(
     "encoding/json"
@@ -6,11 +6,32 @@ import(
     "net/http"
     "time"
     "strings"
+    "os"
 
-    "github.com/aws/aws-sdk-go/aws"
+    "local.com/jwt"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
     "github.com/aws/aws-sdk-go/service/dynamodb"
     "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
+
+var svc dynamodbiface.DynamoDBAPI
+
+func init() {
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region:   aws.String(os.Getenv("AWS_REGION")),
+		Endpoint: aws.String(os.Getenv("DYNAMODB_ENDPOINT")),
+		Credentials: credentials.NewStaticCredentials(
+			os.Getenv("AWS_ACCESS_KEY_ID"),
+			os.Getenv("AWS_SECRET_ACCESS_KEY"),
+			"",
+		),
+	}))
+	svc = dynamodb.New(sess)
+}
 
 func getUserByEmail(email string) (string, string, error) {
     result, err := svc.Query(&dynamodb.QueryInput{
@@ -48,7 +69,7 @@ func getUserByEmail(email string) (string, string, error) {
     return user.UserId, user.PasswordHash, nil
 }
 
-func loginHandler(w http.ResponseWriter, r *http.Request) {
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
     var loginRequest struct {
         Email    string `json:"email"`
         PasswordHash string `json:"password"`
@@ -73,7 +94,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    tokenString, err := generateJWT(userId)
+    tokenString, err := jwt.GenerateJWT(userId)
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
         json.NewEncoder(w).Encode(map[string]string{"error": "Error generating token"})

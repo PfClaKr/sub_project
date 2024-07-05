@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	"local.com/eshandler"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -27,6 +29,80 @@ func init() {
 		),
 	}))
 	svc = dynamodb.New(sess)
+}
+
+func listTables(w http.ResponseWriter, r *http.Request) {
+	input := &dynamodb.ListTablesInput{}
+	result, err := svc.ListTables(input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(result.TableNames)
+}
+
+func describeTable(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	tableName := vars["table"]
+
+	// Scan the table
+	input := &dynamodb.ScanInput{
+		TableName: aws.String(tableName),
+	}
+	result, err := svc.Scan(input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	readableItems := make([]map[string]interface{}, 0)
+
+	for _, item := range result.Items {
+		readableItem := make(map[string]interface{})
+		for k, v := range item {
+			switch {
+			case v.S != nil:
+				readableItem[k] = *v.S
+			case v.N != nil:
+				readableItem[k] = *v.N
+			case v.SS != nil:
+				readableItem[k] = v.SS
+			case v.NS != nil:
+				readableItem[k] = v.NS
+			case v.BOOL != nil:
+				readableItem[k] = *v.BOOL
+			case v.L != nil:
+				readableList := make([]interface{}, len(v.L))
+				for i, lv := range v.L {
+					switch {
+					case lv.S != nil:
+						readableList[i] = *lv.S
+					case lv.N != nil:
+						readableList[i] = *lv.N
+					case lv.BOOL != nil:
+						readableList[i] = *lv.BOOL
+					}
+				}
+				readableItem[k] = readableList
+			case v.M != nil:
+				readableMap := make(map[string]interface{})
+				for mk, mv := range v.M {
+					switch {
+					case mv.S != nil:
+						readableMap[mk] = *mv.S
+					case mv.N != nil:
+						readableMap[mk] = *mv.N
+					case mv.BOOL != nil:
+						readableMap[mk] = *mv.BOOL
+					}
+				}
+				readableItem[k] = readableMap
+			}
+		}
+		readableItems = append(readableItems, readableItem)
+	}
+
+	json.NewEncoder(w).Encode(readableItems)
 }
 
 func generateUserDummyData(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +126,7 @@ func generateUserDummyData(w http.ResponseWriter, r *http.Request) {
 			"PasswordHash":      {S: aws.String(fmt.Sprintf("PasswordHash%d", i+1))},
 			"UserNickname":      {S: aws.String(names[rand.Intn(len(names))])},
 			"ProfileImage":      {S: aws.String(profileImages[rand.Intn(len(profileImages))])},
+			"ProductList":       {SS: []*string{aws.String(fmt.Sprintf("Product%d", i+1))}},
 			"PublishedQuantity": {N: aws.String(fmt.Sprintf("1"))},
 			"CreatedAt":         {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
 		}
@@ -109,7 +186,7 @@ func generateDummyData(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("Failed to create product: %s", err.Error()), http.StatusInternalServerError)
 			return
 		}
-		err = addItemToElasticsearch(item)
+		err = eshandler.AddItemToElasticsearch(item)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to create product in elasticsearch: %s", err.Error()), http.StatusInternalServerError)
 			return

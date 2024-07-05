@@ -1,0 +1,36 @@
+# schema.graphql
+
+type Query {
+  product(ProductId: String!): Product
+  productSearch(ProductName: String!): [Product]
+  user(UserId: String!): User
+}
+
+type Mutation {
+  createUser(Email: String!, PasswordHash: String!, UserNickname: String!): User
+  createProduct(ProductItemId: String!, UserId: String!, ProductName: String!, ProductDescription: String!, ProductPrice: Float!, ProductCategory: String!, ProductImage: [String!], PreferedLocation: String!, ProductCreatedAt: Float!, ProductUpdatedAt: Float!): Product
+  deleteProduct(ProductId: String!): Boolean
+}
+
+type Product {
+  ProductId: String
+  UserId: String
+  ProductName: String
+  ProductDescription: String
+  ProductPrice: Float
+  ProductCategory: String
+  ProductImage: [String]
+  PreferedLocation: String
+  ProductCreatedAt: Float
+  ProductUpdatedAt: Float
+}
+
+type User {
+  UserId: String
+  Email: String
+  PasswordHash: String
+  UserNickname: String
+  ProfileImage: String
+  PublishedQuantity: Float
+  CreatedAt: Float
+}

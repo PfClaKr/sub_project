@@ -1,13 +1,16 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
 	"local.com/createtable"
+	"local.com/graphqlhandler"
+	"local.com/jwt"
+	"local.com/eshandler"
+	"local.com/loginhandler"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -31,82 +34,7 @@ func init() {
 	}))
 	svc = dynamodb.New(sess)
 	createtable.CreateTables()
-	initElasticsearch()
-}
-
-func listTables(w http.ResponseWriter, r *http.Request) {
-	input := &dynamodb.ListTablesInput{}
-	result, err := svc.ListTables(input)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	json.NewEncoder(w).Encode(result.TableNames)
-}
-
-func describeTable(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	tableName := vars["table"]
-
-	// Scan the table
-	input := &dynamodb.ScanInput{
-		TableName: aws.String(tableName),
-	}
-	result, err := svc.Scan(input)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Convert the result to a more readable format
-	readableItems := make([]map[string]interface{}, 0)
-
-	for _, item := range result.Items {
-		readableItem := make(map[string]interface{})
-		for k, v := range item {
-			switch {
-			case v.S != nil:
-				readableItem[k] = *v.S
-			case v.N != nil:
-				readableItem[k] = *v.N
-			case v.SS != nil:
-				readableItem[k] = v.SS
-			case v.NS != nil:
-				readableItem[k] = v.NS
-			case v.BOOL != nil:
-				readableItem[k] = *v.BOOL
-			case v.L != nil:
-				readableList := make([]interface{}, len(v.L))
-				for i, lv := range v.L {
-					switch {
-					case lv.S != nil:
-						readableList[i] = *lv.S
-					case lv.N != nil:
-						readableList[i] = *lv.N
-					case lv.BOOL != nil:
-						readableList[i] = *lv.BOOL
-					}
-				}
-				readableItem[k] = readableList
-			case v.M != nil:
-				readableMap := make(map[string]interface{})
-				for mk, mv := range v.M {
-					switch {
-					case mv.S != nil:
-						readableMap[mk] = *mv.S
-					case mv.N != nil:
-						readableMap[mk] = *mv.N
-					case mv.BOOL != nil:
-						readableMap[mk] = *mv.BOOL
-					}
-				}
-				readableItem[k] = readableMap
-			}
-		}
-		readableItems = append(readableItems, readableItem)
-	}
-
-	json.NewEncoder(w).Encode(readableItems)
+	eshandler.InitElasticsearch()
 }
 
 func main() {
@@ -117,11 +45,10 @@ func main() {
 	r.HandleFunc("/dummy/{count}", generateDummyData).Methods("GET")
 	r.HandleFunc("/dummydelete", deleteDummyData).Methods("GET")
 
-	r.HandleFunc("/graphql", graphqlHandler).Methods("POST")
-	r.HandleFunc("/login", loginHandler).Methods("POST")
+	r.HandleFunc("/graphql", graphqlhandler.GraphqlHandler).Methods("POST")
+	r.HandleFunc("/login", loginhandler.LoginHandler).Methods("POST")
 
-	r.HandleFunc("/getjwt/{UserId}", getjwt).Methods("GET")
-	r.Handle("/testjwt", jwtMiddleware(http.HandlerFunc(showjwt))).Methods("GET")
+	r.Handle("/testjwt", jwt.JwtMiddleware(http.HandlerFunc(jwt.Showjwt))).Methods("GET")
 
 	fmt.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))

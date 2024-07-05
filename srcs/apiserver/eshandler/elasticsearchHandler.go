@@ -1,4 +1,4 @@
-package main
+package eshandler
 
 import (
 	"bytes"
@@ -16,7 +16,7 @@ import (
 
 var es *elasticsearch.Client
 
-func initElasticsearch() {
+func InitElasticsearch() {
 	cfg := elasticsearch.Config{
 		Addresses: []string{
 			"http://elasticsearch:9200",
@@ -28,7 +28,6 @@ func initElasticsearch() {
 		log.Fatalf("Error creating the Elasticsearch client: %s", err)
 	}
 
-	// Elasticsearch가 준비될 때까지 재시도
 	for {
 		res, err := es.Info()
 		if err != nil {
@@ -127,7 +126,16 @@ func initElasticsearch() {
 	}
 }
 
-func addItemToElasticsearch(item map[string]*dynamodb.AttributeValue) error {
+func FindItemWithProductName(buf *bytes.Buffer) (*esapi.Response, error) {
+	res, err := es.Search(
+		es.Search.WithContext(context.Background()),
+		es.Search.WithIndex("nori_sample"),
+		es.Search.WithBody(buf),
+	)
+	return res, err
+}
+
+func AddItemToElasticsearch(item map[string]*dynamodb.AttributeValue) error {
 	doc := map[string]interface{}{
 		"ProductId":   item["ProductId"].S,
 		"ProductName": item["ProductName"].S,
@@ -158,7 +166,7 @@ func addItemToElasticsearch(item map[string]*dynamodb.AttributeValue) error {
 	return nil
 }
 
-func deleteItemFromElasticsearch(itemId string) error {
+func DeleteItemFromElasticsearch(itemId string) error {
 	req := esapi.DeleteRequest{
 		Index:      "nori_sample",
 		DocumentID: itemId,
