@@ -420,9 +420,11 @@ func graphqlHandler(w http.ResponseWriter, r *http.Request) {
 	select {
 	case result := <-resultChan:
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		json.NewEncoder(w).Encode(result)
 	case err := <-errChan:
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		json.NewEncoder(w).Encode(err)
 	}
 }

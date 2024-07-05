@@ -25,7 +25,7 @@ endif
 ##for removing image files
 # ifneq ($(shell sudo docker image ls | wc -l), 1)
 # 	@sudo docker image prune -f
-#endif
+# endif
 
 re: fclean up
 

@@ -116,7 +116,9 @@ func main() {
 	r.HandleFunc("/tables/{table}", describeTable).Methods("GET")
 	r.HandleFunc("/dummy/{count}", generateDummyData).Methods("GET")
 	r.HandleFunc("/dummydelete", deleteDummyData).Methods("GET")
+
 	r.HandleFunc("/graphql", graphqlHandler).Methods("POST")
+	r.HandleFunc("/login", loginHandler).Methods("POST")
 
 	r.HandleFunc("/getjwt/{UserId}", getjwt).Methods("GET")
 	r.Handle("/testjwt", jwtMiddleware(http.HandlerFunc(showjwt))).Methods("GET")
