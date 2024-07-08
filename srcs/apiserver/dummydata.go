@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"local.com/eshandler"
+	"apiserver/eshandler"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"

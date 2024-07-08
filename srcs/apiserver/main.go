@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"os"
 
-	"local.com/createtable"
-	"local.com/graphqlhandler"
-	"local.com/jwt"
-	"local.com/eshandler"
-	"local.com/loginhandler"
+	"apiserver/createtable"
+	"apiserver/graphqlhandler"
+	"apiserver/jwt"
+	"apiserver/eshandler"
+	"apiserver/loginhandler"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"

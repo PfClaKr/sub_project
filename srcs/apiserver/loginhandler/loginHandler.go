@@ -8,7 +8,7 @@ import(
     "strings"
     "os"
 
-    "local.com/jwt"
+    "apiserver/jwt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
