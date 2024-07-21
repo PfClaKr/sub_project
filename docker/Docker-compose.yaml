@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   nextjs:
     build:
@@ -21,13 +19,13 @@ services:
     ports:
       - "8000:8000"
 
-  golang:
+  apiserver:
     build:
-      context: ../srcs/apiserver
+      context: ../srcs/server
       dockerfile: ../../docker/apiserver/Dockerfile
     volumes:
-      - "../srcs/apiserver:/app"
-    container_name: golang
+      - "../srcs/server/apiserver:/app/apiserver"
+    container_name: apiserver
     restart: always
     ports:
       - "8080:8080"
@@ -40,6 +38,42 @@ services:
       - dynamodb
       - elasticsearch
 
+  loginserver:
+    build:
+      context: ../srcs/server
+      dockerfile: ../../docker/loginserver/Dockerfile
+    volumes:
+      - "../srcs/server/loginserver:/app/loginserver"
+    container_name: loginserver
+    restart: always
+    ports:
+      - "7070:7070"
+    environment:
+      - DYNAMODB_ENDPOINT=http://dynamodb:8000
+      - AWS_REGION=eu-west-3
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+    depends_on:
+      - apiserver
+
+  chatserver:
+    build:
+      context: ../srcs/server
+      dockerfile: ../../docker/chatserver/Dockerfile
+    volumes:
+      - "../srcs/server/chatserver:/app/chatserver"
+    container_name: chatserver
+    restart: always
+    ports:
+      - "9090:9090"
+    environment:
+      - DYNAMODB_ENDPOINT=http://dynamodb:8000
+      - AWS_REGION=eu-west-3
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+    depends_on:
+      - apiserver
+
   elasticsearch:
     container_name: elasticsearch
     build: ./elasticsearch
@@ -51,7 +85,6 @@ services:
       - ELASTIC_CERT_PASSWORD="1"
       - "discovery.type=single-node"
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-
   # kibana:
   #   container_name: kibana
   #   build: ./kibana

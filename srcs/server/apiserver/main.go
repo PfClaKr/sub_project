@@ -7,10 +7,10 @@ import (
 	"os"
 
 	"apiserver/createtable"
-	"apiserver/graphqlhandler"
-	"apiserver/jwt"
 	"apiserver/eshandler"
-	"apiserver/loginhandler"
+	"apiserver/graphqlhandler"
+
+	"local.com/jwt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -46,10 +46,10 @@ func main() {
 	r.HandleFunc("/dummydelete", deleteDummyData).Methods("GET")
 
 	r.HandleFunc("/graphql", graphqlhandler.GraphqlHandler).Methods("POST")
-	r.HandleFunc("/login", loginhandler.LoginHandler).Methods("POST")
+	// r.HandleFunc("/login", loginhandler.LoginHandler).Methods("POST")
 
-	r.Handle("/testjwt", jwt.JwtMiddleware(http.HandlerFunc(jwt.Showjwt))).Methods("GET")
+	r.Handle("/testjwt", jwt.Middleware(http.HandlerFunc(jwt.Showjwt))).Methods("GET")
 
-	fmt.Println("Starting server on :8080")
+	fmt.Println("Starting api server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }

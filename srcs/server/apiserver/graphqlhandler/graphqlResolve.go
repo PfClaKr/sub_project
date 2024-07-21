@@ -211,11 +211,6 @@ func resolveItemSearch(p graphql.ResolveParams) (interface{}, error) {
 
 	res, err := eshandler.FindItemWithProductName(&buf)
 
-	// res, err := es.Search(
-	// 	es.Search.WithContext(context.Background()),
-	// 	es.Search.WithIndex("nori_sample"),
-	// 	es.Search.WithBody(&buf),
-	// )
 	if err != nil {
 		return nil, err
 	}

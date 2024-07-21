@@ -21,7 +21,7 @@ var svc *dynamodb.DynamoDB
 var schema graphql.Schema
 
 func init() {
-	schemaFile, err := os.ReadFile("graphQL/schema.graphql")
+	schemaFile, err := os.ReadFile("graphqlhandler/schema.graphql")
 	if err != nil {
 		log.Fatalf("failed to read schema.graphql: %v", err)
 	}

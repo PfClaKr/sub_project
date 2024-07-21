@@ -17,7 +17,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func GenerateJWT(username string) (string, error) {
+func New(username string) (string, error) {
 	expirationTime := time.Now().Add(5 * time.Minute)
 	claims := &Claims{
 		Username: username,
@@ -35,7 +35,7 @@ func GenerateJWT(username string) (string, error) {
 	return tokenString, nil
 }
 
-func JwtMiddleware(next http.Handler) http.Handler {
+func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("token")
 		if err != nil {
@@ -81,7 +81,7 @@ func getjwt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenString, err := GenerateJWT(userID)
+	tokenString, err := New(userID)
 	if err != nil {
 		http.Error(w, "Error generating token", http.StatusInternalServerError)
 		return

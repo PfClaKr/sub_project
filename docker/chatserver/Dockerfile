@@ -11,12 +11,12 @@ WORKDIR /app
 
 COPY . .
 
-WORKDIR /app/apiserver
+WORKDIR /app/chatserver
 
 RUN go mod download
 
 RUN go build -o /main .
 
-EXPOSE 8080
+EXPOSE 9090
 
 CMD ["/main"]

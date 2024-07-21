@@ -127,7 +127,7 @@ func generateUserDummyData(w http.ResponseWriter, r *http.Request) {
 			"UserNickname":      {S: aws.String(names[rand.Intn(len(names))])},
 			"ProfileImage":      {S: aws.String(profileImages[rand.Intn(len(profileImages))])},
 			"ProductList":       {SS: []*string{aws.String(fmt.Sprintf("Product%d", i+1))}},
-			"PublishedQuantity": {N: aws.String(fmt.Sprintf("1"))},
+			"PublishedQuantity": {N: aws.String("1")},
 			"CreatedAt":         {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
 		}
 

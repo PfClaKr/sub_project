@@ -57,6 +57,15 @@ func CreateTables() {
 			},
 		},
 		{
+			name: "UsersCredential",
+			schema: []*dynamodb.KeySchemaElement{
+				{AttributeName: aws.String("Email"), KeyType: aws.String("HASH")},
+			},
+			attribs: []*dynamodb.AttributeDefinition{
+				{AttributeName: aws.String("Email"), AttributeType: aws.String("S")},
+			},
+		},
+		{
 			name: "Product",
 			schema: []*dynamodb.KeySchemaElement{
 				{AttributeName: aws.String("ProductId"), KeyType: aws.String("HASH")},
@@ -94,43 +103,29 @@ func CreateTables() {
 			},
 		},
 		{
-			name: "ProductSearchIndex",
-			schema: []*dynamodb.KeySchemaElement{
-				{AttributeName: aws.String("Category"), KeyType: aws.String("HASH")},
-				{AttributeName: aws.String("Price#Location"), KeyType: aws.String("RANGE")},
-			},
-			attribs: []*dynamodb.AttributeDefinition{
-				{AttributeName: aws.String("Category"), AttributeType: aws.String("S")},
-				{AttributeName: aws.String("Price#Location"), AttributeType: aws.String("S")},
-			},
-		},
-		{
-			name: "Chats",
-			schema: []*dynamodb.KeySchemaElement{
-				{AttributeName: aws.String("ChatId"), KeyType: aws.String("HASH")},
-				{AttributeName: aws.String("Timestamp"), KeyType: aws.String("RANGE")},
-			},
-			attribs: []*dynamodb.AttributeDefinition{
-				{AttributeName: aws.String("ChatId"), AttributeType: aws.String("S")},
-				{AttributeName: aws.String("Timestamp"), AttributeType: aws.String("N")},
-			},
-		},
-		{
 			name: "ChatRooms",
 			schema: []*dynamodb.KeySchemaElement{
-				{AttributeName: aws.String("UserId"), KeyType: aws.String("HASH")},
-				{AttributeName: aws.String("ChatId"), KeyType: aws.String("RANGE")},
+				{AttributeName: aws.String("ChatId"), KeyType: aws.String("HASH")},
 			},
 			attribs: []*dynamodb.AttributeDefinition{
-				{AttributeName: aws.String("UserId"), AttributeType: aws.String("S")},
 				{AttributeName: aws.String("ChatId"), AttributeType: aws.String("S")},
+			},
+		},
+		{
+			name: "ChatMessage",
+			schema: []*dynamodb.KeySchemaElement{
+				{AttributeName: aws.String("MessageId"), KeyType: aws.String("HASH")},
+			},
+			attribs: []*dynamodb.AttributeDefinition{
+				{AttributeName: aws.String("MessageId"), AttributeType: aws.String("S")},
+				{AttributeName: aws.String("Timestamp"), AttributeType: aws.String("N")}, // Timestamp 추가
 			},
 			indexes: []*dynamodb.GlobalSecondaryIndex{
 				{
-					IndexName: aws.String("ChatUserIndex"),
+					IndexName: aws.String("TimestampIndex"),
 					KeySchema: []*dynamodb.KeySchemaElement{
-						{AttributeName: aws.String("UserId"), KeyType: aws.String("HASH")},
-						{AttributeName: aws.String("ChatId"), KeyType: aws.String("RANGE")},
+						{AttributeName: aws.String("Timestamp"), KeyType: aws.String("HASH")},
+						{AttributeName: aws.String("MessageId"), KeyType: aws.String("RANGE")}, // Range key 추가
 					},
 					Projection: &dynamodb.Projection{
 						ProjectionType: aws.String("ALL"),
