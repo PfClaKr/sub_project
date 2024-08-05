@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 
-export async function RegisterUserAction(formData: FormData) {
+export async function LoginUserAction(formData: FormData) {
 	const email = formData.get("email");
 	const password = formData.get("password");
-	const nickname = formData.get("nickname");
 
-	const response = await fetch("http://127.0.0.1:7070/signup", {
+	const response = await fetch("http://127.0.0.1:7070/login", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -13,7 +12,6 @@ export async function RegisterUserAction(formData: FormData) {
 		body: JSON.stringify({
 			Email: email,
 			Password: password,
-			UserNickname: nickname
 		}),
 	});
 	if (response.ok) redirect('/');

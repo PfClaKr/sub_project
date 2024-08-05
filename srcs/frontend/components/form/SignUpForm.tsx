@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, ChangeEvent, FormEvent } from "react";
 import { RegisterUserAction } from "./RegisterUserAction"; 
 
 export const SignUpForm = () => {

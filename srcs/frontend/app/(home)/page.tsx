@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 // debug purpose
-const URL = "http://golang:8080/graphql";
+const URL = "http://127.0.0.1:8080/graphql";
 
 async function getProducts() {
 	const response = await fetch(URL, {
@@ -39,8 +39,8 @@ async function getProducts() {
 }
 
 export default async function HomePage() {
-	const productsJSON = await getProducts();
-	const product = productsJSON.data.product;
+	// const productsJSON = await getProducts();
+	// const product = productsJSON.data.product;
 	return (
 		<div>
 			<div>
