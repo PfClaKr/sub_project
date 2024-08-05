@@ -1,4 +1,4 @@
-package signinhandler
+package signuphandler
 
 import (
 	"crypto/rand"
@@ -21,7 +21,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type SigninRequest struct {
+type SignupRequest struct {
 	Email        string `json:"email"`
 	Password     string `json:"password"`
 	UserNickname string `json:"usernickname"`
@@ -60,8 +60,8 @@ func hashPassword(password, salt string) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-func SigninHandler(w http.ResponseWriter, r *http.Request) {
-	var req SigninRequest
+func SignupHandler(w http.ResponseWriter, r *http.Request) {
+	var req SignupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		jsonresponse.New(w, http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 		return

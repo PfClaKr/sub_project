@@ -6,7 +6,7 @@ import(
 	"log"
 
 	"loginserver/loginhandler"
-	"loginserver/signinhandler"
+	"loginserver/signuphandler"
 	"loginserver/emailhandler"
 
 	"github.com/gorilla/mux"
@@ -15,7 +15,7 @@ import(
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/login", loginhandler.LoginHandler).Methods("GET")
-	r.HandleFunc("/signin", signinhandler.SigninHandler).Methods("POST")
+	r.HandleFunc("/signup", signuphandler.SignupHandler).Methods("POST")
 	r.HandleFunc("/emailcheck", emailhandler.EmailcheckHandler).Methods("GET")
 
 	fmt.Println("Starting login server on :7070")
