@@ -25,6 +25,13 @@ func writeErrorResponse(w http.ResponseWriter, status int, message string) {
 	json.NewEncoder(w).Encode(errorResponse)
 }
 
+func NewPreflight(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Method", "POST")
+	w.WriteHeader(http.StatusOK)
+}
+
 func New(w http.ResponseWriter, status int, payload interface{}) {
 	writeJSONResponse(w, status, payload)
 }

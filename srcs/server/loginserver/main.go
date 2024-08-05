@@ -14,8 +14,8 @@ import(
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/login", loginhandler.LoginHandler).Methods("GET")
-	r.HandleFunc("/signup", signuphandler.SignupHandler).Methods("POST")
+	r.HandleFunc("/login", loginhandler.LoginHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/signup", signuphandler.SignupHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/emailcheck", emailhandler.EmailcheckHandler).Methods("GET")
 
 	fmt.Println("Starting login server on :7070")

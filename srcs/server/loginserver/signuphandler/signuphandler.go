@@ -63,6 +63,10 @@ func hashPassword(password, salt string) string {
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	var req SignupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if r.Method == http.MethodOptions {
+			jsonresponse.NewPreflight(w)
+			return
+		}
 		jsonresponse.New(w, http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 		return
 	}

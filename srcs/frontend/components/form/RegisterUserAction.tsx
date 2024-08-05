@@ -7,7 +7,7 @@ export async function RegisterUserAction(formData: FormData) {
 
 	console.log("user data: ", email, password, nickname);
 
-	const response = await fetch("http://127.0.0.1:7070/signin", {
+	const response = await fetch("http://127.0.0.1:7070/signup", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
