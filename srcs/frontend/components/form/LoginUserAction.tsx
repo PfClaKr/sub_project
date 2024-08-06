@@ -13,6 +13,7 @@ export async function LoginUserAction(formData: FormData) {
 			Email: email,
 			Password: password,
 		}),
+		credentials: 'include'
 	});
 	if (response.ok) redirect('/');
 	else console.log('fetch error');

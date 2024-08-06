@@ -69,6 +69,8 @@
 # nextjs/Dockerfile
 FROM node:18-alpine
 
+RUN apk add tzdata
+
 WORKDIR /app
 
 COPY package*.json ./

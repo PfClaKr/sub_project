@@ -11,7 +11,7 @@ func writeJSONResponse(w http.ResponseWriter, status int, payload interface{}) {
 		writeErrorResponse(w, http.StatusInternalServerError, "Failed to marshal JSON response")
 		return
 	}
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:3000")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(response)
@@ -26,9 +26,10 @@ func writeErrorResponse(w http.ResponseWriter, status int, message string) {
 }
 
 func NewPreflight(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:3000")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Access-Control-Allow-Method", "POST")
+	w.Header().Set("Access-Control-Allow-Credentials", "true");
 	w.WriteHeader(http.StatusOK)
 }
 

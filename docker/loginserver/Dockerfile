@@ -7,6 +7,8 @@
 # golang/Dockerfile
 FROM golang:1.22-rc-alpine
 
+RUN apk add tzdata
+
 WORKDIR /app
 
 COPY . .

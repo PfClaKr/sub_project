@@ -78,6 +78,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 
+	w.Header().Set("Access-Control-Allow-Credentials", "true");
+
 	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
 		if r.Method == http.MethodOptions {
 			jsonresponse.NewPreflight(w)
@@ -108,9 +110,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    tokenString,
-		Expires:  time.Now().Add(30 * time.Minute),
+		Expires:  time.Now().Add(500000 * time.Minute),
 		HttpOnly: true,
+		Secure: false,
 	})
+
 
 	jsonresponse.New(w, http.StatusOK, map[string]string{"message": "JWT created"})
 }
