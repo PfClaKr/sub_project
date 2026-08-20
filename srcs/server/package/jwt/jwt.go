@@ -4,13 +4,33 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 )
 
-var jwtKey = []byte("hi_im_yugeon")
+// JWT_SECRET must be set in production; the fallback is for local dev only.
+var jwtKey = []byte(secret())
+
+func secret() string {
+	if s := os.Getenv("JWT_SECRET"); s != "" {
+		return s
+	}
+	return "local_dev_secret"
+}
+
+// ExpireDuration is the token lifetime; JWT_EXPIRE_MINUTES overrides it.
+func ExpireDuration() time.Duration {
+	if v := os.Getenv("JWT_EXPIRE_MINUTES"); v != "" {
+		if m, err := strconv.Atoi(v); err == nil && m > 0 {
+			return time.Duration(m) * time.Minute
+		}
+	}
+	return 24 * time.Hour
+}
 
 type Claims struct {
 	Username string `json:"username"`
@@ -18,7 +38,7 @@ type Claims struct {
 }
 
 func New(username string) (string, error) {
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(ExpireDuration())
 	claims := &Claims{
 		Username: username,
 		StandardClaims: jwt.StandardClaims{
