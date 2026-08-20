@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 
 	"local.com/jsonresponse"
 	"local.com/jwt"
@@ -72,6 +75,15 @@ func hashPassword(password, salt string) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
+// verifyPassword checks bcrypt hashes, falling back to the legacy
+// sha256+salt scheme for accounts created before the bcrypt switch.
+func verifyPassword(storedHash, salt, password string) bool {
+	if strings.HasPrefix(storedHash, "$2") {
+		return bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)) == nil
+	}
+	return storedHash == hashPassword(password, salt)
+}
+
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var loginRequest struct {
 		Email    string `json:"email"`
@@ -89,8 +101,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashedPassword := hashPassword(loginRequest.Password, salt)
-	if storedHash != hashedPassword {
+	if !verifyPassword(storedHash, salt, loginRequest.Password) {
 		jsonresponse.New(w, http.StatusUnauthorized, map[string]string{"error": "Invalid email or password"})
 		return
 	}
