@@ -3,6 +3,7 @@
 type Query {
   product(ProductId: String!): Product
   productSearch(ProductName: String!): [Product]
+  recentProducts(Limit: Float): [Product]
   user(UserId: String!): User
 }
 

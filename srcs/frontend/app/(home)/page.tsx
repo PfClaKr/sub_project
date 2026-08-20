@@ -7,75 +7,53 @@ export const metadata: Metadata = {
 	title: "Home",
 };
 
-async function getProducts() {
-	const response = await fetch(GRAPHQL_URL, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify({
-			// need to change to newest products and separate files
-			query: `{
-				product(ProductId: \"Product1\") {
-					ProductId
-					UserId
-					ProductName
-					ProductDescription
-					ProductPrice
-					ProductImage
-					PreferedLocation
-					ProductCreatedAt
-				}
-			}`,
-		}),
-	});
-	if (response.ok) {
+async function getRecentProducts(limit: number) {
+	try {
+		const response = await fetch(GRAPHQL_URL, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				query: `query RecentProducts($limit: Float) {
+					recentProducts(Limit: $limit) {
+						ProductId
+						UserId
+						ProductName
+						ProductPrice
+						ProductImage
+						PreferedLocation
+					}
+				}`,
+				variables: { limit },
+			}),
+			cache: 'no-store',
+		});
+		if (!response.ok) return [];
 		const json = await response.json();
-		return json;
+		return json.data?.recentProducts ?? [];
+	} catch {
+		// Backend unreachable: render the page with an empty feed.
+		return [];
 	}
-	return [];
 }
 
 export default async function HomePage() {
-	// const productsJSON = await getProducts();
-	// const product = productsJSON.data.product;
+	const products = await getRecentProducts(8);
 	return (
 		<div>
 			<div>
 				<p>파리 한인 중고마켓</p>
 				<h1>여기는 잇냥 사고팔 물건 있냥?</h1>
 				<SearchInput />
-				<p>lorem ipsum dolor sit amet</p>
 			</div>
 			<div>
 				<p><strong>최근</strong>에 올라온거 뭐<strong>있냥</strong>?</p>
-				<div>
-					<ul>
-						{/* test */}
-						{/* <DisplayTray
-							product={product}
-						/> */}
-					</ul>
-				</div>
-			</div>
-			<div>
-				<p>필요한거 <strong>있냥</strong>?</p>
-				<div>
-					<ul>
-						<li>New Arrival</li>
-						<li>Best Seller</li>
-						<li>Featured</li>
-						<li>Special Offer</li>
-					</ul>
-				</div>
-				<div>
-					<ul>
-						{/* <li>item 1</li>
-						<li>item 2</li>
-						<li>item 3</li>
-						<li>item 4</li> */}
-					</ul>
-				</div>
+				{products.length > 0 ? (
+					<DisplayTray products={products} />
+				) : (
+					<p>아직 올라온 물건이 없어요.</p>
+				)}
 			</div>
 		</div>
 	);
