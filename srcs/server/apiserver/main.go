@@ -10,6 +10,7 @@ import (
 	"apiserver/eshandler"
 	"apiserver/graphqlhandler"
 
+	"local.com/cors"
 	"local.com/jwt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -50,6 +51,11 @@ func main() {
 
 	r.Handle("/testjwt", jwt.Middleware(http.HandlerFunc(jwt.Showjwt))).Methods("GET")
 
-	fmt.Println("Starting api server on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	fmt.Println("Starting api server on :" + port)
+	log.Fatal(http.ListenAndServe(":"+port, cors.Middleware(r)))
 }

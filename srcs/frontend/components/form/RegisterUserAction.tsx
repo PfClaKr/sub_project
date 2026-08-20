@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
+import { LOGIN_URL } from "@/libs/config";
 
 export async function RegisterUserAction(formData: FormData) {
 	const email = formData.get("email");
 	const password = formData.get("password");
 	const nickname = formData.get("nickname");
 
-	const response = await fetch("http://127.0.0.1:7070/signup", {
+	const response = await fetch(`${LOGIN_URL}/signup`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",

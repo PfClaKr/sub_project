@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	local.com/cors v0.0.0
 	local.com/jsonresponse v0.0.0
 	local.com/jwt v0.0.0
 )
@@ -21,3 +22,5 @@ require (
 replace local.com/jwt v0.0.0 => ../package/jwt
 
 replace local.com/jsonresponse v0.0.0 => ../package/jsonresponse
+
+replace local.com/cors v0.0.0 => ../package/cors

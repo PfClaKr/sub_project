@@ -21,6 +21,11 @@ require (
 	go.opentelemetry.io/otel/trace v1.28.0 // indirect
 )
 
-require local.com/jwt v0.0.0
+require (
+	local.com/cors v0.0.0
+	local.com/jwt v0.0.0
+)
 
 replace local.com/jwt v0.0.0 => ../package/jwt
+
+replace local.com/cors v0.0.0 => ../package/cors

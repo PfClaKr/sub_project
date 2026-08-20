@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -17,10 +18,12 @@ import (
 var es *elasticsearch.Client
 
 func InitElasticsearch() {
+	esURL := os.Getenv("ELASTICSEARCH_URL")
+	if esURL == "" {
+		esURL = "http://elasticsearch:9200"
+	}
 	cfg := elasticsearch.Config{
-		Addresses: []string{
-			"http://elasticsearch:9200",
-		},
+		Addresses: []string{esURL},
 	}
 	var err error
 	es, err = elasticsearch.NewClient(cfg)

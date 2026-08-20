@@ -78,13 +78,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 
-	w.Header().Set("Access-Control-Allow-Credentials", "true");
-
 	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
-		if r.Method == http.MethodOptions {
-			jsonresponse.NewPreflight(w)
-			return
-		}
 		jsonresponse.New(w, http.StatusBadRequest, map[string]string{"error": "Invalid request payload"})
 		return
 	}
