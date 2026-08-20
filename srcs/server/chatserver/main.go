@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"os"
 
-	"local.com/jwt"
 	"chatserver/sockethandler"
+
+	"local.com/cors"
+	"local.com/jwt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -41,6 +43,11 @@ func main() {
 
 	r.HandleFunc("/ws/{ChatId}", sockethandler.Sockethandler).Methods("GET", "POST")
 
-	fmt.Println("Starting chat server on :9090")
-	log.Fatal(http.ListenAndServe(":9090", r))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "9090"
+	}
+
+	fmt.Println("Starting chat server on :" + port)
+	log.Fatal(http.ListenAndServe(":"+port, cors.Middleware(r)))
 }

@@ -12,6 +12,14 @@ services:
     environment:
       - TZ=Europe/Paris
       - NODE_ENV=development
+      # SSR-side endpoints (compose network)
+      - API_INTERNAL_URL=http://apiserver:8080
+      - LOGIN_INTERNAL_URL=http://loginserver:7070
+      - CHAT_INTERNAL_URL=http://chatserver:9090
+      # Browser-side endpoints (host-published ports)
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_LOGIN_URL=http://localhost:7070
+      - NEXT_PUBLIC_CHAT_URL=http://localhost:9090
 
   dynamodb:
     image: amazon/dynamodb-local
@@ -36,6 +44,8 @@ services:
       - AWS_REGION=eu-west-3
       - AWS_ACCESS_KEY_ID=dummy
       - AWS_SECRET_ACCESS_KEY=dummy
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
     depends_on:
       - dynamodb
       - elasticsearch
@@ -56,6 +66,7 @@ services:
       - AWS_REGION=eu-west-3
       - AWS_ACCESS_KEY_ID=dummy
       - AWS_SECRET_ACCESS_KEY=dummy
+      - FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
     depends_on:
       - apiserver
 
@@ -75,6 +86,7 @@ services:
       - AWS_REGION=eu-west-3
       - AWS_ACCESS_KEY_ID=dummy
       - AWS_SECRET_ACCESS_KEY=dummy
+      - FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
     depends_on:
       - apiserver
 

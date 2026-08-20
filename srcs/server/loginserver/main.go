@@ -1,13 +1,16 @@
 package main
 
-import(
-    "fmt"
-    "net/http"
+import (
+	"fmt"
 	"log"
+	"net/http"
+	"os"
 
+	"loginserver/emailhandler"
 	"loginserver/loginhandler"
 	"loginserver/signuphandler"
-	"loginserver/emailhandler"
+
+	"local.com/cors"
 
 	"github.com/gorilla/mux"
 )
@@ -18,6 +21,11 @@ func main() {
 	r.HandleFunc("/signup", signuphandler.SignupHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/emailcheck", emailhandler.EmailcheckHandler).Methods("GET")
 
-	fmt.Println("Starting login server on :7070")
-	log.Fatal(http.ListenAndServe(":7070", r))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "7070"
+	}
+
+	fmt.Println("Starting login server on :" + port)
+	log.Fatal(http.ListenAndServe(":"+port, cors.Middleware(r)))
 }

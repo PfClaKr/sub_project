@@ -2,13 +2,14 @@ import { Metadata } from "next";
 import { ProductDetail } from "@/components/product/detail/ProductDetail";
 import { UserCard } from "@/components/UserCard";
 import { ProductDescription } from "@/components/product/detail/ProductDescription";
+import { GRAPHQL_URL } from "@/libs/config";
 
 export const metadata: Metadata = {
 	title: "Product",
 };
 
 async function getProductInfo(searchKeyword: string) {
-	return await fetch('http://golang:8080/graphql', {
+	return await fetch(GRAPHQL_URL, {
 		method: 'POST',
 		headers: {
 			"Content-Type": "application/json"
@@ -31,7 +32,7 @@ async function getProductInfo(searchKeyword: string) {
 }
 
 async function getUserInfo(searchKeyword: string) {
-	return await fetch('http://golang:8080/graphql', {
+	return await fetch(GRAPHQL_URL, {
 		method: 'POST',
 		headers: {
 			"Content-Type": "application/json"

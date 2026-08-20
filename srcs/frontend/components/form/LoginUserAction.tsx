@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
+import { LOGIN_URL } from "@/libs/config";
 
 export async function LoginUserAction(formData: FormData) {
 	const email = formData.get("email");
 	const password = formData.get("password");
 
-	const response = await fetch("http://127.0.0.1:7070/login", {
+	const response = await fetch(`${LOGIN_URL}/login`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",

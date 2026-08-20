@@ -1,12 +1,13 @@
 import { Metadata } from "next";
 import DisplayTray from "@/components/product/DisplayTray";
+import { GRAPHQL_URL } from "@/libs/config";
 
 export const metadata: Metadata = {
 	title: "Result",
 };
 
 async function getSearchResult(searchKeyword: string) {
-	return await fetch('http://golang:8080/graphql', {
+	return await fetch(GRAPHQL_URL, {
 		signal: AbortSignal.timeout(5000), // prevent infinite loading
 		method: 'POST',
 		headers: {

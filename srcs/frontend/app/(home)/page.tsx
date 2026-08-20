@@ -1,16 +1,14 @@
 import { Metadata } from "next";
 import { SearchInput } from "../../components/SearchInput";
 import DisplayTray from "@/components/product/DisplayTray";
+import { GRAPHQL_URL } from "@/libs/config";
 
 export const metadata: Metadata = {
 	title: "Home",
 };
 
-// debug purpose
-const URL = "http://127.0.0.1:8080/graphql";
-
 async function getProducts() {
-	const response = await fetch(URL, {
+	const response = await fetch(GRAPHQL_URL, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
