@@ -8,6 +8,7 @@ import (
 
 	"apiserver/createtable"
 	"apiserver/eshandler"
+	"apiserver/favoriteshandler"
 	"apiserver/graphqlhandler"
 	"apiserver/uploadhandler"
 
@@ -50,6 +51,11 @@ func main() {
 
 	r.HandleFunc("/graphql", graphqlhandler.GraphqlHandler).Methods("POST")
 	r.Handle("/upload", jwt.Middleware(http.HandlerFunc(uploadhandler.UploadHandler))).Methods("POST")
+
+	r.Handle("/favorites", jwt.Middleware(http.HandlerFunc(favoriteshandler.ListHandler))).Methods("GET")
+	r.Handle("/favorites/{productId}", jwt.Middleware(http.HandlerFunc(favoriteshandler.StatusHandler))).Methods("GET")
+	r.Handle("/favorites/{productId}", jwt.Middleware(http.HandlerFunc(favoriteshandler.AddHandler))).Methods("POST")
+	r.Handle("/favorites/{productId}", jwt.Middleware(http.HandlerFunc(favoriteshandler.RemoveHandler))).Methods("DELETE")
 	// r.HandleFunc("/login", loginhandler.LoginHandler).Methods("POST")
 
 	r.Handle("/testjwt", jwt.Middleware(http.HandlerFunc(jwt.Showjwt))).Methods("GET")
