@@ -52,6 +52,9 @@ export default function Navigation() {
 							<span>{session.UserNickname ?? session.UserId}님</span>
 						</li>
 						<li>
+							<StyledNavbar href="/sell">판매하기</StyledNavbar>
+						</li>
+						<li>
 							<StyledNavbar href="/myaccount">마이페이지</StyledNavbar>
 						</li>
 						<li>

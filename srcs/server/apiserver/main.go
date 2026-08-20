@@ -9,6 +9,7 @@ import (
 	"apiserver/createtable"
 	"apiserver/eshandler"
 	"apiserver/graphqlhandler"
+	"apiserver/uploadhandler"
 
 	"local.com/cors"
 	"local.com/jwt"
@@ -36,6 +37,7 @@ func init() {
 	svc = dynamodb.New(sess)
 	createtable.CreateTables()
 	eshandler.InitElasticsearch()
+	uploadhandler.EnsureBucket()
 }
 
 func main() {
@@ -47,6 +49,7 @@ func main() {
 	r.HandleFunc("/dummydelete", deleteDummyData).Methods("GET")
 
 	r.HandleFunc("/graphql", graphqlhandler.GraphqlHandler).Methods("POST")
+	r.Handle("/upload", jwt.Middleware(http.HandlerFunc(uploadhandler.UploadHandler))).Methods("POST")
 	// r.HandleFunc("/login", loginhandler.LoginHandler).Methods("POST")
 
 	r.Handle("/testjwt", jwt.Middleware(http.HandlerFunc(jwt.Showjwt))).Methods("GET")
