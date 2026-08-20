@@ -101,12 +101,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Cookie lifetime follows the token lifetime.
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    tokenString,
-		Expires:  time.Now().Add(500000 * time.Minute),
+		Path:     "/",
+		Expires:  time.Now().Add(jwt.ExpireDuration()),
 		HttpOnly: true,
-		Secure: false,
+		Secure:   false,
 	})
 
 

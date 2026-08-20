@@ -46,6 +46,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=dummy
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - JWT_SECRET=local_dev_secret
     depends_on:
       - dynamodb
       - elasticsearch
@@ -67,6 +68,7 @@ services:
       - AWS_ACCESS_KEY_ID=dummy
       - AWS_SECRET_ACCESS_KEY=dummy
       - FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - JWT_SECRET=local_dev_secret
     depends_on:
       - apiserver
 
@@ -87,6 +89,7 @@ services:
       - AWS_ACCESS_KEY_ID=dummy
       - AWS_SECRET_ACCESS_KEY=dummy
       - FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - JWT_SECRET=local_dev_secret
     depends_on:
       - apiserver
 
