@@ -7,6 +7,9 @@ import (
 	"os"
 	"time"
 
+	"local.com/cors"
+	"local.com/jwt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -36,95 +39,112 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true
+		origin := r.Header.Get("Origin")
+		// Empty origin means a non-browser client (e.g. tests).
+		return origin == "" || cors.IsAllowedOrigin(origin)
 	},
 }
 
-type Message struct {
-	UserId  string `json:"UserId"`
+type inboundMessage struct {
 	Message string `json:"Message"`
 }
 
+// ChatMessage is the payload stored and broadcast to room members.
+type ChatMessage struct {
+	MessageId string `json:"MessageId"`
+	ChatId    string `json:"ChatId"`
+	UserId    string `json:"UserId"`
+	Timestamp int64  `json:"Timestamp"`
+	Content   string `json:"Content"`
+}
+
+// isParticipant checks the user belongs to the chat room.
+func isParticipant(chatId, userId string) bool {
+	result, err := svc.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String("ChatRooms"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"ChatId": {S: aws.String(chatId)},
+		},
+		ProjectionExpression: aws.String("UserSeller, UserBuyer"),
+	})
+	if err != nil || result.Item == nil {
+		return false
+	}
+	for _, k := range []string{"UserSeller", "UserBuyer"} {
+		if v := result.Item[k]; v != nil && v.S != nil && *v.S == userId {
+			return true
+		}
+	}
+	return false
+}
+
+func storeMessage(msg ChatMessage) error {
+	_, err := svc.PutItem(&dynamodb.PutItemInput{
+		TableName: aws.String("ChatMessage"),
+		Item: map[string]*dynamodb.AttributeValue{
+			"MessageId": {S: aws.String(msg.MessageId)},
+			"ChatId":    {S: aws.String(msg.ChatId)},
+			"UserId":    {S: aws.String(msg.UserId)},
+			"Timestamp": {N: aws.String(fmt.Sprintf("%d", msg.Timestamp))},
+			"Content":   {S: aws.String(msg.Content)},
+		},
+	})
+	return err
+}
+
+// Sockethandler upgrades the connection, joins the room hub and
+// broadcasts each stored message. Must be wrapped with jwt.Middleware.
 func Sockethandler(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("claims").(*jwt.Claims)
+	if !ok {
+		http.Error(w, "no session", http.StatusUnauthorized)
+		return
+	}
+	userId := claims.Username
+
+	chatId := mux.Vars(r)["ChatId"]
+	if !isParticipant(chatId, userId) {
+		http.Error(w, "not a member of this chat room", http.StatusForbidden)
+		return
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("Failed to upgrade to websocket:", err)
-		http.Error(w, fmt.Sprintf("Failed to upgrade to websocket: %s", err.Error()), http.StatusInternalServerError)
-		return
-	}
-	defer conn.Close()
-
-	vars := mux.Vars(r)
-	chatId := vars["ChatId"]
-
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String("ChatRooms"),
-		Key: map[string]*dynamodb.AttributeValue{
-			"ChatId": {
-				S: aws.String(chatId),
-			},
-		},
-	}
-
-	result, err := svc.GetItem(input)
-	if err != nil {
-		fmt.Println("Error fetching ChatId:", err)
-		conn.WriteMessage(websocket.TextMessage, []byte("Error fetching ChatId"))
 		return
 	}
 
-	if result.Item == nil {
-		fmt.Println("ChatId not found")
-		conn.WriteMessage(websocket.TextMessage, []byte("ChatId not found"))
-		return
-	}
+	hub.Join(chatId, conn)
+	defer func() {
+		hub.Leave(chatId, conn)
+		conn.Close()
+	}()
 
 	for {
-		_, message, err := conn.ReadMessage()
+		_, raw, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Println("Failed to read websocket message:", err)
 			return
 		}
 
-		var msg Message
-		if err := json.Unmarshal(message, &msg); err != nil {
-			fmt.Println("Failed to unmarshal message:", err)
-			conn.WriteMessage(websocket.TextMessage, []byte("Failed to unmarshal message"))
+		var in inboundMessage
+		if err := json.Unmarshal(raw, &in); err != nil || in.Message == "" {
 			continue
 		}
 
-		messageId := uuid.NewString()
-
-		item := map[string]*dynamodb.AttributeValue{
-			"MessageId": {
-				S: aws.String(messageId),
-			},
-			"ChatId": {
-				S: aws.String(chatId),
-			},
-			"UserId": {
-				S: aws.String(msg.UserId),
-			},
-			"Timestamp": {
-				N: aws.String(fmt.Sprintf("%d", time.Now().Unix())),
-			},
-			"Content": {
-				S: aws.String(msg.Message),
-			},
+		msg := ChatMessage{
+			MessageId: uuid.NewString(),
+			ChatId:    chatId,
+			UserId:    userId,
+			Timestamp: time.Now().Unix(),
+			Content:   in.Message,
 		}
 
-		putInput := &dynamodb.PutItemInput{
-			TableName: aws.String("ChatMessage"),
-			Item:      item,
-		}
-
-		_, err = svc.PutItem(putInput)
-		if err != nil {
-			fmt.Println("Failed to put item in chatmessage:", err)
-			conn.WriteMessage(websocket.TextMessage, []byte("Failed to store message"))
+		if err := storeMessage(msg); err != nil {
+			fmt.Println("Failed to store message:", err)
 			continue
 		}
 
-		conn.WriteMessage(websocket.TextMessage, []byte("Message stored successfully"))
+		payload, _ := json.Marshal(msg)
+		hub.Broadcast(chatId, payload)
 	}
 }

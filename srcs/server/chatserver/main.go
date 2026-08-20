@@ -35,13 +35,11 @@ func init() {
 }
 
 func main() {
-
 	r := mux.NewRouter()
-	r.Handle("/getchatroom/{productId}", jwt.Middleware(http.HandlerFunc(getchathandler))).Methods("GET")
-	r.HandleFunc("/joinchatroom/{str}", joinchathandler).Methods("GET")
-	r.HandleFunc("/dummy/{count}", dummyhandler).Methods("GET")
-
-	r.HandleFunc("/ws/{ChatId}", sockethandler.Sockethandler).Methods("GET", "POST")
+	r.Handle("/rooms", jwt.Middleware(http.HandlerFunc(roomsHandler))).Methods("GET")
+	r.Handle("/room/product/{productId}", jwt.Middleware(http.HandlerFunc(getOrCreateRoomHandler))).Methods("GET")
+	r.Handle("/history/{chatId}", jwt.Middleware(http.HandlerFunc(historyHandler))).Methods("GET")
+	r.Handle("/ws/{ChatId}", jwt.Middleware(http.HandlerFunc(sockethandler.Sockethandler))).Methods("GET")
 
 	port := os.Getenv("PORT")
 	if port == "" {

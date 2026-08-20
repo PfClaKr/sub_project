@@ -55,6 +55,9 @@ export default function Navigation() {
 							<StyledNavbar href="/sell">판매하기</StyledNavbar>
 						</li>
 						<li>
+							<StyledNavbar href="/chat">채팅</StyledNavbar>
+						</li>
+						<li>
 							<StyledNavbar href="/myaccount">마이페이지</StyledNavbar>
 						</li>
 						<li>
