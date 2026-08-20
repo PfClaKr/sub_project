@@ -135,11 +135,19 @@ func resolveUser(p graphql.ResolveParams) (interface{}, error) {
 
 	item := map[string]interface{}{}
 	for _, field := range fields {
+		attr, ok := result.Item[field]
+		if !ok {
+			continue
+		}
 		switch field {
 		case "UserId", "Email", "PasswordHash", "UserNickname", "ProfileImage":
-			item[field] = *result.Item[field].S
+			if attr.S != nil {
+				item[field] = *attr.S
+			}
 		case "PublishedQuantity", "CreatedAt":
-			item[field] = *result.Item[field].N
+			if attr.N != nil {
+				item[field] = *attr.N
+			}
 		}
 	}
 
@@ -174,19 +182,7 @@ func resolveItem(p graphql.ResolveParams) (interface{}, error) {
 		return nil, nil
 	}
 
-	item := map[string]interface{}{}
-	for _, field := range fields {
-		switch field {
-		case "ProductId", "UserId", "ProductName", "ProductDescription", "ProductCategory", "PreferedLocation":
-			item[field] = *result.Item[field].S
-		case "ProductPrice", "ProductCreatedAt", "ProductUpdatedAt":
-			item[field] = *result.Item[field].N
-		case "ProductImage":
-			item[field] = aws.StringValueSlice(result.Item[field].SS)
-		}
-	}
-
-	return item, nil
+	return mapProductItem(result.Item, fields), nil
 }
 
 // mapProductItem converts a DynamoDB product item to a GraphQL map,
@@ -327,18 +323,7 @@ func resolveItemSearch(p graphql.ResolveParams) (interface{}, error) {
 		}
 
 		if result.Item != nil {
-			item := map[string]interface{}{}
-			for _, field := range fields {
-				switch field {
-				case "ProductId", "UserId", "ProductName", "ProductDescription", "ProductCategory", "PreferedLocation":
-					item[field] = *result.Item[field].S
-				case "ProductPrice", "ProductCreatedAt", "ProductUpdatedAt":
-					item[field] = *result.Item[field].N
-				case "ProductImage":
-					item[field] = aws.StringValueSlice(result.Item[field].SS)
-				}
-			}
-			items = append(items, item)
+			items = append(items, mapProductItem(result.Item, fields))
 		}
 	}
 

@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { ProductDetail } from "@/components/product/detail/ProductDetail";
 import { UserCard } from "@/components/UserCard";
 import { ProductDescription } from "@/components/product/detail/ProductDescription";
@@ -8,52 +9,70 @@ export const metadata: Metadata = {
 	title: "Product",
 };
 
-async function getProductInfo(searchKeyword: string) {
-	return await fetch(GRAPHQL_URL, {
-		method: 'POST',
-		headers: {
-			"Content-Type": "application/json"
-		},
-		body: JSON.stringify({
-			query: `{
-				product(ProductId: \"${searchKeyword}\") {
-					ProductCategory
-					ProductDescription
-					UserId
-					ProductName
-					ProductImage
-					ProductPrice
-					PreferedLocation
-					ProductCreatedAt
-				}
-			}`
-		})
-	}).then(response => response.json());
+async function getProductInfo(productId: string) {
+	try {
+		const response = await fetch(GRAPHQL_URL, {
+			method: 'POST',
+			headers: {
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify({
+				query: `query Product($productId: String!) {
+					product(ProductId: $productId) {
+						ProductCategory
+						ProductDescription
+						UserId
+						ProductName
+						ProductImage
+						ProductPrice
+						PreferedLocation
+						ProductCreatedAt
+					}
+				}`,
+				variables: { productId },
+			}),
+			cache: 'no-store',
+		});
+		if (!response.ok) return null;
+		const json = await response.json();
+		return json.data?.product ?? null;
+	} catch {
+		return null;
+	}
 }
 
-async function getUserInfo(searchKeyword: string) {
-	return await fetch(GRAPHQL_URL, {
-		method: 'POST',
-		headers: {
-			"Content-Type": "application/json"
-		},
-		body: JSON.stringify({
-			query: `{
-				user(UserId: \"${searchKeyword}\") {
-					ProfileImage
-					UserNickname
-					PublishedQuantity
-				}
-			}`
-		})
-	}).then(response => response.json());
+async function getUserInfo(userId: string) {
+	try {
+		const response = await fetch(GRAPHQL_URL, {
+			method: 'POST',
+			headers: {
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify({
+				query: `query User($userId: String!) {
+					user(UserId: $userId) {
+						ProfileImage
+						UserNickname
+						PublishedQuantity
+					}
+				}`,
+				variables: { userId },
+			}),
+			cache: 'no-store',
+		});
+		if (!response.ok) return null;
+		const json = await response.json();
+		return json.data?.user ?? null;
+	} catch {
+		return null;
+	}
 }
 
 export default async function ProductDetailPage({params: {id}}: {params: {id: string}; }) {
-	const productResult = await getProductInfo(id);
-	const userResult = await getUserInfo(productResult.data.product.UserId);
-	const productData = productResult.data.product;
-	const userdata = userResult.data.user;
+	const productData = await getProductInfo(id);
+	if (!productData) notFound();
+
+	const userdata = productData.UserId ? await getUserInfo(productData.UserId) : null;
 	return (
 		<div>
 			<div>
@@ -70,28 +89,21 @@ export default async function ProductDetailPage({params: {id}}: {params: {id: st
 					productCreatedAt={productData.ProductCreatedAt}
 				/>
 			</div>
-			<div>
-				<UserCard
-					profileImage={userdata.ProfileImage}
-					userNickname={userdata.UserNickname}
-					publishedQuantity={userdata.PublishedQuantity}
-				/>
-			</div>
+			{userdata && (
+				<div>
+					<UserCard
+						profileImage={userdata.ProfileImage}
+						userNickname={userdata.UserNickname}
+						publishedQuantity={userdata.PublishedQuantity}
+					/>
+				</div>
+			)}
 			<div>
 				<ProductDescription
 					productDescription={productData.ProductDescription}
 					preferedLocation={productData.PreferedLocation}
 				/>
 			</div>
-			{/* <div>
-				<p>이런건 <strong>어떠냥</strong> ?</p>
-				<ul>
-					<li>item 1</li>
-					<li>item 2</li>
-					<li>item 3</li>
-					<li>item 4</li>
-				</ul>
-			</div> */}
 		</div>
 	);
 }
