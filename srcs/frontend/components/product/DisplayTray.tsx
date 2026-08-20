@@ -10,7 +10,7 @@ export default function DisplayTray(props: any) {
 	return (
 		<DisplayTrayContainer>
 			{products.map((product: any) =>
-				<Container>
+				<Container key={product.ProductId}>
 					<StyledLink href={`/product/${product.ProductId}`}>
 						<ProductCard
 							productImage={product.ProductImage}
