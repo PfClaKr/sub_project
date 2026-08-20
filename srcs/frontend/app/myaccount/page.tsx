@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { MyAccount } from "@/components/account/MyAccount";
 
 export const metadata: Metadata = {
 	title: "My Account"
@@ -7,8 +8,8 @@ export const metadata: Metadata = {
 export default function MyAccountPage() {
 	return (
 		<div>
-			<p>My Account</p>
-			<p>Home &gt; Pages &gt; My Account</p>
+			<p>마이페이지</p>
+			<MyAccount />
 		</div>
 	);
 }

@@ -139,6 +139,8 @@ func astToGraphQLObject(def *ast.ObjectDefinition) *graphql.Object {
 						return resolveItemSearch(p)
 					case "recentProducts":
 						return resolveRecentProducts(p)
+					case "userProducts":
+						return resolveUserProducts(p)
 					case "user":
 						return resolveUser(p)
 					}
