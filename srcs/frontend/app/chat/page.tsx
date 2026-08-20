@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { ChatRoomList } from "@/components/chat/ChatRoomList";
 
 export const metadata: Metadata = {
 	title: "Chat"
@@ -7,8 +8,8 @@ export const metadata: Metadata = {
 export default function ChatPage() {
 	return (
 		<div>
-			<p>My Chat</p>
-			<p>Home &gt; Pages &gt; Chat</p>
+			<p>내 채팅</p>
+			<ChatRoomList />
 		</div>
 	);
 }

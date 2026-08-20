@@ -81,6 +81,7 @@ export default async function ProductDetailPage({params: {id}}: {params: {id: st
 			</div>
 			<div>
 				<ProductDetail
+					productId={id}
 					productImage={productData.ProductImage}
 					productName={productData.ProductName}
 					productPrice={productData.ProductPrice}

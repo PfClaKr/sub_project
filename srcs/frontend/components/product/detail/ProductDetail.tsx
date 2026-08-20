@@ -30,7 +30,7 @@ export function convertUnixToParisTime(unixTime: number) {
 export function ProductDetail(props: any) {
     return (
         <div>
-            <img src={props.productImage[0]} />
+            {props.productImage?.[0] && <img src={props.productImage[0]} />}
             <div>
                 <p>카테고리 &gt; 가구 &gt; 의자</p>
                 <p>관심목록 저장</p>
@@ -43,7 +43,7 @@ export function ProductDetail(props: any) {
                     <li><p>사이즈 {props.productPrice}</p></li>
                     <li><p>게시일 {convertUnixToParisTime(props.productCreatedAt)}</p></li>
                 </ul>
-                <ChatButton/>
+                <ChatButton productId={props.productId}/>
             </div>
         </div>
     )
