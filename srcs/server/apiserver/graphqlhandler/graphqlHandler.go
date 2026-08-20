@@ -148,6 +148,8 @@ func astToGraphQLObject(def *ast.ObjectDefinition) *graphql.Object {
 						return createUserResolver(p)
 					case "createProduct":
 						return createProductResolver(p)
+					case "updateProductStatus":
+						return updateProductStatusResolver(p)
 					case "deleteProduct":
 						return deleteProductResolver(p)
 					}

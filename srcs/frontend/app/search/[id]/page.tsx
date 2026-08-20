@@ -19,6 +19,7 @@ async function getSearchResult(searchKeyword: string) {
 					productSearch(ProductName: $productName) {
 						ProductId
 						UserId
+						ProductStatus
 						ProductName
 						ProductImage
 						ProductPrice

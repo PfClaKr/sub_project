@@ -10,12 +10,14 @@ type Query {
 type Mutation {
   createUser(Email: String!, PasswordHash: String!, UserNickname: String!): User
   createProduct(UserId: String!, ProductName: String!, ProductDescription: String!, ProductPrice: Float!, ProductCategory: String!, ProductImage: [String!], PreferedLocation: String!): Product
+  updateProductStatus(ProductId: String!, UserId: String!, ProductStatus: String!): Product
   deleteProduct(ProductId: String!): Boolean
 }
 
 type Product {
   ProductId: String
   UserId: String
+  ProductStatus: String
   ProductName: String
   ProductDescription: String
   ProductPrice: Float

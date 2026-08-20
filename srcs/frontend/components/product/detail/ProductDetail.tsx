@@ -1,5 +1,6 @@
 import { ChatButton } from "../../button/ChatButton"
 import { FavoriteButton } from "../../button/FavoriteButton"
+import { StatusSelector } from "./StatusSelector"
 
 export function convertUnixToParisTime(unixTime: number) {
   const date = new Date(unixTime * 1000);
@@ -36,6 +37,11 @@ export function ProductDetail(props: any) {
                 <p>카테고리 &gt; {props.productCategory}</p>
                 <FavoriteButton productId={props.productId}/>
                 <p><strong>{props.productName}</strong></p>
+                <StatusSelector
+                    productId={props.productId}
+                    ownerId={props.userId}
+                    productStatus={props.productStatus}
+                />
                 <ul>
                     <li><p>가격 {props.productPrice}&euro;</p></li>
                     <li><p>지역 {props.preferedLocation};</p></li>

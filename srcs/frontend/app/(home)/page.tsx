@@ -19,6 +19,7 @@ async function getRecentProducts(limit: number) {
 					recentProducts(Limit: $limit) {
 						ProductId
 						UserId
+						ProductStatus
 						ProductName
 						ProductPrice
 						ProductImage

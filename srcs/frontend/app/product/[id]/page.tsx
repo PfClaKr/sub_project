@@ -22,6 +22,7 @@ async function getProductInfo(productId: string) {
 						ProductCategory
 						ProductDescription
 						UserId
+						ProductStatus
 						ProductName
 						ProductImage
 						ProductPrice
@@ -82,6 +83,8 @@ export default async function ProductDetailPage({params: {id}}: {params: {id: st
 			<div>
 				<ProductDetail
 					productId={id}
+					userId={productData.UserId}
+					productStatus={productData.ProductStatus}
 					productImage={productData.ProductImage}
 					productName={productData.ProductName}
 					productPrice={productData.ProductPrice}
