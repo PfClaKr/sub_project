@@ -347,6 +347,54 @@ func resolveRecentProducts(p graphql.ResolveParams) (interface{}, error) {
 	return items, nil
 }
 
+func resolveUserProducts(p graphql.ResolveParams) (interface{}, error) {
+	userId, ok := p.Args["UserId"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing UserId argument")
+	}
+
+	fields := extractRequestedFields(p.Info.FieldASTs[0].SelectionSet)
+
+	// ProductCreatedAt is needed for sorting even when not requested.
+	scanFields := fields
+	if !strings.Contains(strings.Join(fields, ","), "ProductCreatedAt") {
+		scanFields = append(append([]string{}, fields...), "ProductCreatedAt")
+	}
+
+	// MVP: scan filtered by UserId; replace with a GSI query after
+	// cloud migration.
+	result, err := svc.Scan(&dynamodb.ScanInput{
+		TableName:            aws.String("Product"),
+		ProjectionExpression: aws.String(strings.Join(scanFields, ", ")),
+		FilterExpression:     aws.String("UserId = :u"),
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":u": {S: aws.String(userId)},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]map[string]interface{}, 0, len(result.Items))
+	for _, av := range result.Items {
+		items = append(items, mapProductItem(av, scanFields))
+	}
+
+	createdAt := func(m map[string]interface{}) float64 {
+		if s, ok := m["ProductCreatedAt"].(string); ok {
+			if v, err := strconv.ParseFloat(s, 64); err == nil {
+				return v
+			}
+		}
+		return 0
+	}
+	sort.Slice(items, func(i, j int) bool {
+		return createdAt(items[i]) > createdAt(items[j])
+	})
+
+	return items, nil
+}
+
 func resolveItemSearch(p graphql.ResolveParams) (interface{}, error) {
 	productName, ok := p.Args["ProductName"].(string)
 	if !ok {
