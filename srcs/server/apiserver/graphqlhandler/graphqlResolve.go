@@ -80,6 +80,7 @@ func createProductResolver(p graphql.ResolveParams) (interface{}, error) {
 	item := map[string]*dynamodb.AttributeValue{
 		"ProductId":          {S: aws.String(productId)},
 		"UserId":             {S: aws.String(userId)},
+		"ProductStatus":      {S: aws.String("판매중")},
 		"ProductName":        {S: aws.String(name)},
 		"ProductDescription": {S: aws.String(description)},
 		"ProductPrice":       {N: aws.String(fmt.Sprintf("%g", price))},
@@ -108,6 +109,7 @@ func createProductResolver(p graphql.ResolveParams) (interface{}, error) {
 	return map[string]interface{}{
 		"ProductId":          productId,
 		"UserId":             userId,
+		"ProductStatus":      "판매중",
 		"ProductName":        name,
 		"ProductDescription": description,
 		"ProductPrice":       price,
@@ -116,6 +118,57 @@ func createProductResolver(p graphql.ResolveParams) (interface{}, error) {
 		"PreferedLocation":   location,
 		"ProductCreatedAt":   now,
 		"ProductUpdatedAt":   now,
+	}, nil
+}
+
+var validStatuses = map[string]bool{"판매중": true, "예약중": true, "판매완료": true}
+
+func updateProductStatusResolver(p graphql.ResolveParams) (interface{}, error) {
+	productId, _ := p.Args["ProductId"].(string)
+	userId, _ := p.Args["UserId"].(string)
+	status, _ := p.Args["ProductStatus"].(string)
+	if !validStatuses[status] {
+		return nil, fmt.Errorf("invalid status")
+	}
+
+	result, err := svc.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String("Product"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"ProductId": {S: aws.String(productId)},
+		},
+		ProjectionExpression: aws.String("UserId"),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if result.Item == nil || result.Item["UserId"] == nil || result.Item["UserId"].S == nil {
+		return nil, fmt.Errorf("product not found")
+	}
+	if *result.Item["UserId"].S != userId {
+		return nil, fmt.Errorf("only the owner can change the status")
+	}
+
+	now := fmt.Sprintf("%d", time.Now().Unix())
+	_, err = svc.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName: aws.String("Product"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"ProductId": {S: aws.String(productId)},
+		},
+		UpdateExpression: aws.String("SET ProductStatus = :s, ProductUpdatedAt = :t"),
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":s": {S: aws.String(status)},
+			":t": {N: aws.String(now)},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"ProductId":        productId,
+		"UserId":           userId,
+		"ProductStatus":    status,
+		"ProductUpdatedAt": now,
 	}, nil
 }
 
@@ -230,7 +283,7 @@ func mapProductItem(av map[string]*dynamodb.AttributeValue, fields []string) map
 			continue
 		}
 		switch field {
-		case "ProductId", "UserId", "ProductName", "ProductDescription", "ProductCategory", "PreferedLocation":
+		case "ProductId", "UserId", "ProductName", "ProductDescription", "ProductCategory", "PreferedLocation", "ProductStatus":
 			if attr.S != nil {
 				item[field] = *attr.S
 			}

@@ -22,6 +22,7 @@ var productType = graphql.NewObject(graphql.ObjectConfig{
 	Fields: graphql.Fields{
 		"ProductId":          &graphql.Field{Type: graphql.String},
 		"UserId":             &graphql.Field{Type: graphql.String},
+		"ProductStatus":      &graphql.Field{Type: graphql.String},
 		"ProductName":        &graphql.Field{Type: graphql.String},
 		"ProductDescription": &graphql.Field{Type: graphql.String},
 		"ProductPrice":       &graphql.Field{Type: graphql.Float},

@@ -14,10 +14,13 @@ export default function ProductCard(props: any) {
 	return (
 		<Card>
 			<ThumbContainer>
-				<Thumb src={props.productImage[0]} />
+				{props.productImage?.[0] && <Thumb src={props.productImage[0]} />}
 			</ThumbContainer>
 			<InfoContainer>
 				<Title>{props.productName}</Title>
+				{props.productStatus && props.productStatus !== "판매중" && (
+					<div>{props.productStatus}</div>
+				)}
 				<Price>&euro; {props.productPrice}</Price>
 				<Subtitle>
 					<div>{props.userId}</div>

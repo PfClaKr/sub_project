@@ -15,6 +15,7 @@ export default function DisplayTray(props: any) {
 						<ProductCard
 							productImage={product.ProductImage}
 							productName={product.ProductName}
+							productStatus={product.ProductStatus}
 							productPrice={product.ProductPrice}
 							userId={product.UserId}
 							preferedLocation={product.PreferedLocation}
