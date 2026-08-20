@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -185,6 +187,80 @@ func resolveItem(p graphql.ResolveParams) (interface{}, error) {
 	}
 
 	return item, nil
+}
+
+// mapProductItem converts a DynamoDB product item to a GraphQL map,
+// skipping attributes missing on the item.
+func mapProductItem(av map[string]*dynamodb.AttributeValue, fields []string) map[string]interface{} {
+	item := map[string]interface{}{}
+	for _, field := range fields {
+		attr, ok := av[field]
+		if !ok {
+			continue
+		}
+		switch field {
+		case "ProductId", "UserId", "ProductName", "ProductDescription", "ProductCategory", "PreferedLocation":
+			if attr.S != nil {
+				item[field] = *attr.S
+			}
+		case "ProductPrice", "ProductCreatedAt", "ProductUpdatedAt":
+			if attr.N != nil {
+				item[field] = *attr.N
+			}
+		case "ProductImage":
+			item[field] = aws.StringValueSlice(attr.SS)
+		}
+	}
+	return item
+}
+
+func resolveRecentProducts(p graphql.ResolveParams) (interface{}, error) {
+	limit := 8
+	if l, ok := p.Args["Limit"].(float64); ok && l > 0 {
+		limit = int(l)
+	}
+
+	fields := extractRequestedFields(p.Info.FieldASTs[0].SelectionSet)
+
+	// ProductCreatedAt is needed for sorting even when not requested.
+	scanFields := fields
+	if !strings.Contains(strings.Join(fields, ","), "ProductCreatedAt") {
+		scanFields = append(append([]string{}, fields...), "ProductCreatedAt")
+	}
+
+	input := &dynamodb.ScanInput{
+		TableName:            aws.String("Product"),
+		ProjectionExpression: aws.String(strings.Join(scanFields, ", ")),
+	}
+
+	result, err := svc.Scan(input)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]map[string]interface{}, 0, len(result.Items))
+	for _, av := range result.Items {
+		items = append(items, mapProductItem(av, scanFields))
+	}
+
+	// Scan cannot order; sort in memory. Fine for MVP data volume,
+	// replace with a GSI query after cloud migration.
+	createdAt := func(m map[string]interface{}) float64 {
+		if s, ok := m["ProductCreatedAt"].(string); ok {
+			if v, err := strconv.ParseFloat(s, 64); err == nil {
+				return v
+			}
+		}
+		return 0
+	}
+	sort.Slice(items, func(i, j int) bool {
+		return createdAt(items[i]) > createdAt(items[j])
+	})
+
+	if len(items) > limit {
+		items = items[:limit]
+	}
+	return items, nil
 }
 
 func resolveItemSearch(p graphql.ResolveParams) (interface{}, error) {
