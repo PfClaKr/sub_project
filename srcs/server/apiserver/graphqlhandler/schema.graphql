@@ -9,7 +9,7 @@ type Query {
 
 type Mutation {
   createUser(Email: String!, PasswordHash: String!, UserNickname: String!): User
-  createProduct(ProductItemId: String!, UserId: String!, ProductName: String!, ProductDescription: String!, ProductPrice: Float!, ProductCategory: String!, ProductImage: [String!], PreferedLocation: String!, ProductCreatedAt: Float!, ProductUpdatedAt: Float!): Product
+  createProduct(UserId: String!, ProductName: String!, ProductDescription: String!, ProductPrice: Float!, ProductCategory: String!, ProductImage: [String!], PreferedLocation: String!): Product
   deleteProduct(ProductId: String!): Boolean
 }
 

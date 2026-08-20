@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -156,6 +157,11 @@ func CreateTables() {
 
 		_, err := svc.CreateTable(input)
 		if err != nil {
+			// Existing tables are fine; only unexpected errors are fatal.
+			if aerr, ok := err.(awserr.Error); ok && aerr.Code() == dynamodb.ErrCodeResourceInUseException {
+				fmt.Printf("Table %s already exists\n", table.name)
+				continue
+			}
 			log.Fatalf("Got error calling CreateTable: %s", err)
 		}
 

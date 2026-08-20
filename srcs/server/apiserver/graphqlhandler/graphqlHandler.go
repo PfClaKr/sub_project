@@ -181,6 +181,8 @@ func fieldTypeToGraphQLType(t ast.Type) graphql.Output {
 		}
 	case *ast.List:
 		return graphql.NewList(fieldTypeToGraphQLType(t.Type))
+	case *ast.NonNull:
+		return graphql.NewNonNull(fieldTypeToGraphQLType(t.Type))
 	}
 	return graphql.String
 }

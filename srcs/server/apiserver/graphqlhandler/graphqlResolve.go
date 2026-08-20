@@ -54,17 +54,43 @@ func createUserResolver(p graphql.ResolveParams) (interface{}, error) {
 }
 
 func createProductResolver(p graphql.ResolveParams) (interface{}, error) {
+	userId, _ := p.Args["UserId"].(string)
+	name, _ := p.Args["ProductName"].(string)
+	description, _ := p.Args["ProductDescription"].(string)
+	category, _ := p.Args["ProductCategory"].(string)
+	location, _ := p.Args["PreferedLocation"].(string)
+	price, _ := p.Args["ProductPrice"].(float64)
+	if userId == "" || name == "" {
+		return nil, fmt.Errorf("missing required arguments")
+	}
+
+	// graphql-go delivers list args as []interface{}.
+	images := []string{}
+	if raw, ok := p.Args["ProductImage"].([]interface{}); ok {
+		for _, v := range raw {
+			if s, ok := v.(string); ok && s != "" {
+				images = append(images, s)
+			}
+		}
+	}
+
+	productId := uuid.NewString()
+	now := fmt.Sprintf("%d", time.Now().Unix())
+
 	item := map[string]*dynamodb.AttributeValue{
-		"ProductId":          {S: aws.String(p.Args["ProductItemId"].(string))},
-		"UserId":             {S: aws.String(p.Args["UserId"].(string))},
-		"ProductName":        {S: aws.String(p.Args["ProductName"].(string))},
-		"ProductDescription": {S: aws.String(p.Args["ProductDescription"].(string))},
-		"ProductPrice":       {N: aws.String(fmt.Sprintf("%f", p.Args["ProductPrice"].(float64)))},
-		"ProductCategory":    {S: aws.String(p.Args["ProductCategory"].(string))},
-		"ProductImage":       {SS: aws.StringSlice(p.Args["ProductImage"].([]string))},
-		"PreferedLocation":   {S: aws.String(p.Args["PreferedLocation"].(string))},
-		"ProductCreatedAt":   {N: aws.String(fmt.Sprintf("%f", p.Args["ProductCreatedAt"].(float64)))},
-		"ProductUpdatedAt":   {N: aws.String(fmt.Sprintf("%f", p.Args["ProductUpdatedAt"].(float64)))},
+		"ProductId":          {S: aws.String(productId)},
+		"UserId":             {S: aws.String(userId)},
+		"ProductName":        {S: aws.String(name)},
+		"ProductDescription": {S: aws.String(description)},
+		"ProductPrice":       {N: aws.String(fmt.Sprintf("%g", price))},
+		"ProductCategory":    {S: aws.String(category)},
+		"PreferedLocation":   {S: aws.String(location)},
+		"ProductCreatedAt":   {N: aws.String(now)},
+		"ProductUpdatedAt":   {N: aws.String(now)},
+	}
+	// DynamoDB string sets cannot be empty; omit when no image.
+	if len(images) > 0 {
+		item["ProductImage"] = &dynamodb.AttributeValue{SS: aws.StringSlice(images)}
 	}
 
 	_, err := svc.PutItem(&dynamodb.PutItemInput{
@@ -75,13 +101,22 @@ func createProductResolver(p graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 
-	// Assuming addItemToElasticsearch is defined
-	err = eshandler.AddItemToElasticsearch(item)
-	if err != nil {
+	if err := eshandler.AddItemToElasticsearch(item); err != nil {
 		return nil, err
 	}
 
-	return item, nil
+	return map[string]interface{}{
+		"ProductId":          productId,
+		"UserId":             userId,
+		"ProductName":        name,
+		"ProductDescription": description,
+		"ProductPrice":       price,
+		"ProductCategory":    category,
+		"ProductImage":       images,
+		"PreferedLocation":   location,
+		"ProductCreatedAt":   now,
+		"ProductUpdatedAt":   now,
+	}, nil
 }
 
 func deleteProductResolver(p graphql.ResolveParams) (interface{}, error) {

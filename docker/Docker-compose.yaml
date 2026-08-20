@@ -47,9 +47,16 @@ services:
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
       - JWT_SECRET=local_dev_secret
+      # S3-compatible storage; point to real S3 after cloud migration
+      - S3_ENDPOINT=http://minio:9000
+      - S3_PUBLIC_URL=http://localhost:9000
+      - S3_BUCKET=product-images
+      - S3_ACCESS_KEY=minioadmin
+      - S3_SECRET_KEY=minioadmin
     depends_on:
       - dynamodb
       - elasticsearch
+      - minio
 
   loginserver:
     build:
@@ -93,6 +100,20 @@ services:
     depends_on:
       - apiserver
 
+  minio:
+    image: minio/minio
+    container_name: minio
+    restart: always
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio-data:/data
+
   elasticsearch:
     container_name: elasticsearch
     build: ./elasticsearch
@@ -115,3 +136,6 @@ services:
   #     - ELASTIC_PASSWORD="1"
   #   depends_on:
   #     - elasticsearch
+
+volumes:
+  minio-data:
