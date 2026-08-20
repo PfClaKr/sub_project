@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, FormEvent } from "react";
+import { MessageList, Bubble, BubbleMeta, ChatInputRow } from "@/styles/styledChat";
 import { CHAT_URL, LOGIN_URL } from "@/libs/config";
 
 type Message = {
@@ -80,15 +81,19 @@ export const ChatRoom = ({ chatId }: { chatId: string }) => {
 	return (
 		<div>
 			<p>{connected ? "연결됨" : "연결 중..."}</p>
-			<div>
-				{messages.map(msg => (
-					<div key={msg.MessageId}>
-						<strong>{msg.UserId === myUserId ? "나" : msg.UserId}</strong>: {msg.Content}
-					</div>
-				))}
+			<MessageList>
+				{messages.map(msg => {
+					const mine = msg.UserId === myUserId;
+					return (
+						<Bubble key={msg.MessageId} $mine={mine}>
+							{!mine && <BubbleMeta>{msg.UserId}</BubbleMeta>}
+							{msg.Content}
+						</Bubble>
+					);
+				})}
 				<div ref={bottomRef} />
-			</div>
-			<form onSubmit={handleSend}>
+			</MessageList>
+			<ChatInputRow onSubmit={handleSend}>
 				<input
 					type="text"
 					value={input}
@@ -96,7 +101,7 @@ export const ChatRoom = ({ chatId }: { chatId: string }) => {
 					placeholder="메시지를 입력하세요"
 				/>
 				<button type="submit" disabled={!connected}>보내기</button>
-			</form>
+			</ChatInputRow>
 		</div>
 	);
 };

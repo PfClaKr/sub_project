@@ -1,14 +1,15 @@
 'use client';
 
-import { RegisterUserAction } from "./RegisterUserAction"; 
+import { RegisterUserAction } from "./RegisterUserAction";
+import { FormColumn } from "@/styles/styledForm";
 
 export const SignUpForm = () => {
 	return (
-		<form action={RegisterUserAction}>
-			<input type="text" placeholder="Email" name="email" /><br/>
-			<input type="password" placeholder="Password" name="password" /><br/>
-			<input type="text" placeholder="Nickname" name="nickname" /><br/>
-			<button type="submit">Sign Up</button>
-		</form>
+		<FormColumn action={RegisterUserAction}>
+			<input type="text" placeholder="Email" name="email" required />
+			<input type="password" placeholder="Password" name="password" required />
+			<input type="text" placeholder="Nickname" name="nickname" required />
+			<button type="submit">가입하기</button>
+		</FormColumn>
 	);
 };

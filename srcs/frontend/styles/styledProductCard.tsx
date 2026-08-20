@@ -55,6 +55,16 @@ export const Subtitle = styled.div`
 	margin: auto;
 `;
 
+export const StatusBadge = styled.div`
+	align-self: center;
+	padding: 2px 10px;
+	border-radius: 10px;
+	font-size: 12px;
+	font-weight: 700;
+	color: #ffffff;
+	background-color: ${AppTheme.product.text.sub.color};
+`;
+
 export const Card = styled.div`
 	display: flex;
 	flex-direction: column;

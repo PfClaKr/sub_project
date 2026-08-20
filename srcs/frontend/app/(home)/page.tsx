@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { SearchInput } from "../../components/SearchInput";
 import DisplayTray from "@/components/product/DisplayTray";
+import { Hero, HeroTag, SectionTitle } from "@/styles/styledHome";
 import { GRAPHQL_URL } from "@/libs/config";
 
 export const metadata: Metadata = {
@@ -43,13 +44,13 @@ export default async function HomePage() {
 	const products = await getRecentProducts(8);
 	return (
 		<div>
-			<div>
-				<p>파리 한인 중고마켓</p>
-				<h1>여기는 잇냥 사고팔 물건 있냥?</h1>
+			<Hero>
+				<HeroTag>파리 한인 중고마켓</HeroTag>
+				<h1>여기는 잇냥, 사고팔 물건 있냥?</h1>
 				<SearchInput />
-			</div>
+			</Hero>
 			<div>
-				<p><strong>최근</strong>에 올라온거 뭐<strong>있냥</strong>?</p>
+				<SectionTitle>최근에 올라온거 뭐있냥?</SectionTitle>
 				{products.length > 0 ? (
 					<DisplayTray products={products} />
 				) : (

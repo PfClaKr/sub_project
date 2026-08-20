@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, ChangeEvent } from "react";
+import { SearchRow } from "@/styles/styledHome";
 
 export const SearchInput = () => {
 	const router = useRouter();
@@ -25,8 +26,8 @@ export const SearchInput = () => {
 	}
 
 	return (
-		<div>
-			<input 
+		<SearchRow>
+			<input
 				type="text"
 				placeholder="검색"
 				id="productSearch"
@@ -34,6 +35,6 @@ export const SearchInput = () => {
 				onChange={handleChange}
 				onKeyDown={handleKeyPress} />
 			<button onClick={handleSearch}>검색</button>
-		</div>
+		</SearchRow>
 	);
 }

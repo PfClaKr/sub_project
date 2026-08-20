@@ -8,6 +8,7 @@ import {
 	Subtitle,
 	InfoContainer,
 	Card,
+	StatusBadge,
  } from "@/styles/styledProductCard"
 
 export default function ProductCard(props: any) {
@@ -19,7 +20,7 @@ export default function ProductCard(props: any) {
 			<InfoContainer>
 				<Title>{props.productName}</Title>
 				{props.productStatus && props.productStatus !== "판매중" && (
-					<div>{props.productStatus}</div>
+					<StatusBadge>{props.productStatus}</StatusBadge>
 				)}
 				<Price>&euro; {props.productPrice}</Price>
 				<Subtitle>

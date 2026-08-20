@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { FormColumn, FieldLabel, ErrorText } from "@/styles/styledForm";
 import { API_URL, GRAPHQL_URL, LOGIN_URL } from "@/libs/config";
 
 const CATEGORIES = ["전자기기", "가구", "의류", "도서", "식품", "기타"];
@@ -93,25 +94,31 @@ export const SellForm = () => {
 	};
 
 	return (
-		<form onSubmit={handleSubmit}>
-			<p>상품명</p>
-			<input type="text" name="name" required maxLength={100} /><br/>
-			<p>설명</p>
-			<textarea name="description" required maxLength={2000} /><br/>
-			<p>가격 (€)</p>
-			<input type="number" name="price" required min={0} step={0.01} /><br/>
-			<p>카테고리</p>
-			<select name="category" required>
-				{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-			</select><br/>
-			<p>거래 희망 지역</p>
-			<input type="text" name="location" required maxLength={100} /><br/>
-			<p>사진 (최대 5장)</p>
-			<input type="file" name="images" accept="image/*" multiple /><br/>
-			{error && <p>{error}</p>}
+		<FormColumn onSubmit={handleSubmit}>
+			<FieldLabel>상품명
+				<input type="text" name="name" required maxLength={100} />
+			</FieldLabel>
+			<FieldLabel>설명
+				<textarea name="description" required maxLength={2000} rows={5} />
+			</FieldLabel>
+			<FieldLabel>가격 (€)
+				<input type="number" name="price" required min={0} step={0.01} />
+			</FieldLabel>
+			<FieldLabel>카테고리
+				<select name="category" required>
+					{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+				</select>
+			</FieldLabel>
+			<FieldLabel>거래 희망 지역
+				<input type="text" name="location" required maxLength={100} />
+			</FieldLabel>
+			<FieldLabel>사진 (최대 5장)
+				<input type="file" name="images" accept="image/*" multiple />
+			</FieldLabel>
+			{error && <ErrorText>{error}</ErrorText>}
 			<button type="submit" disabled={submitting}>
 				{submitting ? "등록 중..." : "등록하기"}
 			</button>
-		</form>
+		</FormColumn>
 	);
 };

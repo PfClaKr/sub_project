@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { StyledNavbar } from "@/styles/styledLink";
+import { Nav, NavInner, Brand, NavItem, NavSpacer, NavUser } from "@/styles/styledNav";
 import { LOGIN_URL } from "@/libs/config";
 
 type Session = {
@@ -35,44 +36,43 @@ export default function Navigation() {
 	};
 
 	return (
-		<nav>
-			<ul>
-				<li>
-					<div>itnyang</div>
-				</li>
-				<li>
-					<StyledNavbar href="/">메인홈페이지</StyledNavbar>
-				</li>
-				<li>
-					<StyledNavbar href="/search">상품페이지</StyledNavbar>
-				</li>
+		<Nav>
+			<NavInner>
+				<Brand>
+					<StyledNavbar href="/">itnyang</StyledNavbar>
+				</Brand>
+				<NavItem>
+					<StyledNavbar href="/search">상품찾기</StyledNavbar>
+				</NavItem>
+				{session && (
+					<>
+						<NavItem>
+							<StyledNavbar href="/sell">판매하기</StyledNavbar>
+						</NavItem>
+						<NavItem>
+							<StyledNavbar href="/chat">채팅</StyledNavbar>
+						</NavItem>
+						<NavItem>
+							<StyledNavbar href="/wishlist">찜목록</StyledNavbar>
+						</NavItem>
+					</>
+				)}
+				<NavSpacer />
 				{session ? (
 					<>
-						<li>
-							<span>{session.UserNickname ?? session.UserId}님</span>
-						</li>
-						<li>
-							<StyledNavbar href="/sell">판매하기</StyledNavbar>
-						</li>
-						<li>
-							<StyledNavbar href="/chat">채팅</StyledNavbar>
-						</li>
-						<li>
-							<StyledNavbar href="/myaccount">마이페이지</StyledNavbar>
-						</li>
-						<li>
-							<StyledNavbar href="/wishlist">찜목록페이지</StyledNavbar>
-						</li>
-						<li>
+						<NavUser>
+							<StyledNavbar href="/myaccount">{session.UserNickname ?? session.UserId}님</StyledNavbar>
+						</NavUser>
+						<NavItem>
 							<button onClick={handleLogout}>로그아웃</button>
-						</li>
+						</NavItem>
 					</>
 				) : (
-					<li>
+					<NavItem>
 						<StyledNavbar href="/login">로그인</StyledNavbar>
-					</li>
+					</NavItem>
 				)}
-			</ul>
-		</nav>
+			</NavInner>
+		</Nav>
 	);
 }
