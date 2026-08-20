@@ -4,6 +4,8 @@ import { Metadata } from "next";
 import Navigation from "../components/Navigation";
 import Footer from "../components/Footer";
 import StyledComponentsRegistry from "@/libs/registry";
+import GlobalStyle from "@/styles/globalStyles";
+import { Main } from "@/styles/styledLayout";
 
 // theme
 // import { createGlobalStyle } from "styled-components";
@@ -37,15 +39,10 @@ export default function RootLayout({
 		<html lang="en">
 			<body>
 				<StyledComponentsRegistry>
-					{/* <ThemeProvider themes={['light', 'dark']}> */}
+					<GlobalStyle />
 					<Navigation />
-					<br />
-					<hr />
-					{children}
-					<br />
-					<hr />
+					<Main>{children}</Main>
 					{/* <Footer /> */}
-					{/* </ThemeProvider> */}
 				</StyledComponentsRegistry>
 			</body>
 		</html>

@@ -1,13 +1,14 @@
 'use client';
 
 import { LoginUserAction } from "./LoginUserAction";
+import { FormColumn } from "@/styles/styledForm";
 
 export const SignInForm = () => {
 	return (
-		<form action={LoginUserAction}>
-			<input type="text" placeholder="Email" name="email" /><br/>
-			<input type="password" placeholder="Password" name="password" /><br/>
-			<button type="submit">Sign In</button>
-		</form>
+		<FormColumn action={LoginUserAction}>
+			<input type="text" placeholder="Email" name="email" required />
+			<input type="password" placeholder="Password" name="password" required />
+			<button type="submit">로그인</button>
+		</FormColumn>
 	);
 };
