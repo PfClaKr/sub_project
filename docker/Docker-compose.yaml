@@ -25,6 +25,11 @@ services:
     image: amazon/dynamodb-local
     restart: always
     container_name: dynamodb
+    # Persist data on disk instead of the default in-memory mode.
+    command: -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data
+    user: root
+    volumes:
+      - dynamodb-data:/home/dynamodblocal/data
     ports:
       - "8000:8000"
 
@@ -139,3 +144,4 @@ services:
 
 volumes:
   minio-data:
+  dynamodb-data:
