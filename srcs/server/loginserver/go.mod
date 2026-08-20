@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	golang.org/x/crypto v0.24.0
 	local.com/cors v0.0.0
 	local.com/jsonresponse v0.0.0
 	local.com/jwt v0.0.0

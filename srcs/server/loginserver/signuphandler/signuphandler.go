@@ -1,15 +1,13 @@
 package signuphandler
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 
 	"local.com/jsonresponse"
 
@@ -45,21 +43,6 @@ func init() {
 	svc = dynamodb.New(sess)
 }
 
-func generateSalt() (string, error) {
-	salt := make([]byte, 16)
-	_, err := rand.Read(salt)
-	if err != nil {
-		return "", err
-	}
-	return base64.StdEncoding.EncodeToString(salt), nil
-}
-
-func hashPassword(password, salt string) string {
-	hash := sha256.New()
-	hash.Write([]byte(password + salt))
-	return hex.EncodeToString(hash.Sum(nil))
-}
-
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	var req SignupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -74,12 +57,12 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		profileImage = defaultProfileImage
 	}
 
-	salt, err := generateSalt()
+	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		jsonresponse.New(w, http.StatusInternalServerError, map[string]string{"error": "Failed to generate salt"})
+		jsonresponse.New(w, http.StatusInternalServerError, map[string]string{"error": "Failed to hash password"})
 		return
 	}
-	hashedPassword := hashPassword(req.Password, salt)
+	hashedPassword := string(hashed)
 
 	usersItem := map[string]*dynamodb.AttributeValue{
 		"UserId":            {S: aws.String(userId)},
@@ -91,10 +74,10 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		"CreatedAt":         {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
 	}
 
+	// bcrypt embeds its own salt in the hash; no separate Salt attribute.
 	credentialsItem := map[string]*dynamodb.AttributeValue{
 		"UserId":       {S: aws.String(userId)},
 		"Email":        {S: aws.String(req.Email)},
-		"Salt":         {S: aws.String(salt)},
 		"PasswordHash": {S: aws.String(hashedPassword)},
 	}
 
