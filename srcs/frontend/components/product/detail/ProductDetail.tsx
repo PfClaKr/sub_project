@@ -1,4 +1,5 @@
 import { ChatButton } from "../../button/ChatButton"
+import { FavoriteButton } from "../../button/FavoriteButton"
 
 export function convertUnixToParisTime(unixTime: number) {
   const date = new Date(unixTime * 1000);
@@ -32,8 +33,8 @@ export function ProductDetail(props: any) {
         <div>
             {props.productImage?.[0] && <img src={props.productImage[0]} />}
             <div>
-                <p>카테고리 &gt; 가구 &gt; 의자</p>
-                <p>관심목록 저장</p>
+                <p>카테고리 &gt; {props.productCategory}</p>
+                <FavoriteButton productId={props.productId}/>
                 <p><strong>{props.productName}</strong></p>
                 <ul>
                     <li><p>가격 {props.productPrice}&euro;</p></li>
