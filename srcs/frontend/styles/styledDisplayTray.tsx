@@ -1,15 +1,14 @@
-import AppTheme from "@/theme/ui";
+'use client';
+
 import styled from "styled-components";
 
 export const DisplayTrayContainer = styled.div`
-	display: flex;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+	gap: 20px;
 	width: 100%;
-	flex-flow: row wrap;
-	justify-content: flex-start;
 `;
 
 export const Container = styled.div`
-	margin: auto;
-	padding: 30px;
+	min-width: 0;
 `;
-

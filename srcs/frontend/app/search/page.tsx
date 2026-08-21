@@ -1,18 +1,30 @@
 import { Metadata } from "next";
 import { SearchInput } from "../../components/SearchInput";
+import { Hero, HeroTag } from "@/styles/styledHome";
+import { ChipRow } from "@/styles/styledCommon";
+import { KeywordChip } from "@/styles/styledChip";
 
 export const metadata: Metadata = {
 	title: "Search",
 };
 
+const POPULAR_KEYWORDS = ["아이폰", "이케아", "자전거", "책상", "패딩", "모니터", "유모차", "에어프라이어"];
+
 export default function SearchPage() {
 	return (
 		<div>
-			<p>Shop Grid Default</p>
-			<p>Home &gt; Pages &gt; Shop Grid Default</p>
-			<SearchInput/>
-			{/* <p>Ecommerce Accesories &amp; Fashion Item</p>
-			<p>About 9,620 results &#40;0.62 seconds&#41;</p> */}
+			<Hero>
+				<HeroTag>상품 검색</HeroTag>
+				<h1>어떤 물건을 찾고 있냥?</h1>
+				<SearchInput />
+				<ChipRow>
+					{POPULAR_KEYWORDS.map(keyword => (
+						<KeywordChip key={keyword} href={`/search/${keyword}`}>
+							{keyword}
+						</KeywordChip>
+					))}
+				</ChipRow>
+			</Hero>
 		</div>
 	);
 }

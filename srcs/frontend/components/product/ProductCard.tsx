@@ -12,19 +12,19 @@ import {
  } from "@/styles/styledProductCard"
 
 export default function ProductCard(props: any) {
+	const soldout = props.productStatus === "판매완료";
 	return (
 		<Card>
-			<ThumbContainer>
-				{props.productImage?.[0] && <Thumb src={props.productImage[0]} />}
-			</ThumbContainer>
-			<InfoContainer>
-				<Title>{props.productName}</Title>
+			<ThumbContainer $soldout={soldout}>
+				{props.productImage?.[0] && <Thumb src={props.productImage[0]} alt={props.productName} />}
 				{props.productStatus && props.productStatus !== "판매중" && (
 					<StatusBadge>{props.productStatus}</StatusBadge>
 				)}
-				<Price>&euro; {props.productPrice}</Price>
+			</ThumbContainer>
+			<InfoContainer>
+				<Title>{props.productName}</Title>
+				<Price>€ {props.productPrice}</Price>
 				<Subtitle>
-					<div>{props.userId}</div>
 					<div>{props.preferedLocation}</div>
 				</Subtitle>
 			</InfoContainer>

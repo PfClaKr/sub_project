@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { SellForm } from "@/components/form/SellForm";
+import { PageTitle, SectionCard } from "@/styles/styledCommon";
 
 export const metadata: Metadata = {
 	title: "Sell",
@@ -8,9 +9,10 @@ export const metadata: Metadata = {
 export default function SellPage() {
 	return (
 		<div>
-			<p>판매하기</p>
-			<p>Home &gt; Pages &gt; Sell</p>
-			<SellForm />
+			<PageTitle>판매하기</PageTitle>
+			<SectionCard>
+				<SellForm />
+			</SectionCard>
 		</div>
 	);
 }

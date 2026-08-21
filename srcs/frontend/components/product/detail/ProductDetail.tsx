@@ -1,6 +1,15 @@
 import { ChatButton } from "../../button/ChatButton"
 import { FavoriteButton } from "../../button/FavoriteButton"
 import { StatusSelector } from "./StatusSelector"
+import { Gallery } from "./Gallery"
+import {
+    DetailGrid,
+    InfoPanel,
+    DetailTitle,
+    DetailPrice,
+    MetaList,
+    ActionRow,
+} from "@/styles/styledDetail"
 
 export function convertUnixToParisTime(unixTime: number) {
   const date = new Date(unixTime * 1000);
@@ -17,7 +26,6 @@ export function convertUnixToParisTime(unixTime: number) {
 
   const formatter = new Intl.DateTimeFormat('en-GB', options);
 
-  // 포맷된 날짜와 시간 얻기
   const [
     { value: day },,
     { value: month },,
@@ -31,27 +39,26 @@ export function convertUnixToParisTime(unixTime: number) {
 
 export function ProductDetail(props: any) {
     return (
-        <div>
-            {props.productImage?.[0] && <img src={props.productImage[0]} />}
-            <div>
-                <p>카테고리 &gt; {props.productCategory}</p>
-                <FavoriteButton productId={props.productId}/>
-                <p><strong>{props.productName}</strong></p>
+        <DetailGrid>
+            <Gallery images={props.productImage} alt={props.productName} />
+            <InfoPanel>
+                <DetailTitle>{props.productName}</DetailTitle>
+                <DetailPrice>€ {props.productPrice}</DetailPrice>
                 <StatusSelector
                     productId={props.productId}
                     ownerId={props.userId}
                     productStatus={props.productStatus}
                 />
-                <ul>
-                    <li><p>가격 {props.productPrice}&euro;</p></li>
-                    <li><p>지역 {props.preferedLocation};</p></li>
-                    <li><p>카테고리 {props.productCategory}</p></li>
-                    <li><p>상태 {props.productPrice}</p></li>
-                    <li><p>사이즈 {props.productPrice}</p></li>
-                    <li><p>게시일 {convertUnixToParisTime(props.productCreatedAt)}</p></li>
-                </ul>
-                <ChatButton productId={props.productId}/>
-            </div>
-        </div>
+                <MetaList>
+                    <li><strong>카테고리</strong> {props.productCategory}</li>
+                    <li><strong>거래 지역</strong> {props.preferedLocation}</li>
+                    <li><strong>게시일</strong> {convertUnixToParisTime(props.productCreatedAt)}</li>
+                </MetaList>
+                <ActionRow>
+                    <ChatButton productId={props.productId}/>
+                    <FavoriteButton productId={props.productId}/>
+                </ActionRow>
+            </InfoPanel>
+        </DetailGrid>
     )
 }

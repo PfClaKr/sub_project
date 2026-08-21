@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ProductDetail } from "@/components/product/detail/ProductDetail";
 import { UserCard } from "@/components/UserCard";
 import { ProductDescription } from "@/components/product/detail/ProductDescription";
+import { Breadcrumb } from "@/styles/styledCommon";
 import { GRAPHQL_URL } from "@/libs/config";
 
 export const metadata: Metadata = {
@@ -76,38 +77,28 @@ export default async function ProductDetailPage({params: {id}}: {params: {id: st
 	const userdata = productData.UserId ? await getUserInfo(productData.UserId) : null;
 	return (
 		<div>
-			<div>
-				<p>Product Details</p>
-				<p>Home &gt; Pages &gt; Product Details</p>
-			</div>
-			<div>
-				<ProductDetail
-					productId={id}
-					userId={productData.UserId}
-					productStatus={productData.ProductStatus}
-					productImage={productData.ProductImage}
-					productName={productData.ProductName}
-					productPrice={productData.ProductPrice}
-					productCategory={productData.ProductCategory}
-					preferedLocation={productData.PreferedLocation}
-					productCreatedAt={productData.ProductCreatedAt}
-				/>
-			</div>
+			<Breadcrumb>홈 &gt; {productData.ProductCategory} &gt; {productData.ProductName}</Breadcrumb>
+			<ProductDetail
+				productId={id}
+				userId={productData.UserId}
+				productStatus={productData.ProductStatus}
+				productImage={productData.ProductImage}
+				productName={productData.ProductName}
+				productPrice={productData.ProductPrice}
+				productCategory={productData.ProductCategory}
+				preferedLocation={productData.PreferedLocation}
+				productCreatedAt={productData.ProductCreatedAt}
+			/>
+			<ProductDescription
+				productDescription={productData.ProductDescription}
+			/>
 			{userdata && (
-				<div>
-					<UserCard
-						profileImage={userdata.ProfileImage}
-						userNickname={userdata.UserNickname}
-						publishedQuantity={userdata.PublishedQuantity}
-					/>
-				</div>
-			)}
-			<div>
-				<ProductDescription
-					productDescription={productData.ProductDescription}
-					preferedLocation={productData.PreferedLocation}
+				<UserCard
+					profileImage={userdata.ProfileImage}
+					userNickname={userdata.UserNickname}
+					publishedQuantity={userdata.PublishedQuantity}
 				/>
-			</div>
+			)}
 		</div>
 	);
 }

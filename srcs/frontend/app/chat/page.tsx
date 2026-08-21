@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { ChatRoomList } from "@/components/chat/ChatRoomList";
+import { PageTitle } from "@/styles/styledCommon";
 
 export const metadata: Metadata = {
 	title: "Chat"
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
 export default function ChatPage() {
 	return (
 		<div>
-			<p>내 채팅</p>
+			<PageTitle>내 채팅</PageTitle>
 			<ChatRoomList />
 		</div>
 	);
