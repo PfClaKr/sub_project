@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -105,6 +104,20 @@ func describeTable(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(readableItems)
 }
 
+var mockUsers = []struct {
+	nickname string
+	email    string
+}{
+	{"파리지앵냥", "chat1@test.com"},
+	{"에펠탑아래", "chat2@test.com"},
+	{"바게트헌터", "chat3@test.com"},
+	{"몽마르뜨댁", "chat4@test.com"},
+	{"세느강산책", "chat5@test.com"},
+	{"15구토박이", "chat6@test.com"},
+	{"오페라단골", "chat7@test.com"},
+	{"마레지구", "chat8@test.com"},
+}
+
 func generateUserDummyData(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	countStr := vars["count"]
@@ -114,30 +127,24 @@ func generateUserDummyData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	names := []string{"김철수", "이영희", "박민수", "최지혜", "홍길동", "전유건", "송채훈", "이동빈"}
-	emails := []string{"example1@test.com", "example2@test.com", "example3@test.com", "example4@test.com", "example5@test.com"}
-	profileImages := []string{"https://cdn.icon-icons.com/icons2/1378/PNG/512/avatardefault_92824.png"}
-
 	tableName := "Users"
 	for i := 0; i < count; i++ {
+		u := mockUsers[i%len(mockUsers)]
 		item := map[string]*dynamodb.AttributeValue{
 			"UserId":            {S: aws.String(fmt.Sprintf("User%d", i+1))},
-			"Email":             {S: aws.String(emails[rand.Intn(len(emails))])},
-			"PasswordHash":      {S: aws.String(fmt.Sprintf("PasswordHash%d", i+1))},
-			"UserNickname":      {S: aws.String(names[rand.Intn(len(names))])},
-			"ProfileImage":      {S: aws.String(profileImages[rand.Intn(len(profileImages))])},
+			"Email":             {S: aws.String(u.email)},
+			"PasswordHash":      {S: aws.String("mock-not-loginable")},
+			"UserNickname":      {S: aws.String(u.nickname)},
+			"ProfileImage":      {S: aws.String(fmt.Sprintf("https://picsum.photos/seed/avatar%d/150/150", i+1))},
 			"ProductList":       {SS: []*string{aws.String(fmt.Sprintf("Product%d", i+1))}},
 			"PublishedQuantity": {N: aws.String("1")},
 			"CreatedAt":         {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
 		}
 
-		input := &dynamodb.PutItemInput{
+		if _, err := svc.PutItem(&dynamodb.PutItemInput{
 			TableName: aws.String(tableName),
 			Item:      item,
-		}
-
-		_, err := svc.PutItem(input)
-		if err != nil {
+		}); err != nil {
 			http.Error(w, fmt.Sprintf("Failed to create user: %s", err.Error()), http.StatusInternalServerError)
 			return
 		}
@@ -145,6 +152,38 @@ func generateUserDummyData(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": fmt.Sprintf("%d users created", count)})
+}
+
+// mockProducts is a curated catalog so the UI can be tested with
+// realistic marketplace listings.
+var mockProducts = []struct {
+	name        string
+	description string
+	category    string
+	location    string
+	price       int
+	status      string
+}{
+	{"아이폰 13 미니 128GB 화이트", "한국에서 쓰던 폰이에요. 배터리 성능 87%, 기스 거의 없습니다. 케이스 두 개 같이 드려요.", "전자기기", "15구 Beaugrenelle", 380, "판매중"},
+	{"이케아 MALM 책상 + 의자 세트", "귀국하게 되어 급처합니다. 직접 가지러 오셔야 해요. 상태 아주 좋아요.", "가구", "13구 Tolbiac", 60, "판매중"},
+	{"라이스쿠커 6인용 (쿠쿠)", "220V 변환 필요 없는 유럽용입니다. 1년 사용했고 내솥 코팅 멀쩡해요.", "전자기기", "Cachan", 70, "예약중"},
+	{"패딩 롱코트 (M, 검정)", "작년에 한국에서 사온 건데 파리 겨울에 너무 따뜻해요. 이사가서 정리합니다.", "의류", "5구 팡테옹 근처", 45, "판매중"},
+	{"한국 소설 10권 묶음", "한강, 김영하, 김초엽 등이요. 목록은 채팅으로 보내드릴게요. 낱권 판매는 안 해요.", "도서", "마레지구", 25, "판매중"},
+	{"고추장 3kg + 된장 2kg", "한국 다녀오면서 넉넉히 사왔는데 너무 많네요. 미개봉 새제품입니다.", "식품", "오페라 한인마트 앞", 35, "판매중"},
+	{"닌텐도 스위치 OLED + 게임 3개", "젤다, 마리오카트, 모여봐요 동물의숲 포함이요. 박스 있어요.", "전자기기", "몽파르나스", 260, "판매중"},
+	{"전기장판 (싱글)", "파리 집 너무 추워서 샀는데 이사 가는 집은 난방이 잘 돼요. 두 계절 썼습니다.", "전자기기", "14구", 20, "판매완료"},
+	{"유모차 (Yoyo2)", "둘째까지 쓰고 정리해요. 사용감 있지만 바퀴, 접힘 모두 정상입니다.", "기타", "불로뉴", 180, "판매중"},
+	{"에어프라이어 5.5L", "필립스 제품이고 작동 완벽해요. 기숙사 이사로 판매합니다.", "전자기기", "Cité U 근처", 40, "판매중"},
+	{"김치냉장고용 김치통 6개", "딤채 정품 김치통입니다. 냄새 배임 없이 깨끗하게 썼어요.", "기타", "리옹역 근처", 15, "판매중"},
+	{"토익 공식문제집 최신판", "필기 거의 없어요. 시험 끝나서 바로 팝니다. 지하철역에서 직거래 가능해요.", "도서", "샤틀레", 12, "예약중"},
+	{"원목 옷장 2단", "H&M 홈 원목 옷장이에요. 분해해서 드릴 수 있고 차 있으시면 옮기기 편해요.", "가구", "뇌이쉬르센", 90, "판매중"},
+	{"캡슐커피 머신 + 캡슐 30개", "네스프레소 에센자 미니, 화이트 색상. 캡슐은 유통기한 넉넉합니다.", "전자기기", "9구", 55, "판매중"},
+	{"여성 원피스 3벌 (S)", "한 번씩만 입은 거라 새옷 수준이에요. 사진 더 필요하시면 채팅 주세요.", "의류", "16구 Passy", 30, "판매중"},
+	{"전공책: Le francais du tourisme", "소르본 어학원 교재입니다. 형광펜 약간 있어요.", "도서", "라틴지구", 18, "판매중"},
+	{"쌀 10kg (이천쌀)", "한인마트에서 산 지 한 달 안 됐어요. 귀국 정리로 반값에 드려요.", "식품", "13구 슈아지", 22, "판매중"},
+	{"접이식 자전거", "B'TWIN 접이식이고 브레이크 최근에 갈았어요. 시승 가능합니다.", "기타", "베르사유", 95, "판매중"},
+	{"모니터 27인치 QHD", "LG 27QN600. 픽셀 불량 없고 박스 보관 중입니다. HDMI 케이블 포함.", "전자기기", "라데팡스", 140, "예약중"},
+	{"화장품 미개봉 (설화수 세트)", "선물 받았는데 쓰는 라인이 아니라서 팝니다. 백화점 정품이에요.", "기타", "7구", 65, "판매중"},
 }
 
 func generateDummyData(w http.ResponseWriter, r *http.Request) {
@@ -157,37 +196,38 @@ func generateDummyData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	generateUserDummyData(w, r)
-	koreanWords := []string{"맛있는 조기", "걸그룹 포토카드", "신호등과 가드레일", "비서구합니다", "덕수궁 산책하실분", "중고에어컨 팝니다", "자랑할꺼 생겼슴", "신문지 한장씩 팝니다", "한국에서 가져온 꿀 팝니다", "금 유로로 바꾸실분", "공룡팝니다", "하늘에 별 팝니다", "애완용거미 먹이 팝니다", "에어팟 2세대 상태 굿", "모기 팝니다", "부르고뉴 레드와인 2병", "한인택시", "장례식대여합니다", "볼펜5자루", "울산에 가주실분 구합니다", "에펠탑 동행하실분?", "한라봉 맛있습니다", "헤어 디자이너 구합니다", "어제 딴 싱싱한 콩나물 팝니다", "상태좋은 디올 목걸이", "제가그린기린그림", "큰바위얼굴", "필름카메라 거의 사용안함", "밥 해주실분?", "계단 만들어 드립니다", "초보환영", "허리아픔", "터미널 어디로 가야하죠", "분필 먹으면 배아파요", "스튜디오1개 25m", "사위하실분 구합니다", "상태좋은 그랜드피아노 팝니다", "아이폰13 pro 팔아요"}
-	imageUrls1 := []string{"https://images.pexels.com/videos/5201403/abstract-antidepressant-background-beach-5201403.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500", "https://bytescare.com/blog/wp-content/uploads/2023/05/no-copyright-infringement-intended.svg", "https://stock.bmw.co.uk/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBa1VDIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--40694218137195e12d241012c715264f9d6bb3a7/bmw-2-series-gran-coupe.png"}
-	imageUrls2 := []string{"https://thumbs.wbm.im/pw/small/2633e48cbe3e1e9864caebfdbbc38329.jpg", "https://png.pngtree.com/thumb_back/fh260/background/20230612/pngtree-picture-of-a-girl-with-a-camera-in-hand-image_2891140.jpg"}
 
 	tableName := "Product"
+	now := time.Now().Unix()
 	for i := 0; i < count; i++ {
+		p := mockProducts[i%len(mockProducts)]
+		images := []*string{
+			aws.String(fmt.Sprintf("https://picsum.photos/seed/product%da/600/600", i+1)),
+			aws.String(fmt.Sprintf("https://picsum.photos/seed/product%db/600/600", i+1)),
+		}
 		item := map[string]*dynamodb.AttributeValue{
 			"ProductId":          {S: aws.String(fmt.Sprintf("Product%d", i+1))},
-			"UserId":             {S: aws.String(fmt.Sprintf("User%d", i+1))},
-			"ProductName":        {S: aws.String(koreanWords[rand.Intn(len(koreanWords))])},
-			"ProductDescription": {S: aws.String(fmt.Sprintf("ProductDescription for Product %d", i+1))},
-			"ProductPrice":       {N: aws.String(fmt.Sprintf("%d", rand.Intn(1000)))},
-			"ProductCategory":    {S: aws.String("Category")},
-			"ProductImage":       {SS: []*string{aws.String(imageUrls1[rand.Intn(len(imageUrls1))]), aws.String(imageUrls2[rand.Intn(len(imageUrls2))])}},
-			"PreferedLocation":   {S: aws.String("PreferedLocation")},
-			"ProductCreatedAt":   {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
-			"ProductUpdatedAt":   {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
+			"UserId":             {S: aws.String(fmt.Sprintf("User%d", (i%len(mockUsers))+1))},
+			"ProductStatus":      {S: aws.String(p.status)},
+			"ProductName":        {S: aws.String(p.name)},
+			"ProductDescription": {S: aws.String(p.description)},
+			"ProductPrice":       {N: aws.String(fmt.Sprintf("%d", p.price))},
+			"ProductCategory":    {S: aws.String(p.category)},
+			"ProductImage":       {SS: images},
+			"PreferedLocation":   {S: aws.String(p.location)},
+			// Stagger creation times so the recent feed has an order.
+			"ProductCreatedAt": {N: aws.String(fmt.Sprintf("%d", now-int64(i)*3600))},
+			"ProductUpdatedAt": {N: aws.String(fmt.Sprintf("%d", now-int64(i)*3600))},
 		}
 
-		input := &dynamodb.PutItemInput{
+		if _, err := svc.PutItem(&dynamodb.PutItemInput{
 			TableName: aws.String(tableName),
 			Item:      item,
-		}
-
-		_, err := svc.PutItem(input)
-		if err != nil {
+		}); err != nil {
 			http.Error(w, fmt.Sprintf("Failed to create product: %s", err.Error()), http.StatusInternalServerError)
 			return
 		}
-		err = eshandler.AddItemToElasticsearch(item)
-		if err != nil {
+		if err := eshandler.AddItemToElasticsearch(item); err != nil {
 			http.Error(w, fmt.Sprintf("Failed to create product in elasticsearch: %s", err.Error()), http.StatusInternalServerError)
 			return
 		}
