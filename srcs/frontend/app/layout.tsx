@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import { Metadata, Viewport } from "next";
 
 // components
 import Navigation from "../components/Navigation";
@@ -17,7 +17,15 @@ export const metadata: Metadata = {
 		template: "%s | itnyang",
 		default: "itnyang",
 	},
-	description: "itnyang test page",
+	description: "파리 한인 중고마켓 — 사고팔 물건 있냥?",
+};
+
+// Mobile web app: fit the device width and allow user zoom.
+export const viewport: Viewport = {
+	width: "device-width",
+	initialScale: 1,
+	maximumScale: 5,
+	themeColor: "#0048b4",
 };
 
 // const Layout = ({ children } : Props) => {
@@ -36,7 +44,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en">
+		<html lang="ko">
 			<body>
 				<StyledComponentsRegistry>
 					<GlobalStyle />

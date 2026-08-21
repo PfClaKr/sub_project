@@ -18,9 +18,13 @@ export const NavInner = styled.ul`
 	padding: 14px 16px;
 	display: flex;
 	align-items: center;
-	flex-wrap: wrap;
 	gap: 18px;
 	list-style: none;
+
+	@media (max-width: 600px) {
+		padding: 10px 12px;
+		gap: 12px;
+	}
 `;
 
 export const Brand = styled.li`
@@ -32,10 +36,21 @@ export const Brand = styled.li`
 	a {
 		color: ${palette.fg[500]};
 	}
+
+	@media (max-width: 600px) {
+		font-size: 18px;
+		margin-right: 0;
+	}
 `;
 
 export const NavItem = styled.li`
 	font-size: 15px;
+	white-space: nowrap;
+
+	@media (max-width: 600px) {
+		font-size: 14px;
+	}
+
 
 	button {
 		padding: 7px 14px;
@@ -56,12 +71,22 @@ export const NavSpacer = styled.li`
 export const NavUser = styled.li`
 	font-size: 14px;
 	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 90px;
+
+	@media (max-width: 600px) {
+		max-width: 64px;
+		font-size: 13px;
+	}
 `;
 
 export const SellCta = styled(NavItem)`
 	a {
 		display: inline-block;
 		padding: 7px 16px;
+		white-space: nowrap;
 		border-radius: 8px;
 		background-color: ${palette.fg[500]};
 		color: #ffffff !important;
@@ -72,5 +97,12 @@ export const SellCta = styled(NavItem)`
 	a:hover {
 		background-color: ${palette.fg[300]};
 		color: #ffffff !important;
+	}
+
+	@media (max-width: 600px) {
+		a {
+			padding: 6px 12px;
+			font-size: 13px;
+		}
 	}
 `;

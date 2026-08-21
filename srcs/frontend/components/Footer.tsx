@@ -18,6 +18,13 @@ const FooterInner = styled.div`
 	gap: 16px;
 	font-size: 13px;
 	color: ${palette.fg[700]};
+
+	@media (max-width: 600px) {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
+		padding: 22px 12px;
+	}
 `;
 
 const FooterBrand = styled.div`

@@ -100,6 +100,14 @@ export const ActionRow = styled.div`
 		padding: 12px 20px;
 		font-size: 15px;
 	}
+
+	@media (max-width: 600px) {
+		button {
+			flex: 1;
+			padding: 12px 10px;
+			font-size: 14px;
+		}
+	}
 `;
 
 export const SellerCard = styled.div`

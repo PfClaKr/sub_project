@@ -7,6 +7,10 @@ export const AuthWrap = styled.div`
 	display: flex;
 	justify-content: center;
 	padding: 40px 0;
+
+	@media (max-width: 600px) {
+		padding: 16px 0;
+	}
 `;
 
 export const AuthCard = styled.div`
@@ -20,6 +24,11 @@ export const AuthCard = styled.div`
 
 	form {
 		max-width: none;
+	}
+
+	@media (max-width: 600px) {
+		padding: 24px 20px;
+		border-radius: 14px;
 	}
 `;
 
