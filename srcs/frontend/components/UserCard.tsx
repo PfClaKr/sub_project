@@ -1,12 +1,13 @@
+import { SellerCard, SellerName, SellerMeta } from "@/styles/styledDetail";
+
 export function UserCard(props: any) {
-    return (
-        <div>
-            <p>판매자 정보</p>
-            <img src={props.profileImage[0]} />
-            <p>{props.userNickname}</p>
-            <p>팔로우</p>
-            <p>게시 상품수 {props.publishedQuantity}</p>
-            <button>둘러보기</button>
-        </div>
-    );
+	return (
+		<SellerCard>
+			{props.profileImage && <img src={props.profileImage} alt={props.userNickname} />}
+			<div>
+				<SellerName>{props.userNickname}</SellerName>
+				<SellerMeta>판매 상품 {props.publishedQuantity ?? 0}개</SellerMeta>
+			</div>
+		</SellerCard>
+	);
 }

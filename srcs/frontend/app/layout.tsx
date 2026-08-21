@@ -42,7 +42,7 @@ export default function RootLayout({
 					<GlobalStyle />
 					<Navigation />
 					<Main>{children}</Main>
-					{/* <Footer /> */}
+					<Footer />
 				</StyledComponentsRegistry>
 			</body>
 		</html>

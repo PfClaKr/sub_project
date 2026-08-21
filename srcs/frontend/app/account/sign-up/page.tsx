@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { SignUpForm } from "@/components/form/SignUpForm";
+import { AuthWrap, AuthCard, AuthTitle, AuthSubtitle, AuthFooter } from "@/styles/styledAuth";
 
 export const metadata: Metadata = {
 	title: "Sign Up"
@@ -8,12 +9,15 @@ export const metadata: Metadata = {
 
 export default function AccountSignUpPage() {
 	return (
-		<div>
-			<p>Create Account</p>
-			<p>Please sign-up using account detail below.</p>
-			<SignUpForm />
-			{/* <Link href="/account/whoami" style={{backgroundColor: '#f6f7fb'}}>Sign Up</Link> */}
-			<p>Already have an Account? <Link href="/login">Log In</Link></p>
-		</div>
+		<AuthWrap>
+			<AuthCard>
+				<AuthTitle>회원가입</AuthTitle>
+				<AuthSubtitle>파리 한인 중고거래, 잇냥과 함께해요.</AuthSubtitle>
+				<SignUpForm />
+				<AuthFooter>
+					이미 계정이 있으신가요? <Link href="/login">로그인</Link>
+				</AuthFooter>
+			</AuthCard>
+		</AuthWrap>
 	);
 }

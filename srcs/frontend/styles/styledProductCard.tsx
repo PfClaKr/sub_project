@@ -1,76 +1,91 @@
+'use client';
+
 import AppTheme from "@/theme/ui";
+import palette from "@/theme/colorPalette";
 import styled from "styled-components";
+
+export const Card = styled.div`
+	display: flex;
+	flex-direction: column;
+	border-radius: 10px;
+	overflow: hidden;
+	background-color: ${AppTheme.product.bg.normal};
+	border: 1px solid ${palette.bg[300]};
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+	&:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 8px 20px rgba(16, 23, 80, 0.1);
+	}
+`;
+
+export const ThumbContainer = styled.div<{ $soldout?: boolean }>`
+	position: relative;
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	background-color: ${palette.bg[300]};
+
+	${p => p.$soldout && `
+		img { filter: grayscale(60%) brightness(0.7); }
+	`}
+`;
 
 export const Thumb = styled.img`
 	position: absolute;
-	background-image: url('');
-	background-repeat: no-repeat;
+	inset: 0;
 	width: 100%;
 	height: 100%;
-	border-radius: 4px;
-	top: 0;
-	left: 0;
-	margin: auto;
 	object-fit: cover;
-	transform: translate(50, 50);
 `;
 
-export const ThumbContainer = styled.div`
-	position: relative;
-	width: 332px;
-	height: 344px;
+export const StatusBadge = styled.div`
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	padding: 3px 10px;
+	border-radius: 12px;
+	font-size: 12px;
+	font-weight: 700;
+	color: #ffffff;
+	background-color: ${palette.fg[700]};
+	opacity: 0.92;
 `;
 
 export const InfoContainer = styled.div`
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	margin: auto;
+	gap: 4px;
+	padding: 12px 14px 14px;
 `;
 
 export const Title = styled.div`
-	color: ${AppTheme.product.text.secondary.color};
-	font-size: ${AppTheme.product.text.secondary.size};
-	font-weight: ${AppTheme.product.text.secondary.weight};
+	color: ${palette.fg.default};
+	font-size: 15px;
+	font-weight: 600;
 	overflow: hidden;
-	margin: auto;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	min-height: 2.9em;
 `;
 
 export const Price = styled.div`
 	color: ${AppTheme.product.text.primary.color};
-	font-size: ${AppTheme.product.text.primary.size};
-	font-weight: ${AppTheme.product.text.primary.weight};
-	overflow: hidden;
-	margin: auto;
+	font-size: 18px;
+	font-weight: 800;
 `;
 
 export const Subtitle = styled.div`
 	display: flex;
-	flex-direction: column;
-	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
 	color: ${AppTheme.product.text.sub.color};
-	font-size: ${AppTheme.product.text.sub.size};
-	font-weight: ${AppTheme.product.text.sub.weight};
-	overflow: hidden;
-	margin: auto;
-`;
+	font-size: 13px;
 
-export const StatusBadge = styled.div`
-	align-self: center;
-	padding: 2px 10px;
-	border-radius: 10px;
-	font-size: 12px;
-	font-weight: 700;
-	color: #ffffff;
-	background-color: ${AppTheme.product.text.sub.color};
-`;
-
-export const Card = styled.div`
-	display: flex;
-	flex-direction: column;
-	align-content: space-between;
-	width: 332px;
-	height: 476px;
-	border-radius: 4px;
-	background-color: ${AppTheme.product.bg.normal};
+	div {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
 `;

@@ -14,6 +14,14 @@ const GlobalStyle = createGlobalStyle`
 		color: ${palette.fg.default};
 		background-color: ${palette.bg.default};
 		line-height: 1.5;
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+	}
+	/* Keep the footer at the bottom on short pages. */
+	main {
+		flex: 1;
+		width: 100%;
 	}
 	h1, h2 {
 		color: ${palette.fg[700]};

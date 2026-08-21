@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { StyledLink } from "@/styles/styledLink";
+import { SectionTitle } from "@/styles/styledHome";
+import { EmptyState } from "@/styles/styledCommon";
+import { ProfileCard, ProfileName, ListingList, ListingRow, ListingStatus, DangerButton } from "@/styles/styledMypage";
 import { GRAPHQL_URL, LOGIN_URL } from "@/libs/config";
 
 type Session = {
@@ -71,29 +74,33 @@ export const MyAccount = () => {
 		if (res.ok) await loadProducts(session.UserId);
 	};
 
-	if (error) return <p>{error}</p>;
+	if (error) return <EmptyState>{error}</EmptyState>;
 	if (!session) return <p>불러오는 중...</p>;
 
 	return (
 		<div>
-			<div>
-				<p><strong>{session.UserNickname ?? session.UserId}</strong>님의 마이페이지</p>
-			</div>
-			<div>
-				<p>내가 올린 상품</p>
-				{products === null && <p>불러오는 중...</p>}
-				{products?.length === 0 && <p>아직 올린 상품이 없어요.</p>}
-				<ul>
-					{products?.map(product => (
-						<li key={product.ProductId}>
-							<StyledLink href={`/product/${product.ProductId}`}>
-								{product.ProductName} — €{product.ProductPrice} [{product.ProductStatus ?? "판매중"}]
-							</StyledLink>
-							<button onClick={() => handleDelete(product.ProductId)}>삭제</button>
-						</li>
-					))}
-				</ul>
-			</div>
+			<ProfileCard>
+				{session.ProfileImage && <img src={session.ProfileImage} alt="" />}
+				<div>
+					<ProfileName>{session.UserNickname ?? session.UserId}</ProfileName>
+				</div>
+			</ProfileCard>
+			<SectionTitle>내가 올린 상품</SectionTitle>
+			{products === null && <p>불러오는 중...</p>}
+			{products?.length === 0 && <EmptyState>아직 올린 상품이 없어요.</EmptyState>}
+			<ListingList>
+				{products?.map(product => (
+					<ListingRow key={product.ProductId}>
+						<StyledLink href={`/product/${product.ProductId}`}>
+							{product.ProductName} — €{product.ProductPrice}
+						</StyledLink>
+						<ListingStatus $status={product.ProductStatus}>
+							{product.ProductStatus ?? "판매중"}
+						</ListingStatus>
+						<DangerButton onClick={() => handleDelete(product.ProductId)}>삭제</DangerButton>
+					</ListingRow>
+				))}
+			</ListingList>
 		</div>
 	);
 };

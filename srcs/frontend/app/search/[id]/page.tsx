@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import DisplayTray from "@/components/product/DisplayTray";
+import { SearchInput } from "@/components/SearchInput";
+import { PageTitle, EmptyState } from "@/styles/styledCommon";
 import { GRAPHQL_URL } from "@/libs/config";
 
 export const metadata: Metadata = {
@@ -42,19 +44,18 @@ export default async function SearchResultPage({params: {id}}: {params: {id: str
 	// decode to support special characters, e.g. korean letters
 	const searchKeyword = decodeURIComponent(id);
 	const products = await getSearchResult(searchKeyword);
-	const searchStatus = products.length > 0
-		? `${products.length} ${products.length > 1 ? "Results" : "Result"}`
-		: "검색 결과가 없어요.";
 	return (
 		<div>
-			<p>상세페이지</p>
-			<p>"{searchKeyword}" 검색 결과</p>
-			<p>{searchStatus}</p>
-			<section>
-				<DisplayTray
-					products={products}
-				/>
-			</section>
+			<SearchInput />
+			<PageTitle>&ldquo;{searchKeyword}&rdquo; 검색 결과 {products.length > 0 && `(${products.length})`}</PageTitle>
+			{products.length > 0 ? (
+				<DisplayTray products={products} />
+			) : (
+				<EmptyState>
+					검색 결과가 없어요.<br />
+					다른 검색어로 시도해보세요.
+				</EmptyState>
+			)}
 		</div>
 	);
 }
