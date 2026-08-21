@@ -3,6 +3,7 @@
 type Query {
   product(ProductId: String!): Product
   productSearch(ProductName: String!): [Product]
+  searchProducts(Keyword: String, Category: String, Region: String, MinPrice: Float, MaxPrice: Float, Sort: String): [Product]
   recentProducts(Limit: Float): [Product]
   userProducts(UserId: String!): [Product]
   user(UserId: String!): User
@@ -10,7 +11,7 @@ type Query {
 
 type Mutation {
   createUser(Email: String!, PasswordHash: String!, UserNickname: String!): User
-  createProduct(UserId: String!, ProductName: String!, ProductDescription: String!, ProductPrice: Float!, ProductCategory: String!, ProductImage: [String!], PreferedLocation: String!): Product
+  createProduct(UserId: String!, ProductName: String!, ProductDescription: String!, ProductPrice: Float!, ProductCategory: String!, ProductImage: [String!], PreferedLocation: String!, ProductRegion: String): Product
   updateProductStatus(ProductId: String!, UserId: String!, ProductStatus: String!): Product
   deleteProduct(ProductId: String!): Boolean
 }
@@ -23,6 +24,7 @@ type Product {
   ProductDescription: String
   ProductPrice: Float
   ProductCategory: String
+  ProductRegion: String
   ProductImage: [String]
   PreferedLocation: String
   ProductCreatedAt: Float

@@ -51,7 +51,8 @@ export function ProductDetail(props: any) {
                 />
                 <MetaList>
                     <li><strong>카테고리</strong> {props.productCategory}</li>
-                    <li><strong>거래 지역</strong> {props.preferedLocation}</li>
+                    <li><strong>지역</strong> {props.productRegion ?? "파리"}</li>
+                    <li><strong>거래 장소</strong> {props.preferedLocation}</li>
                     <li><strong>게시일</strong> {convertUnixToParisTime(props.productCreatedAt)}</li>
                 </MetaList>
                 <ActionRow>

@@ -5,6 +5,7 @@ import { Hero, HeroTag, SectionTitle } from "@/styles/styledHome";
 import { ChipRow, EmptyState } from "@/styles/styledCommon";
 import { KeywordChip } from "@/styles/styledChip";
 import { GRAPHQL_URL } from "@/libs/config";
+import { CATEGORIES } from "@/libs/constants";
 
 const POPULAR_KEYWORDS = ["아이폰", "이케아", "자전거", "책상", "패딩", "모니터"];
 
@@ -54,12 +55,22 @@ export default async function HomePage() {
 				<SearchInput />
 				<ChipRow>
 					{POPULAR_KEYWORDS.map(keyword => (
-						<KeywordChip key={keyword} href={`/search/${keyword}`}>
+						<KeywordChip key={keyword} href={`/search?q=${encodeURIComponent(keyword)}`}>
 							{keyword}
 						</KeywordChip>
 					))}
 				</ChipRow>
 			</Hero>
+			<div>
+				<SectionTitle>카테고리로 둘러보기</SectionTitle>
+				<ChipRow style={{ justifyContent: "flex-start" }}>
+					{CATEGORIES.map(category => (
+						<KeywordChip key={category} href={`/search?category=${encodeURIComponent(category)}`}>
+							{category}
+						</KeywordChip>
+					))}
+				</ChipRow>
+			</div>
 			<div>
 				<SectionTitle>최근에 올라온거 뭐있냥?</SectionTitle>
 				{products.length > 0 ? (
