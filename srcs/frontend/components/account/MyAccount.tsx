@@ -11,6 +11,7 @@ type Session = {
 	UserId: string;
 	UserNickname?: string;
 	ProfileImage?: string;
+	Residence?: string;
 };
 
 type Product = {
@@ -83,6 +84,7 @@ export const MyAccount = () => {
 				{session.ProfileImage && <img src={session.ProfileImage} alt="" />}
 				<div>
 					<ProfileName>{session.UserNickname ?? session.UserId}</ProfileName>
+					{session.Residence && <div>📍 {session.Residence}</div>}
 				</div>
 			</ProfileCard>
 			<SectionTitle>내가 올린 상품</SectionTitle>

@@ -5,6 +5,8 @@ export async function RegisterUserAction(formData: FormData) {
 	const email = formData.get("email");
 	const password = formData.get("password");
 	const nickname = formData.get("nickname");
+	const residence = formData.get("residence");
+	const residenceDetail = formData.get("residencedetail");
 
 	const response = await fetch(`${LOGIN_URL}/signup`, {
 		method: "POST",
@@ -14,7 +16,9 @@ export async function RegisterUserAction(formData: FormData) {
 		body: JSON.stringify({
 			Email: email,
 			Password: password,
-			UserNickname: nickname
+			UserNickname: nickname,
+			Residence: residence,
+			ResidenceDetail: residenceDetail,
 		}),
 	});
 	if (response.ok) redirect('/');

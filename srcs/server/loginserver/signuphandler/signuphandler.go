@@ -20,10 +20,12 @@ import (
 )
 
 type SignupRequest struct {
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	UserNickname string `json:"usernickname"`
-	ProfileImage string `json:"profileimage,omitempty"`
+	Email           string `json:"email"`
+	Password        string `json:"password"`
+	UserNickname    string `json:"usernickname"`
+	Residence       string `json:"residence"`
+	ResidenceDetail string `json:"residencedetail,omitempty"`
+	ProfileImage    string `json:"profileimage,omitempty"`
 }
 
 const defaultProfileImage = "default_profile_image.png"
@@ -64,10 +66,17 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	hashedPassword := string(hashed)
 
+	residence := req.Residence
+	if residence == "" {
+		residence = "파리"
+	}
+
 	usersItem := map[string]*dynamodb.AttributeValue{
 		"UserId":            {S: aws.String(userId)},
 		"Email":             {S: aws.String(req.Email)},
 		"UserNickname":      {S: aws.String(req.UserNickname)},
+		"Residence":         {S: aws.String(residence)},
+		"ResidenceDetail":   {S: aws.String(req.ResidenceDetail)},
 		"ProfileImage":      {S: aws.String(profileImage)},
 		"ProductList":       {SS: []*string{aws.String("")}},
 		"PublishedQuantity": {N: aws.String("0")},
