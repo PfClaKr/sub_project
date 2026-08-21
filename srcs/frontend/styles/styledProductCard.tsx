@@ -9,13 +9,13 @@ export const Card = styled.div`
 	flex-direction: column;
 	border-radius: 10px;
 	overflow: hidden;
-	background-color: ${AppTheme.product.bg.normal};
-	border: 1px solid ${palette.bg[300]};
+	background-color: ${palette.bg.default};
+	border: 1px solid ${palette.line};
 	transition: transform 0.15s ease, box-shadow 0.15s ease;
 
 	&:hover {
 		transform: translateY(-2px);
-		box-shadow: 0 8px 20px rgba(16, 23, 80, 0.1);
+		box-shadow: 0 10px 24px ${palette.shadow};
 	}
 `;
 

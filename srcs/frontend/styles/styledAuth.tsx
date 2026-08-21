@@ -12,10 +12,11 @@ export const AuthWrap = styled.div`
 export const AuthCard = styled.div`
 	width: 100%;
 	max-width: 420px;
-	padding: 32px;
-	border-radius: 12px;
-	background-color: ${palette.bg[100]};
-	border: 1px solid ${palette.bg[300]};
+	padding: 36px;
+	border-radius: 16px;
+	background-color: ${palette.bg.default};
+	border: 1px solid ${palette.line};
+	box-shadow: 0 10px 30px ${palette.shadow};
 
 	form {
 		max-width: none;
