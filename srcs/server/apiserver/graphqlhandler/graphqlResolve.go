@@ -59,9 +59,13 @@ func createProductResolver(p graphql.ResolveParams) (interface{}, error) {
 	description, _ := p.Args["ProductDescription"].(string)
 	category, _ := p.Args["ProductCategory"].(string)
 	location, _ := p.Args["PreferedLocation"].(string)
+	region, _ := p.Args["ProductRegion"].(string)
 	price, _ := p.Args["ProductPrice"].(float64)
 	if userId == "" || name == "" {
 		return nil, fmt.Errorf("missing required arguments")
+	}
+	if region == "" {
+		region = "파리"
 	}
 
 	// graphql-go delivers list args as []interface{}.
@@ -85,6 +89,7 @@ func createProductResolver(p graphql.ResolveParams) (interface{}, error) {
 		"ProductDescription": {S: aws.String(description)},
 		"ProductPrice":       {N: aws.String(fmt.Sprintf("%g", price))},
 		"ProductCategory":    {S: aws.String(category)},
+		"ProductRegion":      {S: aws.String(region)},
 		"PreferedLocation":   {S: aws.String(location)},
 		"ProductCreatedAt":   {N: aws.String(now)},
 		"ProductUpdatedAt":   {N: aws.String(now)},
@@ -114,6 +119,7 @@ func createProductResolver(p graphql.ResolveParams) (interface{}, error) {
 		"ProductDescription": description,
 		"ProductPrice":       price,
 		"ProductCategory":    category,
+		"ProductRegion":      region,
 		"ProductImage":       images,
 		"PreferedLocation":   location,
 		"ProductCreatedAt":   now,
@@ -283,7 +289,7 @@ func mapProductItem(av map[string]*dynamodb.AttributeValue, fields []string) map
 			continue
 		}
 		switch field {
-		case "ProductId", "UserId", "ProductName", "ProductDescription", "ProductCategory", "PreferedLocation", "ProductStatus":
+		case "ProductId", "UserId", "ProductName", "ProductDescription", "ProductCategory", "ProductRegion", "PreferedLocation", "ProductStatus":
 			if attr.S != nil {
 				item[field] = *attr.S
 			}
@@ -345,6 +351,163 @@ func resolveRecentProducts(p graphql.ResolveParams) (interface{}, error) {
 		items = items[:limit]
 	}
 	return items, nil
+}
+
+// searchProductIds returns product ids matching the keyword via
+// Elasticsearch (nori analyzer).
+func searchProductIds(keyword string) ([]string, error) {
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"match": map[string]interface{}{
+				"ProductName.nori": keyword,
+			},
+		},
+	}
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		return nil, err
+	}
+
+	res, err := eshandler.FindItemWithProductName(&buf)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	if res.IsError() {
+		return nil, fmt.Errorf("error searching document: %s", res.String())
+	}
+
+	var searchResult map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
+		return nil, err
+	}
+
+	ids := []string{}
+	hits, ok := searchResult["hits"].(map[string]interface{})
+	if !ok {
+		return ids, nil
+	}
+	hitList, _ := hits["hits"].([]interface{})
+	for _, hit := range hitList {
+		source, ok := hit.(map[string]interface{})["_source"].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if id, ok := source["ProductId"].(string); ok {
+			ids = append(ids, id)
+		}
+	}
+	return ids, nil
+}
+
+func ensureFields(fields []string, required ...string) []string {
+	out := append([]string{}, fields...)
+	joined := strings.Join(fields, ",")
+	for _, f := range required {
+		if !strings.Contains(joined, f) {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
+// resolveSearchProducts combines a keyword search (Elasticsearch) with
+// category/region/price filters and sorting. Filters run app-side on
+// hydrated items — fine for MVP volume, move into ES after migration.
+func resolveSearchProducts(p graphql.ResolveParams) (interface{}, error) {
+	keyword, _ := p.Args["Keyword"].(string)
+	category, _ := p.Args["Category"].(string)
+	region, _ := p.Args["Region"].(string)
+	minPrice, hasMin := p.Args["MinPrice"].(float64)
+	maxPrice, hasMax := p.Args["MaxPrice"].(float64)
+	sortKey, _ := p.Args["Sort"].(string)
+
+	fields := extractRequestedFields(p.Info.FieldASTs[0].SelectionSet)
+	scanFields := ensureFields(fields, "ProductCreatedAt", "ProductPrice", "ProductCategory", "ProductRegion")
+	projection := strings.Join(scanFields, ", ")
+
+	items := []map[string]interface{}{}
+	if strings.TrimSpace(keyword) != "" {
+		ids, err := searchProductIds(keyword)
+		if err != nil {
+			return nil, err
+		}
+		for _, id := range ids {
+			result, err := svc.GetItem(&dynamodb.GetItemInput{
+				TableName: aws.String("Product"),
+				Key: map[string]*dynamodb.AttributeValue{
+					"ProductId": {S: aws.String(id)},
+				},
+				ProjectionExpression: aws.String(projection),
+			})
+			if err != nil || result.Item == nil {
+				continue
+			}
+			items = append(items, mapProductItem(result.Item, scanFields))
+		}
+	} else {
+		result, err := svc.Scan(&dynamodb.ScanInput{
+			TableName:            aws.String("Product"),
+			ProjectionExpression: aws.String(projection),
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, av := range result.Items {
+			items = append(items, mapProductItem(av, scanFields))
+		}
+	}
+
+	num := func(m map[string]interface{}, key string) float64 {
+		switch v := m[key].(type) {
+		case float64:
+			return v
+		case string:
+			if f, err := strconv.ParseFloat(v, 64); err == nil {
+				return f
+			}
+		}
+		return 0
+	}
+
+	filtered := []map[string]interface{}{}
+	for _, item := range items {
+		if category != "" {
+			if c, _ := item["ProductCategory"].(string); c != category {
+				continue
+			}
+		}
+		if region != "" {
+			if r, _ := item["ProductRegion"].(string); r != region {
+				continue
+			}
+		}
+		price := num(item, "ProductPrice")
+		if hasMin && price < minPrice {
+			continue
+		}
+		if hasMax && maxPrice > 0 && price > maxPrice {
+			continue
+		}
+		filtered = append(filtered, item)
+	}
+
+	switch sortKey {
+	case "price_asc":
+		sort.Slice(filtered, func(i, j int) bool {
+			return num(filtered[i], "ProductPrice") < num(filtered[j], "ProductPrice")
+		})
+	case "price_desc":
+		sort.Slice(filtered, func(i, j int) bool {
+			return num(filtered[i], "ProductPrice") > num(filtered[j], "ProductPrice")
+		})
+	default:
+		sort.Slice(filtered, func(i, j int) bool {
+			return num(filtered[i], "ProductCreatedAt") > num(filtered[j], "ProductCreatedAt")
+		})
+	}
+
+	return filtered, nil
 }
 
 func resolveUserProducts(p graphql.ResolveParams) (interface{}, error) {

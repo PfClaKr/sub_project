@@ -21,6 +21,7 @@ async function getProductInfo(productId: string) {
 				query: `query Product($productId: String!) {
 					product(ProductId: $productId) {
 						ProductCategory
+						ProductRegion
 						ProductDescription
 						UserId
 						ProductStatus
@@ -86,6 +87,7 @@ export default async function ProductDetailPage({params: {id}}: {params: {id: st
 				productName={productData.ProductName}
 				productPrice={productData.ProductPrice}
 				productCategory={productData.ProductCategory}
+				productRegion={productData.ProductRegion}
 				preferedLocation={productData.PreferedLocation}
 				productCreatedAt={productData.ProductCreatedAt}
 			/>

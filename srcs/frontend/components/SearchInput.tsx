@@ -15,9 +15,9 @@ export const SearchInput = () => {
 
 	const handleSearch = () => {
 		if (inputValue)
-			return router.push(`/search/${inputValue}`);
+			return router.push(`/search?q=${encodeURIComponent(inputValue)}`);
 		else
-			return router.push('/');
+			return router.push('/search');
 	}
 	
 	const handleKeyPress = (event: {key: any;}) => {

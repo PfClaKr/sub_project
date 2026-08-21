@@ -4,8 +4,7 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FormColumn, FieldLabel, ErrorText } from "@/styles/styledForm";
 import { API_URL, GRAPHQL_URL, LOGIN_URL } from "@/libs/config";
-
-const CATEGORIES = ["전자기기", "가구", "의류", "도서", "식품", "기타"];
+import { CATEGORIES, REGIONS } from "@/libs/constants";
 
 async function getSessionUserId(): Promise<string | null> {
 	try {
@@ -65,8 +64,8 @@ export const SellForm = () => {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					query: `mutation CreateProduct($userId: String!, $name: String!, $description: String!, $price: Float!, $category: String!, $images: [String!], $location: String!) {
-						createProduct(UserId: $userId, ProductName: $name, ProductDescription: $description, ProductPrice: $price, ProductCategory: $category, ProductImage: $images, PreferedLocation: $location) {
+					query: `mutation CreateProduct($userId: String!, $name: String!, $description: String!, $price: Float!, $category: String!, $images: [String!], $location: String!, $region: String) {
+						createProduct(UserId: $userId, ProductName: $name, ProductDescription: $description, ProductPrice: $price, ProductCategory: $category, ProductImage: $images, PreferedLocation: $location, ProductRegion: $region) {
 							ProductId
 						}
 					}`,
@@ -78,6 +77,7 @@ export const SellForm = () => {
 						category: formData.get("category"),
 						images,
 						location: formData.get("location"),
+						region: formData.get("region"),
 					},
 				}),
 			});
@@ -109,8 +109,13 @@ export const SellForm = () => {
 					{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
 				</select>
 			</FieldLabel>
-			<FieldLabel>거래 희망 지역
-				<input type="text" name="location" required maxLength={100} />
+			<FieldLabel>지역
+				<select name="region" required>
+					{REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+				</select>
+			</FieldLabel>
+			<FieldLabel>상세 거래 장소 (동네, 역 등)
+				<input type="text" name="location" required maxLength={100} placeholder="예: 15구 Beaugrenelle" />
 			</FieldLabel>
 			<FieldLabel>사진 (최대 5장)
 				<input type="file" name="images" accept="image/*" multiple />
