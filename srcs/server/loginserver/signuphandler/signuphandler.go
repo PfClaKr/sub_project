@@ -9,6 +9,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"loginserver/verifyhandler"
+
 	"local.com/jsonresponse"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -108,5 +110,16 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonresponse.New(w, http.StatusOK, map[string]string{"message": "User signed in successfully"})
+	// Mail delivery failure must not roll back the account.
+	if err := verifyhandler.Issue(req.Email); err != nil {
+		jsonresponse.New(w, http.StatusOK, map[string]string{
+			"message": "User created but verification mail failed",
+		})
+		return
+	}
+
+	jsonresponse.New(w, http.StatusOK, map[string]string{
+		"message": "User signed in successfully",
+		"next":    "verify-email",
+	})
 }

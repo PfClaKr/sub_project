@@ -12,6 +12,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"loginserver/verifyhandler"
+
 	"local.com/jsonresponse"
 	"local.com/jwt"
 
@@ -103,6 +105,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !verifyPassword(storedHash, salt, loginRequest.Password) {
 		jsonresponse.New(w, http.StatusUnauthorized, map[string]string{"error": "Invalid email or password"})
+		return
+	}
+
+	if verifyhandler.Required() && !verifyhandler.IsVerified(loginRequest.Email) {
+		jsonresponse.New(w, http.StatusForbidden, map[string]string{
+			"error": "email not verified",
+			"code":  "EMAIL_NOT_VERIFIED",
+		})
 		return
 	}
 
