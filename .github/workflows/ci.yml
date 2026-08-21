@@ -45,3 +45,12 @@ jobs:
           npm ci
           npx tsc --noEmit
           npm run build
+      - name: Verify PWA assets
+        working-directory: srcs/frontend
+        run: |
+          npm run start &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:3000/manifest.webmanifest >/dev/null && break
+            sleep 1
+          done
+          node scripts/check-pwa.mjs
