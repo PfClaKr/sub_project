@@ -6,6 +6,7 @@ import Footer from "../components/Footer";
 import StyledComponentsRegistry from "@/libs/registry";
 import GlobalStyle from "@/styles/globalStyles";
 import { Main } from "@/styles/styledLayout";
+import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar";
 
 // theme
 // import { createGlobalStyle } from "styled-components";
@@ -18,6 +19,13 @@ export const metadata: Metadata = {
 		default: "itnyang",
 	},
 	description: "파리 한인 중고마켓 — 사고팔 물건 있냥?",
+	manifest: "/manifest.webmanifest",
+	// iOS ignores the manifest, so the home-screen behaviour is set here.
+	appleWebApp: {
+		capable: true,
+		title: "잇냥",
+		statusBarStyle: "default",
+	},
 };
 
 // Mobile web app: fit the device width and allow user zoom.
@@ -48,6 +56,7 @@ export default function RootLayout({
 			<body>
 				<StyledComponentsRegistry>
 					<GlobalStyle />
+					<ServiceWorkerRegistrar />
 					<Navigation />
 					<Main>{children}</Main>
 					<Footer />
