@@ -81,8 +81,20 @@ services:
       - AWS_SECRET_ACCESS_KEY=dummy
       - FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
       - JWT_SECRET=local_dev_secret
+      # Mail delivery: MailHog locally, real SMTP creds in the cloud
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_FROM=no-reply@itnyang.local
+      - PUBLIC_APP_URL=http://localhost:3000
+      # Set to false to let unverified accounts log in during development
+      - REQUIRE_EMAIL_VERIFICATION=true
+      # Google OAuth (leave empty to hide the button)
+      - GOOGLE_CLIENT_ID=
+      - GOOGLE_CLIENT_SECRET=
+      - GOOGLE_REDIRECT_URL=http://localhost:7070/auth/google/callback
     depends_on:
       - apiserver
+      - mailhog
 
   chatserver:
     build:
@@ -104,6 +116,15 @@ services:
       - JWT_SECRET=local_dev_secret
     depends_on:
       - apiserver
+
+  # Local SMTP sink: catches verification mails, web UI on 8025.
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    restart: always
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
   minio:
     image: minio/minio

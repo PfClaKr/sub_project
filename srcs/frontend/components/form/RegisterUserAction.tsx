@@ -21,6 +21,6 @@ export async function RegisterUserAction(formData: FormData) {
 			ResidenceDetail: residenceDetail,
 		}),
 	});
-	if (response.ok) redirect('/');
+	if (response.ok) redirect('/account/verify-sent');
 	else console.log('fetch error');
 }

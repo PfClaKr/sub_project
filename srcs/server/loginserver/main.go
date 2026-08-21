@@ -7,9 +7,11 @@ import (
 	"os"
 
 	"loginserver/emailhandler"
+	"loginserver/googlehandler"
 	"loginserver/loginhandler"
 	"loginserver/sessionhandler"
 	"loginserver/signuphandler"
+	"loginserver/verifyhandler"
 
 	"local.com/cors"
 	"local.com/jwt"
@@ -24,6 +26,13 @@ func main() {
 	r.HandleFunc("/emailcheck", emailhandler.EmailcheckHandler).Methods("GET")
 	r.Handle("/whoami", jwt.Middleware(http.HandlerFunc(sessionhandler.WhoamiHandler))).Methods("GET")
 	r.HandleFunc("/logout", sessionhandler.LogoutHandler).Methods("POST", "OPTIONS")
+
+	r.HandleFunc("/verify", verifyhandler.VerifyHandler).Methods("GET")
+	r.HandleFunc("/verify/resend", verifyhandler.ResendHandler).Methods("POST", "OPTIONS")
+
+	r.HandleFunc("/auth/google/status", googlehandler.StatusHandler).Methods("GET")
+	r.HandleFunc("/auth/google/login", googlehandler.LoginHandler).Methods("GET")
+	r.HandleFunc("/auth/google/callback", googlehandler.CallbackHandler).Methods("GET")
 
 	port := os.Getenv("PORT")
 	if port == "" {
