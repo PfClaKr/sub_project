@@ -55,9 +55,15 @@ export const MessageList = styled.div`
 	height: 420px;
 	overflow-y: auto;
 	padding: 16px;
-	border: 1px solid ${palette.bg[500]};
-	border-radius: 8px;
+	border: 1px solid ${palette.line};
+	border-radius: 12px;
 	background-color: ${palette.bg[100]};
+
+	@media (max-width: 600px) {
+		/* Keeps the composer above the fold on a phone screen. */
+		height: 55vh;
+		padding: 12px;
+	}
 `;
 
 export const Bubble = styled.div<{ $mine?: boolean }>`
@@ -68,6 +74,10 @@ export const Bubble = styled.div<{ $mine?: boolean }>`
 	align-self: ${p => (p.$mine ? "flex-end" : "flex-start")};
 	background-color: ${p => (p.$mine ? palette.fg[500] : palette.bg[300])};
 	color: ${p => (p.$mine ? "#ffffff" : palette.fg.default)};
+
+	@media (max-width: 600px) {
+		max-width: 84%;
+	}
 `;
 
 export const BubbleMeta = styled.div`

@@ -56,11 +56,20 @@ export const InfoContainer = styled.div`
 	flex-direction: column;
 	gap: 4px;
 	padding: 12px 14px 14px;
+
+	@media (max-width: 600px) {
+		padding: 10px 10px 12px;
+	}
 `;
 
 export const Title = styled.div`
 	color: ${palette.fg.default};
 	font-size: 15px;
+
+	@media (max-width: 600px) {
+		font-size: 14px;
+	}
+
 	font-weight: 600;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -74,6 +83,10 @@ export const Price = styled.div`
 	color: ${AppTheme.product.text.primary.color};
 	font-size: 18px;
 	font-weight: 800;
+
+	@media (max-width: 600px) {
+		font-size: 16px;
+	}
 `;
 
 export const Subtitle = styled.div`

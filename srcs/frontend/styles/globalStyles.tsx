@@ -71,6 +71,15 @@ const GlobalStyle = createGlobalStyle`
 		color: ${palette.fg[100]};
 		opacity: 0.8;
 	}
+	/* iOS Safari zooms into inputs smaller than 16px on focus. */
+	@media (max-width: 600px) {
+		input, textarea, select {
+			font-size: 16px;
+		}
+		button {
+			font-size: 15px;
+		}
+	}
 `;
 
 export default GlobalStyle;

@@ -41,9 +41,6 @@ export default function Navigation() {
 				<Brand>
 					<StyledNavbar href="/">itnyang</StyledNavbar>
 				</Brand>
-				<NavItem>
-					<StyledNavbar href="/search">상품찾기</StyledNavbar>
-				</NavItem>
 				{session && (
 					<>
 						<NavItem>
