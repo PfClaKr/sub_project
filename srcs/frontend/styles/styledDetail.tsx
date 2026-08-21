@@ -17,9 +17,9 @@ export const GalleryMain = styled.div`
 	position: relative;
 	width: 100%;
 	aspect-ratio: 1 / 1;
-	border-radius: 12px;
+	border-radius: 14px;
 	overflow: hidden;
-	background-color: ${palette.bg[300]};
+	background-color: ${palette.bg[100]};
 
 	img {
 		width: 100%;
@@ -76,8 +76,8 @@ export const MetaList = styled.ul`
 	list-style: none;
 	margin: 0;
 	padding: 16px 0;
-	border-top: 1px solid ${palette.bg[500]};
-	border-bottom: 1px solid ${palette.bg[500]};
+	border-top: 1px solid ${palette.line};
+	border-bottom: 1px solid ${palette.line};
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
@@ -106,9 +106,11 @@ export const SellerCard = styled.div`
 	display: flex;
 	align-items: center;
 	gap: 14px;
-	padding: 16px;
-	border-radius: 12px;
+	padding: 18px;
+	border-radius: 14px;
 	background-color: ${palette.bg[100]};
+	border: 1px solid ${palette.line};
+	margin-top: 28px;
 
 	img {
 		width: 48px;

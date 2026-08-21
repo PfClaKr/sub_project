@@ -4,8 +4,8 @@ import styled from "styled-components";
 import palette from "@/theme/colorPalette";
 
 export const PageTitle = styled.h1`
-	font-size: 24px;
-	margin: 8px 0 20px;
+	font-size: 26px;
+	margin: 8px 0 22px;
 `;
 
 export const Breadcrumb = styled.p`
@@ -15,11 +15,13 @@ export const Breadcrumb = styled.p`
 `;
 
 export const EmptyState = styled.div`
-	padding: 56px 16px;
+	padding: 64px 16px;
 	text-align: center;
 	color: ${palette.fg[100]};
 	background-color: ${palette.bg[100]};
-	border-radius: 12px;
+	border: 1px solid ${palette.line};
+	border-radius: 14px;
+	line-height: 1.8;
 `;
 
 export const ChipRow = styled.div`
@@ -32,6 +34,7 @@ export const ChipRow = styled.div`
 
 export const SectionCard = styled.section`
 	background-color: ${palette.bg[100]};
-	border-radius: 12px;
-	padding: 24px;
+	border: 1px solid ${palette.line};
+	border-radius: 14px;
+	padding: 28px;
 `;

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { StyledNavbar } from "@/styles/styledLink";
-import { Nav, NavInner, Brand, NavItem, NavSpacer, NavUser } from "@/styles/styledNav";
+import { Nav, NavInner, Brand, NavItem, NavSpacer, NavUser, SellCta } from "@/styles/styledNav";
 import { LOGIN_URL } from "@/libs/config";
 
 type Session = {
@@ -47,9 +47,6 @@ export default function Navigation() {
 				{session && (
 					<>
 						<NavItem>
-							<StyledNavbar href="/sell">판매하기</StyledNavbar>
-						</NavItem>
-						<NavItem>
 							<StyledNavbar href="/chat">채팅</StyledNavbar>
 						</NavItem>
 						<NavItem>
@@ -63,14 +60,22 @@ export default function Navigation() {
 						<NavUser>
 							<StyledNavbar href="/myaccount">{session.UserNickname ?? session.UserId}님</StyledNavbar>
 						</NavUser>
+						<SellCta>
+							<StyledNavbar href="/sell">판매하기</StyledNavbar>
+						</SellCta>
 						<NavItem>
 							<button onClick={handleLogout}>로그아웃</button>
 						</NavItem>
 					</>
 				) : (
-					<NavItem>
-						<StyledNavbar href="/login">로그인</StyledNavbar>
-					</NavItem>
+					<>
+						<NavItem>
+							<StyledNavbar href="/login">로그인</StyledNavbar>
+						</NavItem>
+						<SellCta>
+							<StyledNavbar href="/account/sign-up">회원가입</StyledNavbar>
+						</SellCta>
+					</>
 				)}
 			</NavInner>
 		</Nav>
