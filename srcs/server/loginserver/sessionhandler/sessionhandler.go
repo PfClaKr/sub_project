@@ -46,7 +46,7 @@ func WhoamiHandler(w http.ResponseWriter, r *http.Request) {
 		Key: map[string]*dynamodb.AttributeValue{
 			"UserId": {S: aws.String(userId)},
 		},
-		ProjectionExpression: aws.String("UserNickname, ProfileImage"),
+		ProjectionExpression: aws.String("UserNickname, ProfileImage, Residence"),
 	})
 	if err == nil && result.Item != nil {
 		if v := result.Item["UserNickname"]; v != nil && v.S != nil {
@@ -54,6 +54,9 @@ func WhoamiHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if v := result.Item["ProfileImage"]; v != nil && v.S != nil {
 			resp["ProfileImage"] = *v.S
+		}
+		if v := result.Item["Residence"]; v != nil && v.S != nil {
+			resp["Residence"] = *v.S
 		}
 	}
 	jsonresponse.New(w, http.StatusOK, resp)
