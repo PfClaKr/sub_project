@@ -22,9 +22,8 @@ export const ChatButton = ({ productId }: { productId: string }) => {
 			}
 			if (!res.ok) {
 				const json = await res.json().catch(() => null);
-				setError(json?.error === "cannot chat about your own product"
-					? "내 상품에는 채팅할 수 없어요."
-					: "채팅방을 열지 못했어요.");
+				// The chat server answers with a user-facing Korean message.
+				setError(json?.error ?? "채팅방을 열지 못했어요.");
 				return;
 			}
 			const room = await res.json();
