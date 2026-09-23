@@ -2,15 +2,15 @@ package jwt
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/mux"
+	"github.com/golang-jwt/jwt/v5"
 )
+
+const cookieName = "token"
 
 // JWT_SECRET must be set in production; the fallback is for local dev only.
 var jwtKey = []byte(secret())
@@ -32,108 +32,115 @@ func ExpireDuration() time.Duration {
 	return 24 * time.Hour
 }
 
+// Claims carries the user id in Username (kept for token compatibility).
 type Claims struct {
 	Username string `json:"username"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
-func New(username string) (string, error) {
-	expirationTime := time.Now().Add(ExpireDuration())
+func New(userId string) (string, error) {
 	claims := &Claims{
-		Username: username,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
+		Username: userId,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(ExpireDuration())),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(jwtKey)
 }
 
+// Parse validates a token string; only HS256 is accepted.
+func Parse(tokenString string) (*Claims, error) {
+	claims := &Claims{}
+	_, err := jwt.ParseWithClaims(tokenString, claims, func(*jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
+	if err != nil {
+		return nil, err
+	}
+	return claims, nil
+}
+
+type ctxKey struct{}
+
+// WithClaims stores claims in ctx; exported for tests of dependent packages.
+func WithClaims(ctx context.Context, c *Claims) context.Context {
+	return context.WithValue(ctx, ctxKey{}, c)
+}
+
+// FromContext returns the claims set by Middleware or Optional.
+func FromContext(ctx context.Context) (*Claims, bool) {
+	c, ok := ctx.Value(ctxKey{}).(*Claims)
+	return c, ok
+}
+
+// UserID returns the authenticated user id, or "" when anonymous.
+func UserID(ctx context.Context) string {
+	if c, ok := FromContext(ctx); ok {
+		return c.Username
+	}
+	return ""
+}
+
+func claimsFromRequest(r *http.Request) (*Claims, error) {
+	cookie, err := r.Cookie(cookieName)
+	if err != nil {
+		return nil, err
+	}
+	return Parse(cookie.Value)
+}
+
+// Middleware rejects requests without a valid token with 401.
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("token")
+		claims, err := claimsFromRequest(r)
 		if err != nil {
-			if err == http.ErrNoCookie {
-				http.Error(w, "No setup cookie", http.StatusUnauthorized)
-				return
-			}
 			http.Error(w, "Not authorized", http.StatusUnauthorized)
 			return
 		}
-
-		tokenString := cookie.Value
-
-		claims := &Claims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
-		})
-
-		if err != nil {
-			if err == jwt.ErrSignatureInvalid {
-				http.Error(w, "Invalid token signature", http.StatusUnauthorized)
-				return
-			}
-			http.Error(w, "Invalid token", http.StatusBadRequest)
-			return
-		}
-
-		if !token.Valid {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), "claims", claims)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(WithClaims(r.Context(), claims)))
 	})
 }
 
-func getjwt(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userID := vars["UserId"]
-	if userID == "" {
-		http.Error(w, "Username is required", http.StatusBadRequest)
-		return
-	}
+// Optional attaches claims when a valid token is present and lets
+// anonymous requests through; handlers decide what needs auth.
+func Optional(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if claims, err := claimsFromRequest(r); err == nil {
+			r = r.WithContext(WithClaims(r.Context(), claims))
+		}
+		next.ServeHTTP(w, r)
+	})
+}
 
-	tokenString, err := New(userID)
-	if err != nil {
-		http.Error(w, "Error generating token", http.StatusInternalServerError)
-		return
-	}
+// COOKIE_SECURE=true marks the cookie Secure (required behind HTTPS).
+func secureCookie() bool {
+	return os.Getenv("COOKIE_SECURE") == "true"
+}
 
+// SetCookie writes the session cookie; lifetime follows the token.
+func SetCookie(w http.ResponseWriter, token string) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     "token",
-		Value:    tokenString,
-		Expires:  time.Now().Add(5 * time.Minute),
+		Name:     cookieName,
+		Value:    token,
+		Path:     "/",
+		Expires:  time.Now().Add(ExpireDuration()),
 		HttpOnly: true,
+		Secure:   secureCookie(),
+		SameSite: http.SameSiteLaxMode,
 	})
-
-	response := map[string]string{
-		"message": "JWT created",
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
 }
 
-func Showjwt(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("claims").(*Claims)
-	if !ok {
-		http.Error(w, "No claims found in context", http.StatusInternalServerError)
-		return
-	}
-
-	response := map[string]string{
-		"message":  "JWT context",
-		"username": claims.Username,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+// ClearCookie expires the session cookie.
+func ClearCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     cookieName,
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   secureCookie(),
+		SameSite: http.SameSiteLaxMode,
+	})
 }
