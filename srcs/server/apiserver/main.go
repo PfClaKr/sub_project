@@ -6,59 +6,88 @@ import (
 	"net/http"
 	"os"
 
+	"apiserver/adminhandler"
 	"apiserver/createtable"
 	"apiserver/eshandler"
 	"apiserver/favoriteshandler"
+	"apiserver/geohandler"
 	"apiserver/graphqlhandler"
 	"apiserver/uploadhandler"
 
 	"local.com/cors"
+	"local.com/dynamo"
 	"local.com/jwt"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/gorilla/mux"
 )
 
-var svc dynamodbiface.DynamoDBAPI
+var svc dynamodbiface.DynamoDBAPI = dynamo.New()
 
-func init() {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region:   aws.String(os.Getenv("AWS_REGION")),
-		Endpoint: aws.String(os.Getenv("DYNAMODB_ENDPOINT")),
-		Credentials: credentials.NewStaticCredentials(
-			os.Getenv("AWS_ACCESS_KEY_ID"),
-			os.Getenv("AWS_SECRET_ACCESS_KEY"),
-			"",
-		),
-	}))
-	svc = dynamodb.New(sess)
-	createtable.CreateTables()
-	eshandler.InitElasticsearch()
-	uploadhandler.EnsureBucket()
+// loadSearchDocs reads every product so the search index can be
+// rebuilt from DynamoDB, the source of truth.
+func loadSearchDocs() ([]eshandler.ProductDoc, error) {
+	items, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{TableName: aws.String(dynamo.TableProduct)})
+	if err != nil {
+		return nil, err
+	}
+	docs := make([]eshandler.ProductDoc, 0, len(items))
+	for _, item := range items {
+		docs = append(docs, eshandler.DocFromItem(item))
+	}
+	return docs, nil
+}
+
+// promoteAdmin is the only way to create an admin (there is no public
+// route for it): docker compose exec apiserver /main promote-admin <email>
+func promoteAdmin(email string) {
+	userId, err := adminhandler.UserIdByEmail(email)
+	if err != nil {
+		log.Fatalf("no account for %s: %v", email, err)
+	}
+	if err := adminhandler.SetRole(userId, adminhandler.RoleAdmin); err != nil {
+		log.Fatalf("promote %s: %v", email, err)
+	}
+	fmt.Printf("%s (%s) is now an admin\n", email, userId)
 }
 
 func main() {
+	if len(os.Args) == 3 && os.Args[1] == "promote-admin" {
+		promoteAdmin(os.Args[2])
+		return
+	}
+
+	createtable.CreateTables(svc)
+	eshandler.InitElasticsearch()
+	if err := eshandler.EnsureIndex(loadSearchDocs); err != nil {
+		log.Fatalf("search index: %v", err)
+	}
+	uploadhandler.EnsureBucket()
 
 	r := mux.NewRouter()
-	r.HandleFunc("/tables", listTables).Methods("GET")
-	r.HandleFunc("/tables/{table}", describeTable).Methods("GET")
-	r.HandleFunc("/dummy/{count}", generateDummyData).Methods("GET")
-	r.HandleFunc("/dummydelete", deleteDummyData).Methods("GET")
+	r.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) }).Methods("GET")
 
-	r.HandleFunc("/graphql", graphqlhandler.GraphqlHandler).Methods("POST")
+	r.Handle("/graphql", jwt.Optional(http.HandlerFunc(graphqlhandler.GraphqlHandler))).Methods("POST")
 	r.Handle("/upload", jwt.Middleware(http.HandlerFunc(uploadhandler.UploadHandler))).Methods("POST")
 
 	r.Handle("/favorites", jwt.Middleware(http.HandlerFunc(favoriteshandler.ListHandler))).Methods("GET")
 	r.Handle("/favorites/{productId}", jwt.Middleware(http.HandlerFunc(favoriteshandler.StatusHandler))).Methods("GET")
 	r.Handle("/favorites/{productId}", jwt.Middleware(http.HandlerFunc(favoriteshandler.AddHandler))).Methods("POST")
 	r.Handle("/favorites/{productId}", jwt.Middleware(http.HandlerFunc(favoriteshandler.RemoveHandler))).Methods("DELETE")
-	// r.HandleFunc("/login", loginhandler.LoginHandler).Methods("POST")
 
-	r.Handle("/testjwt", jwt.Middleware(http.HandlerFunc(jwt.Showjwt))).Methods("GET")
+	adminhandler.Register(r)
+	geohandler.Register(r)
+
+	// Table dumps and dummy data; never enable outside local dev.
+	if os.Getenv("ENABLE_DEBUG_ROUTES") == "true" {
+		log.Println("WARNING: debug routes enabled")
+		r.HandleFunc("/debug/tables", listTables).Methods("GET")
+		r.HandleFunc("/debug/tables/{table}", describeTable).Methods("GET")
+		r.HandleFunc("/debug/dummy/{count}", generateDummyData).Methods("POST")
+		r.HandleFunc("/debug/dummy", deleteDummyData).Methods("DELETE")
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -3,27 +3,26 @@ package createtable
 import (
 	"fmt"
 	"log"
-	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
-func CreateTables() {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region:   aws.String(os.Getenv("AWS_REGION")),        // DynamoDB Local은 아무 Region이나 사용해도 상관없습니다.
-		Endpoint: aws.String(os.Getenv("DYNAMODB_ENDPOINT")), // DynamoDB Local의 기본 포트
-		Credentials: credentials.NewStaticCredentials(
-			os.Getenv("AWS_ACCESS_KEY_ID"),
-			os.Getenv("AWS_SECRET_ACCESS_KEY"),
-			"",
-		),
-	}))
-
-	svc := dynamodb.New(sess)
+// CreateTables creates missing tables, waiting for DynamoDB to come up.
+func CreateTables(svc dynamodbiface.DynamoDBAPI) {
+	for i := 0; ; i++ {
+		if _, err := svc.ListTables(&dynamodb.ListTablesInput{}); err == nil {
+			break
+		} else if i == 30 {
+			log.Fatalf("dynamodb unreachable: %v", err)
+		} else {
+			log.Printf("dynamodb not ready: %v. Retrying...", err)
+			time.Sleep(2 * time.Second)
+		}
+	}
 
 	tables := []struct {
 		name    string
@@ -110,6 +109,16 @@ func CreateTables() {
 			},
 			attribs: []*dynamodb.AttributeDefinition{
 				{AttributeName: aws.String("ChatId"), AttributeType: aws.String("S")},
+			},
+		},
+		{
+			// Town / arrondissement boundaries cached from OpenStreetMap.
+			name: "GeoAreas",
+			schema: []*dynamodb.KeySchemaElement{
+				{AttributeName: aws.String("AreaId"), KeyType: aws.String("HASH")},
+			},
+			attribs: []*dynamodb.AttributeDefinition{
+				{AttributeName: aws.String("AreaId"), AttributeType: aws.String("S")},
 			},
 		},
 		{

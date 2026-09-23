@@ -50,6 +50,12 @@ func init() {
 	s3Client = s3.New(sess)
 }
 
+// PublicBase is the URL prefix of uploaded images; product and profile
+// image URLs must start with it.
+func PublicBase() string {
+	return publicBase
+}
+
 // EnsureBucket creates the bucket with public-read policy, retrying
 // until the storage backend is reachable.
 func EnsureBucket() {

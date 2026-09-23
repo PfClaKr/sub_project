@@ -1,24 +1,38 @@
 # schema.graphql
+# Object types are built from this file (see graphqlHandler.go);
+# root fields are dispatched through the resolvers map.
+# Mutations act as the user in the session cookie, never an argument.
 
 type Query {
   product(ProductId: String!): Product
-  productSearch(ProductName: String!): [Product]
+  # Sort: relevance (default) | newest | price_asc | price_desc | distance.
+  # Place filter: AreaId alone = inside that town / arrondissement;
+  # Latitude/Longitude + DistanceKm = within that distance.
+  productSearch(ProductName: String!, Category: String, Region: String, MinPrice: Float, MaxPrice: Float, Sort: String, AreaId: String, Latitude: Float, Longitude: Float, DistanceKm: Float): ProductSearchResult
+  # Kept for the current search page; prefer productSearch. An empty
+  # Keyword lists everything matching the filters. Sort "recent" = newest.
   searchProducts(Keyword: String, Category: String, Region: String, MinPrice: Float, MaxPrice: Float, Sort: String): [Product]
-  recentProducts(Limit: Float): [Product]
+  # Autocomplete: distinct product names for what the user typed so far.
+  searchSuggestions(Prefix: String!): [String]
+  recentProducts(Limit: Float, Offset: Float, Category: String): [Product]
   userProducts(UserId: String!): [Product]
   user(UserId: String!): User
+  # Public numbers for the landing page.
+  marketStats: MarketStats
 }
 
 type Mutation {
-  createUser(Email: String!, PasswordHash: String!, UserNickname: String!): User
-  createProduct(UserId: String!, ProductName: String!, ProductDescription: String!, ProductPrice: Float!, ProductCategory: String!, ProductImage: [String!], PreferedLocation: String!, ProductRegion: String): Product
-  updateProductStatus(ProductId: String!, UserId: String!, ProductStatus: String!): Product
+  createProduct(ProductName: String!, ProductDescription: String!, ProductPrice: Float!, ProductCategory: String!, ProductImage: [String!], PreferedLocation: String!, ProductRegion: String, Latitude: Float, Longitude: Float, ExactLocation: Boolean): Product
+  updateProduct(ProductId: String!, ProductName: String!, ProductDescription: String!, ProductPrice: Float!, ProductCategory: String!, ProductImage: [String!], PreferedLocation: String!, ProductRegion: String, Latitude: Float, Longitude: Float, ExactLocation: Boolean): Product
+  updateProductStatus(ProductId: String!, ProductStatus: String!): Product
   deleteProduct(ProductId: String!): Boolean
+  updateProfile(UserNickname: String!, ProfileImage: String): User
 }
 
 type Product {
   ProductId: String
   UserId: String
+  SellerNickname: String
   ProductStatus: String
   ProductName: String
   ProductDescription: String
@@ -27,16 +41,36 @@ type Product {
   ProductRegion: String
   ProductImage: [String]
   PreferedLocation: String
+  # Map position. ExactLocation false = only the town / arrondissement
+  # (AreaId, AreaName) is shown and Latitude/Longitude is its centre.
+  Latitude: Float
+  Longitude: Float
+  ExactLocation: Boolean
+  AreaId: String
+  AreaName: String
   ProductCreatedAt: Float
   ProductUpdatedAt: Float
 }
 
+type MarketStats {
+  Products: Float
+  Selling: Float
+  Users: Float
+}
+
+# Corrected is true when nothing matched exactly and Products come
+# from the typo-tolerant fallback.
+type ProductSearchResult {
+  Products: [Product]
+  Corrected: Boolean
+}
+
+# Email and credentials are intentionally not exposed.
 type User {
   UserId: String
-  Email: String
-  PasswordHash: String
   UserNickname: String
   ProfileImage: String
+  Residence: String
   PublishedQuantity: Float
   CreatedAt: Float
 }
