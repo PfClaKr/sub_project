@@ -6,35 +6,22 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"loginserver/mailer"
 
+	"local.com/dynamo"
 	"local.com/jsonresponse"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
 const tokenTTL = 24 * time.Hour
 
-var svc dynamodbiface.DynamoDBAPI
-
-func init() {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region:   aws.String(os.Getenv("AWS_REGION")),
-		Endpoint: aws.String(os.Getenv("DYNAMODB_ENDPOINT")),
-		Credentials: credentials.NewStaticCredentials(
-			os.Getenv("AWS_ACCESS_KEY_ID"),
-			os.Getenv("AWS_SECRET_ACCESS_KEY"),
-			"",
-		),
-	}))
-	svc = dynamodb.New(sess)
-}
+var svc dynamodbiface.DynamoDBAPI = dynamo.New()
 
 // Required reports whether unverified accounts are blocked from logging in.
 func Required() bool {
@@ -133,6 +120,12 @@ func VerifyHandler(w http.ResponseWriter, r *http.Request) {
 		jsonresponse.New(w, http.StatusBadRequest, map[string]string{"error": "invalid or already used token"})
 		return
 	}
+	// Idempotent: opening the link twice (or React's double effect in
+	// development) must not report a failure for a verified account.
+	if IsVerified(email) {
+		jsonresponse.New(w, http.StatusOK, map[string]string{"message": "email verified"})
+		return
+	}
 	if expires > 0 && time.Now().Unix() > expires {
 		jsonresponse.New(w, http.StatusBadRequest, map[string]string{"error": "token expired"})
 		return
@@ -143,7 +136,9 @@ func VerifyHandler(w http.ResponseWriter, r *http.Request) {
 		Key: map[string]*dynamodb.AttributeValue{
 			"Email": {S: aws.String(email)},
 		},
-		UpdateExpression: aws.String("SET EmailVerified = :v REMOVE VerifyToken, VerifyExpires"),
+		// The token is kept until a new one replaces it, so a second
+		// click still resolves to this (now verified) account.
+		UpdateExpression: aws.String("SET EmailVerified = :v"),
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":v": {BOOL: aws.Bool(true)},
 		},
@@ -157,7 +152,9 @@ func VerifyHandler(w http.ResponseWriter, r *http.Request) {
 
 // ResendHandler issues a new token for an unverified account.
 func ResendHandler(w http.ResponseWriter, r *http.Request) {
-	email := r.URL.Query().Get("email")
+	// Same normalization as signup (strings.ToLower(TrimSpace)); the
+	// signup package cannot be imported here (it imports this one).
+	email := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("email")))
 	if email == "" {
 		jsonresponse.New(w, http.StatusBadRequest, map[string]string{"error": "missing email"})
 		return

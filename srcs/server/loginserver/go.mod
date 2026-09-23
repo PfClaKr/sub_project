@@ -9,19 +9,22 @@ require (
 )
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 )
 
 require (
 	golang.org/x/crypto v0.24.0
 	local.com/cors v0.0.0
+	local.com/dynamo v0.0.0
 	local.com/jsonresponse v0.0.0
 	local.com/jwt v0.0.0
 )
 
-replace local.com/jwt v0.0.0 => ../package/jwt
+replace local.com/cors => ../package/cors
 
-replace local.com/jsonresponse v0.0.0 => ../package/jsonresponse
+replace local.com/jwt => ../package/jwt
 
-replace local.com/cors v0.0.0 => ../package/cors
+replace local.com/jsonresponse => ../package/jsonresponse
+
+replace local.com/dynamo => ../package/dynamo
