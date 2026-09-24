@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styled from "styled-components";
-import palette from "@/theme/colorPalette";
+import palette, { radius } from "@/theme/colorPalette";
 import { LOGIN_URL } from "@/libs/config";
 
 const GoogleLink = styled.a`
@@ -11,16 +11,16 @@ const GoogleLink = styled.a`
 	justify-content: center;
 	gap: 10px;
 	padding: 11px 14px;
-	border-radius: 6px;
-	border: 1px solid ${palette.bg[500]};
-	background-color: #ffffff;
-	color: ${palette.fg.default};
+	border-radius: ${radius.sm};
+	border: 1px solid ${palette.border};
+	background-color: ${palette.bg};
+	color: ${palette.text};
 	font-size: 14px;
 	font-weight: 600;
 	text-decoration: none;
 
 	&:hover {
-		background-color: ${palette.bg[100]};
+		background-color: ${palette.surface};
 	}
 `;
 
@@ -29,14 +29,14 @@ const Divider = styled.div`
 	align-items: center;
 	gap: 12px;
 	margin: 18px 0;
-	color: ${palette.fg[100]};
+	color: ${palette.muted};
 	font-size: 12px;
 
 	&::before, &::after {
 		content: "";
 		flex: 1;
 		height: 1px;
-		background-color: ${palette.bg[500]};
+		background-color: ${palette.border};
 	}
 `;
 
@@ -49,13 +49,13 @@ const GoogleMark = () => (
 	</svg>
 );
 
-// Only rendered when the server reports OAuth credentials are configured.
+// Only rendered when the loginserver reports Google OAuth is configured.
 export const GoogleButton = ({ label }: { label: string }) => {
 	const [enabled, setEnabled] = useState(false);
 
 	useEffect(() => {
 		fetch(`${LOGIN_URL}/auth/google/status`)
-			.then(res => res.ok ? res.json() : null)
+			.then(res => (res.ok ? res.json() : null))
 			.then(json => setEnabled(Boolean(json?.enabled)))
 			.catch(() => setEnabled(false));
 	}, []);

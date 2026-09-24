@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { VerifyResult } from "@/components/auth/VerifyResult";
 
 export const metadata: Metadata = {
-	title: "Verify Email",
+	title: "이메일 인증",
 };
 
 export default function VerifyPage({ searchParams }: { searchParams: { token?: string } }) {
