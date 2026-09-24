@@ -2,61 +2,45 @@ package sessionhandler
 
 import (
 	"net/http"
-	"os"
-	"time"
 
+	"local.com/dynamo"
 	"local.com/jsonresponse"
 	"local.com/jwt"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
-var svc dynamodbiface.DynamoDBAPI
-
-func init() {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region:   aws.String(os.Getenv("AWS_REGION")),
-		Endpoint: aws.String(os.Getenv("DYNAMODB_ENDPOINT")),
-		Credentials: credentials.NewStaticCredentials(
-			os.Getenv("AWS_ACCESS_KEY_ID"),
-			os.Getenv("AWS_SECRET_ACCESS_KEY"),
-			"",
-		),
-	}))
-	svc = dynamodb.New(sess)
-}
+var svc dynamodbiface.DynamoDBAPI = dynamo.New()
 
 // WhoamiHandler returns the logged-in user's public profile.
 // Must be wrapped with jwt.Middleware.
 func WhoamiHandler(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("claims").(*jwt.Claims)
-	if !ok {
-		jsonresponse.New(w, http.StatusUnauthorized, map[string]string{"error": "no session"})
+	userId := jwt.UserID(r.Context())
+	if userId == "" {
+		jsonresponse.Error(w, http.StatusUnauthorized, "no session")
 		return
 	}
-	userId := claims.Username
 
 	resp := map[string]string{"UserId": userId}
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String("Users"),
-		Key: map[string]*dynamodb.AttributeValue{
+		TableName: aws.String(dynamo.TableUsers),
+		Key: dynamo.Item{
 			"UserId": {S: aws.String(userId)},
 		},
-		ProjectionExpression: aws.String("UserNickname, ProfileImage, Residence"),
+		ProjectionExpression: aws.String("UserNickname, ProfileImage, Residence, #r"),
+		// ROLE is a DynamoDB reserved word.
+		ExpressionAttributeNames: map[string]*string{"#r": aws.String("Role")},
 	})
 	if err == nil && result.Item != nil {
-		if v := result.Item["UserNickname"]; v != nil && v.S != nil {
-			resp["UserNickname"] = *v.S
-		}
-		if v := result.Item["ProfileImage"]; v != nil && v.S != nil {
-			resp["ProfileImage"] = *v.S
-		}
-		if v := result.Item["Residence"]; v != nil && v.S != nil {
-			resp["Residence"] = *v.S
+		resp["UserNickname"] = dynamo.S(result.Item, "UserNickname")
+		resp["ProfileImage"] = dynamo.S(result.Item, "ProfileImage")
+		resp["Residence"] = dynamo.S(result.Item, "Residence")
+		// Only for showing the admin menu; the apiserver re-checks the
+		// role on every admin request.
+		if dynamo.S(result.Item, "Role") == "admin" {
+			resp["Role"] = "admin"
 		}
 	}
 	jsonresponse.New(w, http.StatusOK, resp)
@@ -64,13 +48,6 @@ func WhoamiHandler(w http.ResponseWriter, r *http.Request) {
 
 // LogoutHandler clears the token cookie.
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "token",
-		Value:    "",
-		Path:     "/",
-		Expires:  time.Unix(0, 0),
-		MaxAge:   -1,
-		HttpOnly: true,
-	})
+	jwt.ClearCookie(w)
 	jsonresponse.New(w, http.StatusOK, map[string]string{"message": "logged out"})
 }

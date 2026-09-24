@@ -30,13 +30,14 @@ export const StatusSelector = ({ productId, ownerId, productStatus }: Props) => 
 			const res = await fetch(GRAPHQL_URL, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
 				body: JSON.stringify({
-					query: `mutation U($productId: String!, $userId: String!, $status: String!) {
-						updateProductStatus(ProductId: $productId, UserId: $userId, ProductStatus: $status) {
+					query: `mutation U($productId: String!, $status: String!) {
+						updateProductStatus(ProductId: $productId, ProductStatus: $status) {
 							ProductStatus
 						}
 					}`,
-					variables: { productId, userId: ownerId, status: next },
+					variables: { productId, status: next },
 				}),
 			});
 			const json = res.ok ? await res.json() : null;

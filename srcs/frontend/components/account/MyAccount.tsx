@@ -65,6 +65,7 @@ export const MyAccount = () => {
 		const res = await fetch(GRAPHQL_URL, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
 			body: JSON.stringify({
 				query: `mutation D($productId: String!) {
 					deleteProduct(ProductId: $productId)

@@ -1,66 +1,39 @@
 package emailhandler
 
 import (
-	"encoding/json"
 	"net/http"
-	"os"
 
+	"loginserver/signuphandler"
+
+	"local.com/dynamo"
 	"local.com/jsonresponse"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
-type EmailRequest struct {
-	Email string `json:"email"`
-}
+var svc dynamodbiface.DynamoDBAPI = dynamo.New()
 
-var svc dynamodbiface.DynamoDBAPI
+// EmailcheckHandler answers GET /emailcheck?email=... with
+// {"available": bool} so the signup form can warn early.
+func EmailcheckHandler(w http.ResponseWriter, r *http.Request) {
+	email := signuphandler.NormalizeEmail(r.URL.Query().Get("email"))
+	if email == "" {
+		jsonresponse.Error(w, http.StatusBadRequest, "email is required")
+		return
+	}
 
-func init() {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region:   aws.String(os.Getenv("AWS_REGION")),
-		Endpoint: aws.String(os.Getenv("DYNAMODB_ENDPOINT")),
-		Credentials: credentials.NewStaticCredentials(
-			os.Getenv("AWS_ACCESS_KEY_ID"),
-			os.Getenv("AWS_SECRET_ACCESS_KEY"),
-			"",
-		),
-	}))
-	svc = dynamodb.New(sess)
-}
-
-func checkUserByEmail(email string) bool {
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String("UsersCredential"),
-		Key: map[string]*dynamodb.AttributeValue{
-			"Email": {
-				S: aws.String(email),
-			},
+		TableName: aws.String(dynamo.TableUsersCredential),
+		Key: dynamo.Item{
+			"Email": {S: aws.String(email)},
 		},
+		ProjectionExpression: aws.String("Email"),
 	})
 	if err != nil {
-		return true
-	}
-	if result.Item == nil {
-		return true
-	}
-	return false
-}
-
-func EmailcheckHandler(w http.ResponseWriter, r *http.Request) {
-	var req EmailRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		jsonresponse.New(w, http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+		jsonresponse.Internal(w, err)
 		return
 	}
-
-	if checkUserByEmail(req.Email) {
-		jsonresponse.New(w, http.StatusOK, map[string]string{"message": "can use email"})
-		return
-	}
-	jsonresponse.New(w, http.StatusBadRequest, map[string]string{"error": "already used email"})
+	jsonresponse.New(w, http.StatusOK, map[string]bool{"available": result.Item == nil})
 }

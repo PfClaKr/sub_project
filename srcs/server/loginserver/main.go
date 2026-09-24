@@ -21,14 +21,15 @@ import (
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/login", loginhandler.LoginHandler).Methods("POST", "OPTIONS")
-	r.HandleFunc("/signup", signuphandler.SignupHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) }).Methods("GET")
+	r.HandleFunc("/login", loginhandler.LoginHandler).Methods("POST")
+	r.HandleFunc("/signup", signuphandler.SignupHandler).Methods("POST")
 	r.HandleFunc("/emailcheck", emailhandler.EmailcheckHandler).Methods("GET")
 	r.Handle("/whoami", jwt.Middleware(http.HandlerFunc(sessionhandler.WhoamiHandler))).Methods("GET")
-	r.HandleFunc("/logout", sessionhandler.LogoutHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/logout", sessionhandler.LogoutHandler).Methods("POST")
 
 	r.HandleFunc("/verify", verifyhandler.VerifyHandler).Methods("GET")
-	r.HandleFunc("/verify/resend", verifyhandler.ResendHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/verify/resend", verifyhandler.ResendHandler).Methods("POST")
 
 	r.HandleFunc("/auth/google/status", googlehandler.StatusHandler).Methods("GET")
 	r.HandleFunc("/auth/google/login", googlehandler.LoginHandler).Methods("GET")

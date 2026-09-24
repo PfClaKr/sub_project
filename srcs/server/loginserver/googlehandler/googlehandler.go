@@ -13,11 +13,13 @@ import (
 	"time"
 
 	"local.com/jsonresponse"
+	"loginserver/signuphandler"
+
+	"local.com/dynamo"
 	"local.com/jwt"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/google/uuid"
@@ -29,20 +31,7 @@ const (
 	userinfoEndpoint = "https://www.googleapis.com/oauth2/v2/userinfo"
 )
 
-var svc dynamodbiface.DynamoDBAPI
-
-func init() {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region:   aws.String(os.Getenv("AWS_REGION")),
-		Endpoint: aws.String(os.Getenv("DYNAMODB_ENDPOINT")),
-		Credentials: credentials.NewStaticCredentials(
-			os.Getenv("AWS_ACCESS_KEY_ID"),
-			os.Getenv("AWS_SECRET_ACCESS_KEY"),
-			"",
-		),
-	}))
-	svc = dynamodb.New(sess)
-}
+var svc dynamodbiface.DynamoDBAPI = dynamo.New()
 
 func env(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
@@ -98,6 +87,9 @@ type googleUser struct {
 	Email   string `json:"email"`
 	Name    string `json:"name"`
 	Picture string `json:"picture"`
+	// v2 userinfo says verified_email, OpenID Connect email_verified.
+	VerifiedEmail bool `json:"verified_email"`
+	EmailVerified bool `json:"email_verified"`
 }
 
 func exchangeCode(code string) (string, error) {
@@ -147,6 +139,12 @@ func fetchUser(accessToken string) (*googleUser, error) {
 	if err := json.NewDecoder(res.Body).Decode(&user); err != nil {
 		return nil, err
 	}
+	// An unverified address must not sign into the account that owns
+	// the same email: that would be an account takeover.
+	if !user.VerifiedEmail && !user.EmailVerified {
+		return nil, fmt.Errorf("google email not verified")
+	}
+	user.Email = signuphandler.NormalizeEmail(user.Email)
 	return &user, nil
 }
 
@@ -173,37 +171,41 @@ func findOrCreateUser(user *googleUser) (string, error) {
 		nickname = strings.Split(user.Email, "@")[0]
 	}
 	picture := user.Picture
-	if picture == "" {
-		picture = "default_profile_image.png"
-	}
 
-	if _, err := svc.PutItem(&dynamodb.PutItemInput{
-		TableName: aws.String("Users"),
-		Item: map[string]*dynamodb.AttributeValue{
-			"UserId":            {S: aws.String(userId)},
-			"Email":             {S: aws.String(user.Email)},
-			"UserNickname":      {S: aws.String(nickname)},
-			"Residence":         {S: aws.String("파리")},
-			"ProfileImage":      {S: aws.String(picture)},
-			"PublishedQuantity": {N: aws.String("0")},
-			"CreatedAt":         {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
+	// Credential and profile are written together; the condition keeps a
+	// concurrent sign-in (or signup) from overwriting the credential.
+	_, err = svc.TransactWriteItems(&dynamodb.TransactWriteItemsInput{
+		TransactItems: []*dynamodb.TransactWriteItem{
+			{Put: &dynamodb.Put{
+				TableName: aws.String(dynamo.TableUsersCredential),
+				Item: dynamo.Item{
+					"Email":        {S: aws.String(user.Email)},
+					"UserId":       {S: aws.String(userId)},
+					"PasswordHash": {S: aws.String("")},
+					"AuthProvider": {S: aws.String("google")},
+					// Google verified the address.
+					"EmailVerified": {BOOL: aws.Bool(true)},
+				},
+				ConditionExpression: aws.String("attribute_not_exists(Email)"),
+			}},
+			{Put: &dynamodb.Put{
+				TableName: aws.String(dynamo.TableUsers),
+				Item: dynamo.Item{
+					"UserId":            {S: aws.String(userId)},
+					"Email":             {S: aws.String(user.Email)},
+					"UserNickname":      {S: aws.String(nickname)},
+					"Residence":         {S: aws.String(signuphandler.DefaultResidence)},
+					"ProfileImage":      {S: aws.String(picture)},
+					"PublishedQuantity": {N: aws.String("0")},
+					"CreatedAt":         {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
+				},
+			}},
 		},
-	}); err != nil {
-		return "", err
+	})
+	if aerr, ok := err.(awserr.Error); ok && aerr.Code() == dynamodb.ErrCodeTransactionCanceledException {
+		return findOrCreateUser(user) // created meanwhile: sign into it
 	}
-
-	// Google verifies the address, so the account starts activated and
-	// has no local password.
-	if _, err := svc.PutItem(&dynamodb.PutItemInput{
-		TableName: aws.String("UsersCredential"),
-		Item: map[string]*dynamodb.AttributeValue{
-			"Email":         {S: aws.String(user.Email)},
-			"UserId":        {S: aws.String(userId)},
-			"PasswordHash":  {S: aws.String("")},
-			"AuthProvider":  {S: aws.String("google")},
-			"EmailVerified": {BOOL: aws.Bool(true)},
-		},
-	}); err != nil {
+	if err != nil {
 		return "", err
 	}
 
@@ -250,13 +252,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "token",
-		Value:    tokenString,
-		Path:     "/",
-		Expires:  time.Now().Add(jwt.ExpireDuration()),
-		HttpOnly: true,
-	})
+	jwt.SetCookie(w, tokenString)
 	http.SetCookie(w, &http.Cookie{
 		Name:    "oauth_state",
 		Value:   "",

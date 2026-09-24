@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   go:
     runs-on: ubuntu-latest
@@ -18,17 +22,20 @@ jobs:
           - package/cors
           - package/jwt
           - package/jsonresponse
+          - package/dynamo
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
+          cache-dependency-path: srcs/server/${{ matrix.module }}/go.sum
       - name: Vet, build and test
         working-directory: srcs/server/${{ matrix.module }}
         run: |
+          test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
           go vet ./...
           go build ./...
-          go test ./...
+          go test -race ./...
 
   frontend:
     runs-on: ubuntu-latest
@@ -54,3 +61,37 @@ jobs:
             sleep 1
           done
           node scripts/check-pwa.mjs
+
+  # API scenarios against the real backend (DynamoDB Local, Elasticsearch
+  # with nori, MinIO) started with docker compose. See srcs/server/e2e.
+  e2e:
+    runs-on: ubuntu-latest
+    needs: go
+    timeout-minutes: 30
+    env:
+      COMPOSE_FILE: docker/Docker-compose.yaml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: srcs/server/e2e/go.sum
+      - name: Check e2e sources
+        working-directory: srcs/server/e2e
+        run: |
+          test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+          go vet -tags e2e ./...
+      - name: Start backend
+        run: docker compose up -d --build --wait --wait-timeout 600 apiserver loginserver chatserver mailhog
+      - name: Run e2e tests
+        working-directory: srcs/server/e2e
+        env:
+          E2E_COMPOSE_FILE: ${{ github.workspace }}/docker/Docker-compose.yaml
+          E2E_MAILHOG: http://localhost:8025
+        run: go test -tags e2e -count=1 -v ./...
+      - name: Service logs
+        if: failure()
+        run: docker compose logs --no-color --tail=200 apiserver loginserver chatserver elasticsearch
+      - name: Stop backend
+        if: always()
+        run: docker compose down -v

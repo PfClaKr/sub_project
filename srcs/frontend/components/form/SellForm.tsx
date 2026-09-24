@@ -37,6 +37,8 @@ export const SellForm = () => {
 
 	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+		// React clears event.currentTarget after the first await.
+		const form = event.currentTarget;
 		setError("");
 		setSubmitting(true);
 		try {
@@ -46,7 +48,6 @@ export const SellForm = () => {
 				return;
 			}
 
-			const form = event.currentTarget;
 			const formData = new FormData(form);
 			const fileInput = form.elements.namedItem("images") as HTMLInputElement;
 
@@ -63,14 +64,14 @@ export const SellForm = () => {
 			const res = await fetch(GRAPHQL_URL, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
 				body: JSON.stringify({
-					query: `mutation CreateProduct($userId: String!, $name: String!, $description: String!, $price: Float!, $category: String!, $images: [String!], $location: String!, $region: String) {
-						createProduct(UserId: $userId, ProductName: $name, ProductDescription: $description, ProductPrice: $price, ProductCategory: $category, ProductImage: $images, PreferedLocation: $location, ProductRegion: $region) {
+					query: `mutation CreateProduct($name: String!, $description: String!, $price: Float!, $category: String!, $images: [String!], $location: String!, $region: String) {
+						createProduct(ProductName: $name, ProductDescription: $description, ProductPrice: $price, ProductCategory: $category, ProductImage: $images, PreferedLocation: $location, ProductRegion: $region) {
 							ProductId
 						}
 					}`,
 					variables: {
-						userId,
 						name: formData.get("name"),
 						description: formData.get("description"),
 						price: Number(formData.get("price")),

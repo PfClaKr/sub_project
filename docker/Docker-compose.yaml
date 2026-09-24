@@ -1,3 +1,19 @@
+x-go-env: &go-env
+  TZ: Europe/Paris
+  DYNAMODB_ENDPOINT: http://dynamodb:8000
+  AWS_REGION: eu-west-3
+  AWS_ACCESS_KEY_ID: dummy
+  AWS_SECRET_ACCESS_KEY: dummy
+  FRONTEND_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+  JWT_SECRET: local_dev_secret
+  # Set to "true" when served over HTTPS.
+  COOKIE_SECURE: "false"
+
+x-go-healthcheck: &go-healthcheck
+  interval: 5s
+  timeout: 3s
+  retries: 30
+
 services:
   nextjs:
     build:
@@ -5,6 +21,8 @@ services:
       dockerfile: ../../docker/frontend/Dockerfile
     volumes:
       - "../srcs/frontend:/app"
+      # Keep the image's node_modules instead of the host's.
+      - /app/node_modules
     restart: always
     container_name: nextjs
     ports:
@@ -20,6 +38,9 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8080
       - NEXT_PUBLIC_LOGIN_URL=http://localhost:7070
       - NEXT_PUBLIC_CHAT_URL=http://localhost:9090
+    depends_on:
+      apiserver:
+        condition: service_healthy
 
   dynamodb:
     image: amazon/dynamodb-local
@@ -37,85 +58,78 @@ services:
     build:
       context: ../srcs/server
       dockerfile: ../../docker/apiserver/Dockerfile
-    volumes:
-      - "../srcs/server/apiserver:/app/apiserver"
     container_name: apiserver
     restart: always
     ports:
       - "8080:8080"
     environment:
-      - TZ=Europe/Paris
-      - DYNAMODB_ENDPOINT=http://dynamodb:8000
-      - AWS_REGION=eu-west-3
-      - AWS_ACCESS_KEY_ID=dummy
-      - AWS_SECRET_ACCESS_KEY=dummy
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-      - JWT_SECRET=local_dev_secret
+      <<: *go-env
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      # Exposes /debug/* (table dumps, dummy data). Local dev only.
+      ENABLE_DEBUG_ROUTES: "true"
       # S3-compatible storage; point to real S3 after cloud migration
-      - S3_ENDPOINT=http://minio:9000
-      - S3_PUBLIC_URL=http://localhost:9000
-      - S3_BUCKET=product-images
-      - S3_ACCESS_KEY=minioadmin
-      - S3_SECRET_KEY=minioadmin
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_URL: http://localhost:9000
+      S3_BUCKET: product-images
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+    healthcheck:
+      <<: *go-healthcheck
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
     depends_on:
-      - dynamodb
-      - elasticsearch
-      - minio
+      dynamodb:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
 
   loginserver:
     build:
       context: ../srcs/server
       dockerfile: ../../docker/loginserver/Dockerfile
-    volumes:
-      - "../srcs/server/loginserver:/app/loginserver"
     container_name: loginserver
     restart: always
     ports:
       - "7070:7070"
     environment:
-      - TZ=Europe/Paris
-      - DYNAMODB_ENDPOINT=http://dynamodb:8000
-      - AWS_REGION=eu-west-3
-      - AWS_ACCESS_KEY_ID=dummy
-      - AWS_SECRET_ACCESS_KEY=dummy
-      - FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-      - JWT_SECRET=local_dev_secret
+      <<: *go-env
       # Mail delivery: MailHog locally, real SMTP creds in the cloud
-      - SMTP_HOST=mailhog
-      - SMTP_PORT=1025
-      - SMTP_FROM=no-reply@itnyang.local
-      - PUBLIC_APP_URL=http://localhost:3000
+      SMTP_HOST: mailhog
+      SMTP_PORT: "1025"
+      SMTP_FROM: no-reply@itnyang.local
+      PUBLIC_APP_URL: http://localhost:3000
       # Set to false to let unverified accounts log in during development
-      - REQUIRE_EMAIL_VERIFICATION=true
+      REQUIRE_EMAIL_VERIFICATION: "true"
       # Google OAuth (leave empty to hide the button)
-      - GOOGLE_CLIENT_ID=
-      - GOOGLE_CLIENT_SECRET=
-      - GOOGLE_REDIRECT_URL=http://localhost:7070/auth/google/callback
+      GOOGLE_CLIENT_ID: ""
+      GOOGLE_CLIENT_SECRET: ""
+      GOOGLE_REDIRECT_URL: http://localhost:7070/auth/google/callback
+    healthcheck:
+      <<: *go-healthcheck
+      test: ["CMD", "wget", "-qO-", "http://localhost:7070/healthz"]
+    # apiserver creates the tables.
     depends_on:
-      - apiserver
-      - mailhog
+      apiserver:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
 
   chatserver:
     build:
       context: ../srcs/server
       dockerfile: ../../docker/chatserver/Dockerfile
-    volumes:
-      - "../srcs/server/chatserver:/app/chatserver"
     container_name: chatserver
     restart: always
     ports:
       - "9090:9090"
-    environment:
-      - TZ=Europe/Paris
-      - DYNAMODB_ENDPOINT=http://dynamodb:8000
-      - AWS_REGION=eu-west-3
-      - AWS_ACCESS_KEY_ID=dummy
-      - AWS_SECRET_ACCESS_KEY=dummy
-      - FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-      - JWT_SECRET=local_dev_secret
+    environment: *go-env
+    healthcheck:
+      <<: *go-healthcheck
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/healthz"]
     depends_on:
-      - apiserver
+      apiserver:
+        condition: service_healthy
 
   # Local SMTP sink: catches verification mails, web UI on 8025.
   mailhog:
@@ -139,27 +153,33 @@ services:
       - MINIO_ROOT_PASSWORD=minioadmin
     volumes:
       - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
   elasticsearch:
     container_name: elasticsearch
     build: ./elasticsearch
+    restart: always
     ports:
       - "9200:9200"
     environment:
       - TZ=Europe/Paris
-      - ELASTICSEARCH_URL="https://elasticsearch:9200"
-      - ELASTIC_PASSWORD="1"
-      - ELASTIC_CERT_PASSWORD="1"
       - "discovery.type=single-node"
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
   # kibana:
   #   container_name: kibana
   #   build: ./kibana
   #   ports:
   #     - "5601:5601"
   #   restart: always
-  #   environment:
-  #     - ELASTIC_PASSWORD="1"
   #   depends_on:
   #     - elasticsearch
 

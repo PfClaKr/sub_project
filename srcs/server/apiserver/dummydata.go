@@ -1,109 +1,65 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"apiserver/eshandler"
+	"apiserver/graphqlhandler"
+
+	"local.com/dynamo"
+	"local.com/jsonresponse"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/gorilla/mux"
 )
 
-func init() {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region:   aws.String(os.Getenv("AWS_REGION")),
-		Endpoint: aws.String(os.Getenv("DYNAMODB_ENDPOINT")),
-		Credentials: credentials.NewStaticCredentials(
-			os.Getenv("AWS_ACCESS_KEY_ID"),
-			os.Getenv("AWS_SECRET_ACCESS_KEY"),
-			"",
-		),
-	}))
-	svc = dynamodb.New(sess)
-}
+// Debug-only handlers, registered when ENABLE_DEBUG_ROUTES=true.
+// Dummy rows use these id prefixes so they can be told apart from
+// real (uuid) rows and removed without touching real data.
+const (
+	dummyUserPrefix    = "dummy-user-"
+	dummyProductPrefix = "dummy-product-"
+)
 
 func listTables(w http.ResponseWriter, r *http.Request) {
-	input := &dynamodb.ListTablesInput{}
-	result, err := svc.ListTables(input)
+	result, err := svc.ListTables(&dynamodb.ListTablesInput{})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		jsonresponse.Internal(w, err)
 		return
 	}
-	json.NewEncoder(w).Encode(result.TableNames)
+	jsonresponse.New(w, http.StatusOK, result.TableNames)
 }
 
 func describeTable(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	tableName := vars["table"]
-
-	// Scan the table
-	input := &dynamodb.ScanInput{
-		TableName: aws.String(tableName),
-	}
-	result, err := svc.Scan(input)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	tableName := mux.Vars(r)["table"]
+	// Credentials never leave the loginserver, not even in debug mode.
+	if tableName == dynamo.TableUsersCredential {
+		jsonresponse.Error(w, http.StatusForbidden, "table not exposed")
 		return
 	}
 
-	readableItems := make([]map[string]interface{}, 0)
-
-	for _, item := range result.Items {
-		readableItem := make(map[string]interface{})
-		for k, v := range item {
-			switch {
-			case v.S != nil:
-				readableItem[k] = *v.S
-			case v.N != nil:
-				readableItem[k] = *v.N
-			case v.SS != nil:
-				readableItem[k] = v.SS
-			case v.NS != nil:
-				readableItem[k] = v.NS
-			case v.BOOL != nil:
-				readableItem[k] = *v.BOOL
-			case v.L != nil:
-				readableList := make([]interface{}, len(v.L))
-				for i, lv := range v.L {
-					switch {
-					case lv.S != nil:
-						readableList[i] = *lv.S
-					case lv.N != nil:
-						readableList[i] = *lv.N
-					case lv.BOOL != nil:
-						readableList[i] = *lv.BOOL
-					}
-				}
-				readableItem[k] = readableList
-			case v.M != nil:
-				readableMap := make(map[string]interface{})
-				for mk, mv := range v.M {
-					switch {
-					case mv.S != nil:
-						readableMap[mk] = *mv.S
-					case mv.N != nil:
-						readableMap[mk] = *mv.N
-					case mv.BOOL != nil:
-						readableMap[mk] = *mv.BOOL
-					}
-				}
-				readableItem[k] = readableMap
-			}
-		}
-		readableItems = append(readableItems, readableItem)
+	items, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{TableName: aws.String(tableName)})
+	if err != nil {
+		jsonresponse.Internal(w, err)
+		return
 	}
-
-	json.NewEncoder(w).Encode(readableItems)
+	readable := make([]map[string]interface{}, 0, len(items))
+	for _, item := range items {
+		row := map[string]interface{}{}
+		if err := dynamodbattribute.UnmarshalMap(item, &row); err == nil {
+			readable = append(readable, row)
+		}
+	}
+	jsonresponse.New(w, http.StatusOK, readable)
 }
 
+// A curated catalog so the UI can be tried with realistic listings.
 var mockUsers = []struct {
 	nickname string
 	email    string
@@ -118,44 +74,6 @@ var mockUsers = []struct {
 	{"마레지구", "chat8@test.com"},
 }
 
-func generateUserDummyData(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	countStr := vars["count"]
-	count, err := strconv.Atoi(countStr)
-	if err != nil {
-		http.Error(w, "Invalid count parameter", http.StatusBadRequest)
-		return
-	}
-
-	tableName := "Users"
-	for i := 0; i < count; i++ {
-		u := mockUsers[i%len(mockUsers)]
-		item := map[string]*dynamodb.AttributeValue{
-			"UserId":            {S: aws.String(fmt.Sprintf("User%d", i+1))},
-			"Email":             {S: aws.String(u.email)},
-			"PasswordHash":      {S: aws.String("mock-not-loginable")},
-			"UserNickname":      {S: aws.String(u.nickname)},
-			"ProfileImage":      {S: aws.String(fmt.Sprintf("https://picsum.photos/seed/avatar%d/150/150", i+1))},
-			"ProductList":       {SS: []*string{aws.String(fmt.Sprintf("Product%d", i+1))}},
-			"PublishedQuantity": {N: aws.String("1")},
-			"CreatedAt":         {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
-		}
-
-		if _, err := svc.PutItem(&dynamodb.PutItemInput{
-			TableName: aws.String(tableName),
-			Item:      item,
-		}); err != nil {
-			http.Error(w, fmt.Sprintf("Failed to create user: %s", err.Error()), http.StatusInternalServerError)
-			return
-		}
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": fmt.Sprintf("%d users created", count)})
-}
-
-// mockProducts is a curated catalog so the UI can be tested with
-// realistic marketplace listings.
 var mockProducts = []struct {
 	name        string
 	description string
@@ -187,93 +105,102 @@ var mockProducts = []struct {
 	{"화장품 미개봉 (설화수 세트)", "선물 받았는데 쓰는 라인이 아니라서 팝니다. 백화점 정품이에요.", "기타", "파리", "7구", 65, "판매중"},
 }
 
+// generateDummyData creates count users with one product each.
 func generateDummyData(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	countStr := vars["count"]
-	count, err := strconv.Atoi(countStr)
-	if err != nil {
-		http.Error(w, "Invalid count parameter", http.StatusBadRequest)
+	count, err := strconv.Atoi(mux.Vars(r)["count"])
+	if err != nil || count < 1 || count > 100 {
+		jsonresponse.Error(w, http.StatusBadRequest, "count must be 1-100")
 		return
 	}
 
-	generateUserDummyData(w, r)
-
-	tableName := "Product"
-	now := time.Now().Unix()
+	ts := time.Now().Unix()
 	for i := 0; i < count; i++ {
+		u := mockUsers[i%len(mockUsers)]
 		p := mockProducts[i%len(mockProducts)]
-		images := []*string{
-			aws.String(fmt.Sprintf("https://picsum.photos/seed/product%da/600/600", i+1)),
-			aws.String(fmt.Sprintf("https://picsum.photos/seed/product%db/600/600", i+1)),
+		userId := fmt.Sprintf("%s%d", dummyUserPrefix, i%len(mockUsers)+1)
+		productId := fmt.Sprintf("%s%d", dummyProductPrefix, i+1)
+		// Stagger creation times so the recent feed has an order.
+		created := strconv.FormatInt(ts-int64(i)*3600, 10)
+
+		user := dynamo.Item{
+			"UserId":            {S: aws.String(userId)},
+			"Email":             {S: aws.String(u.email)},
+			"UserNickname":      {S: aws.String(u.nickname)},
+			"Residence":         {S: aws.String(graphqlhandler.DefaultRegion)},
+			"ProfileImage":      {S: aws.String(fmt.Sprintf("https://picsum.photos/seed/avatar%d/150/150", i%len(mockUsers)+1))},
+			"PublishedQuantity": {N: aws.String("1")},
+			"CreatedAt":         {N: aws.String(created)},
 		}
-		item := map[string]*dynamodb.AttributeValue{
-			"ProductId":          {S: aws.String(fmt.Sprintf("Product%d", i+1))},
-			"UserId":             {S: aws.String(fmt.Sprintf("User%d", (i%len(mockUsers))+1))},
+		product := dynamo.Item{
+			"ProductId":          {S: aws.String(productId)},
+			"UserId":             {S: aws.String(userId)},
 			"ProductStatus":      {S: aws.String(p.status)},
 			"ProductName":        {S: aws.String(p.name)},
 			"ProductDescription": {S: aws.String(p.description)},
-			"ProductPrice":       {N: aws.String(fmt.Sprintf("%d", p.price))},
+			"ProductPrice":       {N: aws.String(strconv.Itoa(p.price))},
 			"ProductCategory":    {S: aws.String(p.category)},
 			"ProductRegion":      {S: aws.String(p.region)},
-			"ProductImage":       {SS: images},
-			"PreferedLocation":   {S: aws.String(p.location)},
-			// Stagger creation times so the recent feed has an order.
-			"ProductCreatedAt": {N: aws.String(fmt.Sprintf("%d", now-int64(i)*3600))},
-			"ProductUpdatedAt": {N: aws.String(fmt.Sprintf("%d", now-int64(i)*3600))},
+			"ProductImage": {SS: []*string{
+				aws.String(fmt.Sprintf("https://picsum.photos/seed/product%da/600/600", i+1)),
+				aws.String(fmt.Sprintf("https://picsum.photos/seed/product%db/600/600", i+1)),
+			}},
+			"PreferedLocation": {S: aws.String(p.location)},
+			"ProductCreatedAt": {N: aws.String(created)},
+			"ProductUpdatedAt": {N: aws.String(created)},
 		}
 
-		if _, err := svc.PutItem(&dynamodb.PutItemInput{
-			TableName: aws.String(tableName),
-			Item:      item,
-		}); err != nil {
-			http.Error(w, fmt.Sprintf("Failed to create product: %s", err.Error()), http.StatusInternalServerError)
-			return
-		}
-		if err := eshandler.AddItemToElasticsearch(item); err != nil {
-			http.Error(w, fmt.Sprintf("Failed to create product in elasticsearch: %s", err.Error()), http.StatusInternalServerError)
-			return
-		}
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": fmt.Sprintf("%d products created", count)})
-}
-
-func deleteDummyData(w http.ResponseWriter, r *http.Request) {
-	tableNames := []string{"Product", "User"}
-
-	for _, tableName := range tableNames {
-		input := &dynamodb.ScanInput{
-			TableName: aws.String(tableName),
-		}
-
-		result, err := svc.Scan(input)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to scan %s: %s", tableName, err.Error()), http.StatusInternalServerError)
-			return
-		}
-
-		for _, item := range result.Items {
-			deleteInput := &dynamodb.DeleteItemInput{
-				TableName: aws.String(tableName),
-				Key: map[string]*dynamodb.AttributeValue{
-					"ProductId": item["ProductId"],
-				},
-			}
-			if tableName == "User" {
-				deleteInput.Key = map[string]*dynamodb.AttributeValue{
-					"UserId": item["UserId"],
-				}
-			}
-
-			_, err := svc.DeleteItem(deleteInput)
-			if err != nil {
-				http.Error(w, fmt.Sprintf("Failed to delete item from %s: %s", tableName, err.Error()), http.StatusInternalServerError)
+		for table, item := range map[string]dynamo.Item{dynamo.TableUsers: user, dynamo.TableProduct: product} {
+			if _, err := svc.PutItem(&dynamodb.PutItemInput{TableName: aws.String(table), Item: item}); err != nil {
+				jsonresponse.Internal(w, err)
 				return
 			}
 		}
+		if err := eshandler.IndexProduct(eshandler.DocFromItem(product)); err != nil {
+			jsonresponse.Internal(w, err)
+			return
+		}
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "All dummy data deleted"})
+	jsonresponse.New(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%d dummy users/products created", count)})
+}
+
+// deleteDummyData removes only rows created by generateDummyData.
+func deleteDummyData(w http.ResponseWriter, r *http.Request) {
+	targets := []struct{ table, key, prefix string }{
+		{dynamo.TableProduct, "ProductId", dummyProductPrefix},
+		{dynamo.TableUsers, "UserId", dummyUserPrefix},
+	}
+
+	deleted := 0
+	for _, t := range targets {
+		items, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{
+			TableName:                 aws.String(t.table),
+			ProjectionExpression:      aws.String(t.key),
+			FilterExpression:          aws.String("begins_with(" + t.key + ", :p)"),
+			ExpressionAttributeValues: dynamo.Item{":p": {S: aws.String(t.prefix)}},
+		})
+		if err != nil {
+			jsonresponse.Internal(w, err)
+			return
+		}
+		for _, item := range items {
+			id := dynamo.S(item, t.key)
+			if !strings.HasPrefix(id, t.prefix) {
+				continue
+			}
+			if _, err := svc.DeleteItem(&dynamodb.DeleteItemInput{
+				TableName: aws.String(t.table),
+				Key:       dynamo.Item{t.key: {S: aws.String(id)}},
+			}); err != nil {
+				jsonresponse.Internal(w, err)
+				return
+			}
+			if t.table == dynamo.TableProduct {
+				eshandler.DeleteProduct(id)
+			}
+			deleted++
+		}
+	}
+
+	jsonresponse.New(w, http.StatusOK, map[string]string{"message": fmt.Sprintf("%d dummy rows deleted", deleted)})
 }

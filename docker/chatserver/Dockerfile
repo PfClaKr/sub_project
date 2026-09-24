@@ -1,22 +1,11 @@
-# FROM golang:1.22.2-alpine3.19
-
-#RUN go build -o /something-files-for-execute
-
-#CMD ["/something-files-for-execute"]
-
-# golang/Dockerfile
-FROM golang:1.22-rc-alpine
-
-RUN apk add tzdata
-
+# Build context: srcs/server (shared modules under package/ are needed).
+FROM golang:1.22-alpine AS build
 WORKDIR /app
-
 COPY . .
-
 WORKDIR /app/chatserver
+RUN go mod download && CGO_ENABLED=0 go build -o /main .
 
-RUN go mod download
-
-RUN go build -o /main .
-
+FROM alpine:3.20
+RUN apk add --no-cache tzdata ca-certificates
+COPY --from=build /main /main
 CMD ["/main"]
