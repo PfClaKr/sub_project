@@ -1,45 +1,57 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Heart } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { API_URL } from "@/libs/config";
+import { useSession } from "@/libs/session";
+import { GhostButton } from "@/styles/styledUi";
 
 export const FavoriteButton = ({ productId }: { productId: string }) => {
+	const { session } = useSession();
 	const router = useRouter();
-	// null = unknown (not logged in or still loading)
-	const [favorited, setFavorited] = useState<boolean | null>(null);
+	const pathname = usePathname();
+	const [favorited, setFavorited] = useState(false);
 	const [busy, setBusy] = useState(false);
 
 	useEffect(() => {
-		fetch(`${API_URL}/favorites/${productId}`, { credentials: 'include' })
-			.then(res => res.ok ? res.json() : null)
-			.then(json => setFavorited(json ? json.favorited : null))
-			.catch(() => setFavorited(null));
-	}, [productId]);
+		if (!session) {
+			setFavorited(false);
+			return;
+		}
+		fetch(`${API_URL}/favorites/${productId}`, { credentials: "include" })
+			.then(res => (res.ok ? res.json() : null))
+			.then(json => setFavorited(!!json?.favorited))
+			.catch(() => setFavorited(false));
+	}, [productId, session]);
 
 	const toggle = async () => {
+		if (!session) {
+			router.push(`/login?next=${encodeURIComponent(pathname)}`);
+			return;
+		}
 		setBusy(true);
 		try {
 			const res = await fetch(`${API_URL}/favorites/${productId}`, {
-				method: favorited ? 'DELETE' : 'POST',
-				credentials: 'include',
+				method: favorited ? "DELETE" : "POST",
+				credentials: "include",
 			});
 			if (res.status === 401) {
-				router.push('/login');
+				router.push(`/login?next=${encodeURIComponent(pathname)}`);
 				return;
 			}
-			if (res.ok) {
-				const json = await res.json();
-				setFavorited(json.favorited);
-			}
+			if (res.ok) setFavorited((await res.json()).favorited);
+		} catch {
+			// Keep the current state; the user can retry.
 		} finally {
 			setBusy(false);
 		}
 	};
 
 	return (
-		<button onClick={toggle} disabled={busy}>
-			{favorited ? "♥ 관심목록에서 빼기" : "♡ 관심목록 저장"}
-		</button>
+		<GhostButton onClick={toggle} disabled={busy} aria-pressed={favorited}>
+			<Heart size={16} fill={favorited ? "currentColor" : "none"} aria-hidden />
+			{favorited ? "찜 해제" : "찜하기"}
+		</GhostButton>
 	);
 };

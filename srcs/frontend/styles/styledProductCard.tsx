@@ -1,104 +1,92 @@
 'use client';
 
-import AppTheme from "@/theme/ui";
-import palette from "@/theme/colorPalette";
 import styled from "styled-components";
+import palette, { radius, shadow, breakpoint } from "@/theme/colorPalette";
 
-export const Card = styled.div`
-	display: flex;
-	flex-direction: column;
-	border-radius: 10px;
-	overflow: hidden;
-	background-color: ${palette.bg.default};
-	border: 1px solid ${palette.line};
-	transition: transform 0.15s ease, box-shadow 0.15s ease;
+export const Grid = styled.ul`
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 20px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
 
-	&:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 10px 24px ${palette.shadow};
+	@media (max-width: ${breakpoint.sm}) {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 12px;
 	}
 `;
 
-export const ThumbContainer = styled.div<{ $soldout?: boolean }>`
-	position: relative;
-	width: 100%;
-	aspect-ratio: 1 / 1;
-	background-color: ${palette.bg[300]};
+export const Card = styled.article<{ $dimmed?: boolean }>`
+	height: 100%;
+	border-radius: ${radius.md};
+	background-color: ${palette.bg};
+	box-shadow: ${shadow.card};
+	overflow: hidden;
+	transition: box-shadow 0.15s, transform 0.15s;
+	opacity: ${p => (p.$dimmed ? 0.6 : 1)};
 
-	${p => p.$soldout && `
-		img { filter: grayscale(60%) brightness(0.7); }
-	`}
+	&:hover {
+		box-shadow: ${shadow.hover};
+		transform: translateY(-2px);
+	}
 `;
 
-export const Thumb = styled.img`
-	position: absolute;
-	inset: 0;
+export const ThumbContainer = styled.div`
+	position: relative;
+	aspect-ratio: 1 / 1;
+	background-color: ${palette.surface};
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+`;
+
+export const NoImage = styled.div`
 	width: 100%;
 	height: 100%;
-	object-fit: cover;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: ${palette.muted};
+	font-size: 13px;
 `;
 
-export const StatusBadge = styled.div`
+export const BadgeSlot = styled.div`
 	position: absolute;
 	top: 8px;
 	left: 8px;
-	padding: 3px 10px;
-	border-radius: 12px;
-	font-size: 12px;
-	font-weight: 700;
-	color: #ffffff;
-	background-color: ${palette.fg[700]};
-	opacity: 0.92;
 `;
 
 export const InfoContainer = styled.div`
+	padding: 10px 12px 14px;
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
-	padding: 12px 14px 14px;
-
-	@media (max-width: 600px) {
-		padding: 10px 10px 12px;
-	}
+	gap: 2px;
 `;
 
-export const Title = styled.div`
-	color: ${palette.fg.default};
+export const Title = styled.h3`
+	margin: 0;
 	font-size: 15px;
-
-	@media (max-width: 600px) {
-		font-size: 14px;
-	}
-
 	font-weight: 600;
+	color: ${palette.text};
 	overflow: hidden;
 	text-overflow: ellipsis;
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	min-height: 2.9em;
+	white-space: nowrap;
 `;
 
 export const Price = styled.div`
-	color: ${AppTheme.product.text.primary.color};
-	font-size: 18px;
+	font-size: 17px;
 	font-weight: 800;
-
-	@media (max-width: 600px) {
-		font-size: 16px;
-	}
+	color: ${palette.heading};
 `;
 
 export const Subtitle = styled.div`
-	display: flex;
-	justify-content: space-between;
-	gap: 8px;
-	color: ${AppTheme.product.text.sub.color};
 	font-size: 13px;
-
-	div {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
+	color: ${palette.muted};
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 `;

@@ -1,32 +1,40 @@
 'use client';
 
 import {
-	Thumb,
+	Card,
 	ThumbContainer,
+	NoImage,
+	BadgeSlot,
+	InfoContainer,
 	Title,
 	Price,
 	Subtitle,
-	InfoContainer,
-	Card,
-	StatusBadge,
- } from "@/styles/styledProductCard"
+} from "@/styles/styledProductCard";
+import { StatusBadge } from "@/styles/styledUi";
+import { STATUS_SELLING } from "@/libs/constants";
+import { formatPrice, formatRelative, imageUrl } from "@/libs/format";
+import type { Product } from "@/libs/types";
 
-export default function ProductCard(props: any) {
-	const soldout = props.productStatus === "판매완료";
+export default function ProductCard({ product }: { product: Product }) {
+	const thumb = imageUrl(product.ProductImage?.[0]);
+	const status = product.ProductStatus ?? STATUS_SELLING;
+	const meta = [product.PreferedLocation, formatRelative(product.ProductCreatedAt)].filter(Boolean).join(" · ");
+
 	return (
-		<Card>
-			<ThumbContainer $soldout={soldout}>
-				{props.productImage?.[0] && <Thumb src={props.productImage[0]} alt={props.productName} />}
-				{props.productStatus && props.productStatus !== "판매중" && (
-					<StatusBadge>{props.productStatus}</StatusBadge>
+		<Card $dimmed={status === "판매완료"}>
+			<ThumbContainer>
+				{thumb
+					? <img src={thumb} alt={product.ProductName} loading="lazy" />
+					: <NoImage>사진 없음</NoImage>}
+				{status !== STATUS_SELLING && (
+					<BadgeSlot><StatusBadge $status={status}>{status}</StatusBadge></BadgeSlot>
 				)}
 			</ThumbContainer>
 			<InfoContainer>
-				<Title>{props.productName}</Title>
-				<Price>€ {props.productPrice}</Price>
-				<Subtitle>
-					<div>{props.preferedLocation}</div>
-				</Subtitle>
+				<Title title={product.ProductName}>{product.ProductName}</Title>
+				<Price>{formatPrice(product.ProductPrice)}</Price>
+				{meta && <Subtitle>{meta}</Subtitle>}
+				{product.SellerNickname && <Subtitle>{product.SellerNickname}</Subtitle>}
 			</InfoContainer>
 		</Card>
 	);

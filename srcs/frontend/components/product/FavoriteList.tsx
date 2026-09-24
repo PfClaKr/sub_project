@@ -1,17 +1,19 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import DisplayTray from "@/components/product/DisplayTray";
+import ProductGrid, { ProductGridSkeleton } from "@/components/product/ProductGrid";
+import { RequireLogin } from "@/components/ui/RequireLogin";
+import { EmptyState, ErrorText, LinkButton } from "@/styles/styledUi";
 import { API_URL } from "@/libs/config";
+import type { Product } from "@/libs/types";
 
-export const FavoriteList = () => {
-	const [products, setProducts] = useState<any[] | null>(null);
+function Favorites() {
+	const [products, setProducts] = useState<Product[] | null>(null);
 	const [error, setError] = useState("");
 
 	useEffect(() => {
-		fetch(`${API_URL}/favorites`, { credentials: 'include' })
+		fetch(`${API_URL}/favorites`, { credentials: "include" })
 			.then(res => {
-				if (res.status === 401) throw new Error("로그인이 필요해요.");
 				if (!res.ok) throw new Error("찜 목록을 불러오지 못했어요.");
 				return res.json();
 			})
@@ -19,9 +21,17 @@ export const FavoriteList = () => {
 			.catch(e => setError(e.message));
 	}, []);
 
-	if (error) return <p>{error}</p>;
-	if (products === null) return <p>불러오는 중...</p>;
-	if (products.length === 0) return <p>아직 찜한 상품이 없어요.</p>;
+	if (error) return <ErrorText>{error}</ErrorText>;
+	if (products === null) return <ProductGridSkeleton count={4} />;
+	if (products.length === 0) {
+		return (
+			<EmptyState>
+				<p>아직 찜한 상품이 없어요.</p>
+				<LinkButton href="/">상품 둘러보기</LinkButton>
+			</EmptyState>
+		);
+	}
+	return <ProductGrid products={products} />;
+}
 
-	return <DisplayTray products={products} />;
-};
+export const FavoriteList = () => <RequireLogin>{() => <Favorites />}</RequireLogin>;

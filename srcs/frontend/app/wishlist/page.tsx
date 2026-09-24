@@ -1,15 +1,17 @@
 import { Metadata } from "next";
 import { FavoriteList } from "@/components/product/FavoriteList";
-import { PageTitle } from "@/styles/styledCommon";
+import { PageHeader } from "@/styles/styledLayout";
 
 export const metadata: Metadata = {
-	title: "WishList"
-}
+	title: "찜 목록",
+};
 
-export default function WishListPage() {
+export default function Page() {
 	return (
 		<div>
-			<PageTitle>찜 목록</PageTitle>
+			<PageHeader>
+				<h1>찜 목록</h1>
+			</PageHeader>
 			<FavoriteList />
 		</div>
 	);

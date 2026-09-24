@@ -1,18 +1,17 @@
-import { Metadata } from "next";
-import { SellForm } from "@/components/form/SellForm";
-import { PageTitle, SectionCard } from "@/styles/styledCommon";
+'use client';
 
-export const metadata: Metadata = {
-	title: "Sell",
-};
+import { ProductForm } from "@/components/form/ProductForm";
+import { RequireLogin } from "@/components/ui/RequireLogin";
+import { PageHeader } from "@/styles/styledLayout";
 
 export default function SellPage() {
 	return (
 		<div>
-			<PageTitle>판매하기</PageTitle>
-			<SectionCard>
-				<SellForm />
-			</SectionCard>
+			<PageHeader>
+				<h1>판매하기</h1>
+				<p>사진과 설명을 자세히 적을수록 빨리 팔려요.</p>
+			</PageHeader>
+			<RequireLogin>{() => <ProductForm />}</RequireLogin>
 		</div>
 	);
 }
