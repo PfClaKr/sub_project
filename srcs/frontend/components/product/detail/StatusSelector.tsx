@@ -1,62 +1,46 @@
 'use client';
 
-import { useEffect, useState } from "react";
-import { GRAPHQL_URL, LOGIN_URL } from "@/libs/config";
+import { useState } from "react";
+import { gql } from "@/libs/graphql";
+import { STATUSES } from "@/libs/constants";
+import { FieldLabel } from "@/styles/styledForm";
+import { ErrorText } from "@/styles/styledUi";
 
-const STATUSES = ["판매중", "예약중", "판매완료"];
-
-type Props = {
+// Owner-only control; the server checks ownership again.
+export const StatusSelector = ({ productId, initial, onChange }: {
 	productId: string;
-	ownerId: string;
-	productStatus?: string;
-};
-
-// Shows a badge to visitors and a status selector to the owner.
-export const StatusSelector = ({ productId, ownerId, productStatus }: Props) => {
-	const [status, setStatus] = useState(productStatus ?? "판매중");
-	const [isOwner, setIsOwner] = useState(false);
+	initial: string;
+	onChange?: (status: string) => void;
+}) => {
+	const [status, setStatus] = useState(initial);
 	const [busy, setBusy] = useState(false);
-
-	useEffect(() => {
-		fetch(`${LOGIN_URL}/whoami`, { credentials: 'include' })
-			.then(res => res.ok ? res.json() : null)
-			.then(session => setIsOwner(session?.UserId === ownerId))
-			.catch(() => setIsOwner(false));
-	}, [ownerId]);
+	const [error, setError] = useState("");
 
 	const handleChange = async (next: string) => {
 		setBusy(true);
-		try {
-			const res = await fetch(GRAPHQL_URL, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				credentials: 'include',
-				body: JSON.stringify({
-					query: `mutation U($productId: String!, $status: String!) {
-						updateProductStatus(ProductId: $productId, ProductStatus: $status) {
-							ProductStatus
-						}
-					}`,
-					variables: { productId, status: next },
-				}),
-			});
-			const json = res.ok ? await res.json() : null;
-			if (json?.data?.updateProductStatus?.ProductStatus) {
-				setStatus(json.data.updateProductStatus.ProductStatus);
-			}
-		} finally {
-			setBusy(false);
+		setError("");
+		const { data, error } = await gql<{ updateProductStatus: { ProductStatus: string } }>(
+			`mutation U($productId: String!, $status: String!) {
+				updateProductStatus(ProductId: $productId, ProductStatus: $status) { ProductStatus }
+			}`,
+			{ productId, status: next },
+		);
+		setBusy(false);
+		if (error || !data?.updateProductStatus) {
+			setError(error ?? "상태를 바꾸지 못했어요.");
+			return;
 		}
+		setStatus(data.updateProductStatus.ProductStatus);
+		onChange?.(data.updateProductStatus.ProductStatus);
 	};
 
-	if (!isOwner) return <p>상태: {status}</p>;
-
 	return (
-		<label>
-			상태:{" "}
+		<FieldLabel>
+			판매 상태
 			<select value={status} disabled={busy} onChange={e => handleChange(e.target.value)}>
 				{STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
 			</select>
-		</label>
+			{error && <ErrorText>{error}</ErrorText>}
+		</FieldLabel>
 	);
 };

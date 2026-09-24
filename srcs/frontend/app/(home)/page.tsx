@@ -1,84 +1,79 @@
-import { Metadata } from "next";
-import { SearchInput } from "../../components/SearchInput";
-import DisplayTray from "@/components/product/DisplayTray";
-import { Hero, HeroTag, SectionTitle } from "@/styles/styledHome";
-import { ChipRow, EmptyState } from "@/styles/styledCommon";
-import { KeywordChip } from "@/styles/styledChip";
-import { GRAPHQL_URL } from "@/libs/config";
-import { CATEGORIES } from "@/libs/constants";
+import ProductGrid from "@/components/product/ProductGrid";
+import { CategoryChips } from "@/components/product/CategoryChips";
+import { LandingHero } from "@/components/landing/LandingHero";
+import { CallToAction, CategoryTiles, HowItWorks, MarketStats } from "@/components/landing/LandingSections";
+import { Reveal } from "@/components/landing/Reveal";
+import { SectionHead } from "@/styles/styledLanding";
+import { EmptyState, ErrorText, LinkButton, Pagination } from "@/styles/styledUi";
+import { gql, PRODUCT_CARD_FIELDS } from "@/libs/graphql";
+import { CATEGORIES, PAGE_SIZE } from "@/libs/constants";
+import type { Product } from "@/libs/types";
 
-const POPULAR_KEYWORDS = ["아이폰", "이케아", "자전거", "책상", "패딩", "모니터"];
+type Props = { searchParams: { category?: string; page?: string } };
+type Stats = { Products: number; Selling: number; Users: number };
 
-export const metadata: Metadata = {
-	title: "Home",
-};
+// The landing page is also the app's home: hero and search on top, then
+// the live listings, then the "how it works" pitch for newcomers.
+export default async function HomePage({ searchParams }: Props) {
+	const category = CATEGORIES.find(c => c === searchParams.category);
+	const page = Math.max(1, Number(searchParams.page) || 1);
 
-async function getRecentProducts(limit: number) {
-	try {
-		const response = await fetch(GRAPHQL_URL, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				query: `query RecentProducts($limit: Float) {
-					recentProducts(Limit: $limit) {
-						ProductId
-						UserId
-						ProductStatus
-						ProductName
-						ProductPrice
-						ProductImage
-						PreferedLocation
-					}
-				}`,
-				variables: { limit },
-			}),
-			cache: 'no-store',
-		});
-		if (!response.ok) return [];
-		const json = await response.json();
-		return json.data?.recentProducts ?? [];
-	} catch {
-		// Backend unreachable: render the page with an empty feed.
-		return [];
-	}
-}
+	// Ask for one extra item to know whether a next page exists.
+	const { data, error } = await gql<{ recentProducts: Product[]; marketStats: Stats | null }>(
+		`query Home($limit: Float, $offset: Float, $category: String) {
+			recentProducts(Limit: $limit, Offset: $offset, Category: $category) { ${PRODUCT_CARD_FIELDS} }
+			marketStats { Products Selling Users }
+		}`,
+		{ limit: PAGE_SIZE + 1, offset: (page - 1) * PAGE_SIZE, category },
+	);
+	const all = data?.recentProducts ?? [];
+	const products = all.slice(0, PAGE_SIZE);
+	const hasNext = all.length > PAGE_SIZE;
 
-export default async function HomePage() {
-	const products = await getRecentProducts(8);
+	const pageHref = (p: number) => {
+		const q = new URLSearchParams();
+		if (category) q.set("category", category);
+		if (p > 1) q.set("page", String(p));
+		const s = q.toString();
+		return `${s ? `/?${s}` : "/"}#recent`;
+	};
+
 	return (
 		<div>
-			<Hero>
-				<HeroTag>파리 한인 중고마켓</HeroTag>
-				<h1>여기는 잇냥, 사고팔 물건 있냥?</h1>
-				<SearchInput />
-				<ChipRow>
-					{POPULAR_KEYWORDS.map(keyword => (
-						<KeywordChip key={keyword} href={`/search?q=${encodeURIComponent(keyword)}`}>
-							{keyword}
-						</KeywordChip>
-					))}
-				</ChipRow>
-			</Hero>
-			<div>
-				<SectionTitle>카테고리로 둘러보기</SectionTitle>
-				<ChipRow style={{ justifyContent: "flex-start" }}>
-					{CATEGORIES.map(category => (
-						<KeywordChip key={category} href={`/search?category=${encodeURIComponent(category)}`}>
-							{category}
-						</KeywordChip>
-					))}
-				</ChipRow>
-			</div>
-			<div>
-				<SectionTitle>최근에 올라온거 뭐있냥?</SectionTitle>
-				{products.length > 0 ? (
-					<DisplayTray products={products} />
+			<LandingHero />
+			<MarketStats stats={data?.marketStats ?? null} />
+
+			<section id="recent" aria-labelledby="recent-title" style={{ scrollMarginTop: 80 }}>
+				<SectionHead>
+					<div>
+						<h2 id="recent-title">{category ? `${category} 최신 상품` : "최근에 올라온거 뭐있냥?"}</h2>
+						<p>방금 올라온 물건부터 보여드려요.</p>
+					</div>
+				</SectionHead>
+				<CategoryChips active={category} />
+
+				{error && <ErrorText role="alert">{error}</ErrorText>}
+				{!error && products.length === 0 ? (
+					<EmptyState>
+						<p>{category ? `아직 ${category} 상품이 없어요.` : "아직 올라온 물건이 없어요."}</p>
+						<LinkButton href="/sell">첫 상품 올리기</LinkButton>
+					</EmptyState>
 				) : (
-					<EmptyState>아직 올라온 물건이 없어요.</EmptyState>
+					<Reveal><ProductGrid products={products} /></Reveal>
 				)}
-			</div>
+
+				{(page > 1 || hasNext) && (
+					<Pagination aria-label="페이지">
+						{page > 1 && <LinkButton href={pageHref(page - 1)} $ghost>← 이전</LinkButton>}
+						<span>{page} 페이지</span>
+						{hasNext && <LinkButton href={pageHref(page + 1)} $ghost>다음 →</LinkButton>}
+					</Pagination>
+				)}
+			</section>
+
+			<CategoryTiles active={category} />
+			<HowItWorks />
+			<CallToAction />
 		</div>
 	);
 }

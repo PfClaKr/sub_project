@@ -1,25 +1,45 @@
 'use client';
 
 import styled from "styled-components";
-import palette from "@/theme/colorPalette";
+import palette, { radius, breakpoint } from "@/theme/colorPalette";
 
-export const DetailGrid = styled.div`
-	display: grid;
-	grid-template-columns: minmax(0, 480px) minmax(0, 1fr);
-	gap: 32px;
+export const Breadcrumb = styled.nav`
+	font-size: 13px;
+	color: ${palette.muted};
+	margin-bottom: 16px;
 
-	@media (max-width: 800px) {
-		grid-template-columns: 1fr;
+	a {
+		color: ${palette.muted};
+		text-decoration: none;
+	}
+	a:hover {
+		color: ${palette.primary};
 	}
 `;
 
-export const GalleryMain = styled.div`
-	position: relative;
-	width: 100%;
+export const DetailLayout = styled.div`
+	display: grid;
+	grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+	gap: 32px;
+	align-items: start;
+
+	@media (max-width: ${breakpoint.md}) {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 20px;
+	}
+`;
+
+export const Gallery = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+`;
+
+export const MainImage = styled.div`
 	aspect-ratio: 1 / 1;
-	border-radius: 14px;
+	border-radius: ${radius.md};
 	overflow: hidden;
-	background-color: ${palette.bg[100]};
+	background-color: ${palette.surface};
 
 	img {
 		width: 100%;
@@ -28,124 +48,108 @@ export const GalleryMain = styled.div`
 	}
 `;
 
-export const GalleryThumbs = styled.div`
+export const Thumbs = styled.div`
 	display: flex;
 	gap: 8px;
-	margin-top: 8px;
-`;
+	overflow-x: auto;
 
-export const GalleryThumb = styled.button<{ $active?: boolean }>`
-	padding: 0;
-	width: 64px;
-	height: 64px;
-	border-radius: 8px;
-	overflow: hidden;
-	background: none;
-	border: 2px solid ${p => (p.$active ? palette.fg[300] : "transparent")};
-
+	button {
+		flex: none;
+		width: 64px;
+		height: 64px;
+		padding: 0;
+		border-radius: ${radius.sm};
+		overflow: hidden;
+		background: none;
+		border: 2px solid transparent;
+	}
+	button[aria-current="true"] {
+		border-color: ${palette.primary};
+	}
+	button:hover:not(:disabled) {
+		background: none;
+	}
 	img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
-		display: block;
-	}
-
-	&:hover {
-		background: none;
 	}
 `;
 
 export const InfoPanel = styled.div`
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 16px;
+
+	h1 {
+		margin: 0;
+		font-size: 24px;
+	}
 `;
 
-export const DetailTitle = styled.h1`
-	font-size: 24px;
-	margin: 0;
-`;
-
-export const DetailPrice = styled.div`
+export const BigPrice = styled.div`
 	font-size: 28px;
 	font-weight: 800;
-	color: ${palette.fg[500]};
+	color: ${palette.heading};
 `;
 
-export const MetaList = styled.ul`
-	list-style: none;
+export const Facts = styled.dl`
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 8px 16px;
 	margin: 0;
 	padding: 16px 0;
-	border-top: 1px solid ${palette.line};
-	border-bottom: 1px solid ${palette.line};
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
+	border-top: 1px solid ${palette.border};
+	border-bottom: 1px solid ${palette.border};
 	font-size: 14px;
-	color: ${palette.fg[100]};
 
-	strong {
-		color: ${palette.fg.default};
-		font-weight: 600;
-		display: inline-block;
-		min-width: 72px;
+	dt {
+		color: ${palette.muted};
+	}
+	dd {
+		margin: 0;
 	}
 `;
 
-export const ActionRow = styled.div`
+export const Actions = styled.div`
 	display: flex;
-	gap: 10px;
+	flex-wrap: wrap;
+	gap: 8px;
 
-	button {
-		padding: 12px 20px;
-		font-size: 15px;
-	}
-
-	@media (max-width: 600px) {
-		button {
-			flex: 1;
-			padding: 12px 10px;
-			font-size: 14px;
-		}
+	> * {
+		flex: 1 1 140px;
 	}
 `;
 
-export const SellerCard = styled.div`
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	padding: 18px;
-	border-radius: 14px;
-	background-color: ${palette.bg[100]};
-	border: 1px solid ${palette.line};
-	margin-top: 28px;
-
-	img {
-		width: 48px;
-		height: 48px;
-		border-radius: 50%;
-		object-fit: cover;
-	}
-`;
-
-export const SellerName = styled.div`
-	font-weight: 700;
-`;
-
-export const SellerMeta = styled.div`
-	font-size: 13px;
-	color: ${palette.fg[100]};
-`;
-
-export const DescriptionSection = styled.section`
-	margin-top: 32px;
+export const Description = styled.section`
+	margin-top: 36px;
 
 	h2 {
 		font-size: 18px;
+		margin: 0 0 12px;
 	}
-
 	p {
+		margin: 0;
 		white-space: pre-wrap;
-		line-height: 1.7;
+	}
+`;
+
+export const SellerBox = styled.div`
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 14px;
+	border: 1px solid ${palette.border};
+	border-radius: ${radius.md};
+
+	a {
+		text-decoration: none;
+	}
+	strong {
+		display: block;
+	}
+	span {
+		font-size: 13px;
+		color: ${palette.muted};
 	}
 `;

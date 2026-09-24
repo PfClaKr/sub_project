@@ -1,15 +1,17 @@
 import { Metadata } from "next";
 import { ChatRoomList } from "@/components/chat/ChatRoomList";
-import { PageTitle } from "@/styles/styledCommon";
+import { PageHeader } from "@/styles/styledLayout";
 
 export const metadata: Metadata = {
-	title: "Chat"
-}
+	title: "채팅",
+};
 
-export default function ChatPage() {
+export default function Page() {
 	return (
 		<div>
-			<PageTitle>내 채팅</PageTitle>
+			<PageHeader>
+				<h1>채팅</h1>
+			</PageHeader>
 			<ChatRoomList />
 		</div>
 	);

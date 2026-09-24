@@ -1,5 +1,11 @@
-import { EmptyState } from "@/styles/styledCommon";
+import { ProductGridSkeleton } from "@/components/product/ProductGrid";
+import { Skeleton } from "@/styles/styledUi";
 
 export default function Loading() {
-	return <EmptyState>불러오는 중...</EmptyState>;
+	return (
+		<div>
+			<Skeleton $h="32px" $w="40%" style={{ marginBottom: 24 }} />
+			<ProductGridSkeleton />
+		</div>
+	);
 }

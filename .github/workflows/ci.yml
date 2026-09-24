@@ -46,12 +46,22 @@ jobs:
           node-version: '20'
           cache: npm
           cache-dependency-path: srcs/frontend/package-lock.json
-      - name: Install, type-check and build
+      - name: Install
+        working-directory: srcs/frontend
+        run: npm ci
+      - name: Lint and type-check
         working-directory: srcs/frontend
         run: |
-          npm ci
+          npm run lint
           npx tsc --noEmit
-          npm run build
+      # Unit tests for libs/*, including the frontend ↔ apiserver contract
+      # (categories, regions, statuses), which reads the Go source.
+      - name: Unit tests
+        working-directory: srcs/frontend
+        run: npm test
+      - name: Build
+        working-directory: srcs/frontend
+        run: npm run build
       - name: Verify PWA assets
         working-directory: srcs/frontend
         run: |

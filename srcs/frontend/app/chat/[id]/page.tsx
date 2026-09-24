@@ -1,16 +1,19 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { ChatRoom } from "@/components/chat/ChatRoom";
-import { PageTitle } from "@/styles/styledCommon";
+import { Breadcrumb } from "@/styles/styledDetail";
 
 export const metadata: Metadata = {
-	title: "Chat Room"
-}
+	title: "채팅방",
+};
 
-export default function ChatRoomPage({params: {id}}: {params: {id: string}; }) {
+export default function ChatRoomPage({ params }: { params: { id: string } }) {
 	return (
 		<div>
-			<PageTitle>채팅방</PageTitle>
-			<ChatRoom chatId={id} />
+			<Breadcrumb>
+				<Link href="/chat">← 채팅 목록</Link>
+			</Breadcrumb>
+			<ChatRoom chatId={params.id} />
 		</div>
 	);
 }

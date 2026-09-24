@@ -1,79 +1,66 @@
 'use client';
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { StyledNavbar } from "@/styles/styledLink";
-import { Nav, NavInner, Brand, NavItem, NavSpacer, NavUser, SellCta } from "@/styles/styledNav";
-import { LOGIN_URL } from "@/libs/config";
+import { usePathname } from "next/navigation";
+import { StyledLink, StyledNavbar } from "@/styles/styledLink";
+import { Nav, NavInner, Brand, NavLinks, NavSpacer, NavUser } from "@/styles/styledNav";
+import { GhostButton, LinkButton } from "@/styles/styledUi";
+import { Avatar } from "@/components/ui/Avatar";
+import { useSession } from "@/libs/session";
 
-type Session = {
-	UserId: string;
-	UserNickname?: string;
-	ProfileImage?: string;
-} | null;
+const LINKS = [
+	{ href: "/search", label: "상품찾기", auth: false },
+	{ href: "/sell", label: "판매하기", auth: true },
+	{ href: "/chat", label: "채팅", auth: true },
+	{ href: "/wishlist", label: "찜목록", auth: true },
+];
 
 export default function Navigation() {
-	const [session, setSession] = useState<Session>(null);
+	const { session, loading, logout } = useSession();
 	const pathname = usePathname();
-	const router = useRouter();
 
-	// Refetch on route change so the navbar updates right after login.
-	useEffect(() => {
-		fetch(`${LOGIN_URL}/whoami`, { credentials: 'include' })
-			.then(res => res.ok ? res.json() : null)
-			.then(setSession)
-			.catch(() => setSession(null));
-	}, [pathname]);
-
+	// A full reload drops the client router cache, so no page rendered
+	// for the logged-in user (e.g. /admin) can be shown from cache.
 	const handleLogout = async () => {
-		try {
-			await fetch(`${LOGIN_URL}/logout`, { method: 'POST', credentials: 'include' });
-		} finally {
-			setSession(null);
-			router.push('/');
-			router.refresh();
-		}
+		await logout();
+		window.location.assign("/");
 	};
 
 	return (
-		<Nav>
+		<Nav aria-label="주 메뉴">
 			<NavInner>
 				<Brand>
-					<StyledNavbar href="/">itnyang</StyledNavbar>
+					<StyledLink href="/">잇냥</StyledLink>
 				</Brand>
-				{session && (
-					<>
-						<NavItem>
-							<StyledNavbar href="/chat">채팅</StyledNavbar>
-						</NavItem>
-						<NavItem>
-							<StyledNavbar href="/wishlist">찜목록</StyledNavbar>
-						</NavItem>
-					</>
+				<NavLinks>
+					{LINKS.filter(l => !l.auth || session).map(l => (
+						<li key={l.href}>
+							<StyledNavbar
+								href={l.href}
+								$active={pathname.startsWith(l.href)}
+								aria-current={pathname.startsWith(l.href) ? "page" : undefined}
+							>
+								{l.label}
+							</StyledNavbar>
+						</li>
+					))}
+				</NavLinks>
+				{session?.Role === "admin" && (
+					<StyledNavbar href="/admin" $active={pathname.startsWith("/admin")}>관리자</StyledNavbar>
 				)}
 				<NavSpacer />
-				{session ? (
-					<>
-						<NavUser>
-							<StyledNavbar href="/myaccount">{session.UserNickname ?? session.UserId}님</StyledNavbar>
-						</NavUser>
-						<SellCta>
-							<StyledNavbar href="/sell">판매하기</StyledNavbar>
-						</SellCta>
-						<NavItem>
-							<button onClick={handleLogout}>로그아웃</button>
-						</NavItem>
-					</>
+				{!loading && (session ? (
+					<NavUser>
+						<StyledNavbar href="/myaccount" $active={pathname === "/myaccount"}>
+							<span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+								<Avatar src={session.ProfileImage} name={session.UserNickname} size={28} />
+								{session.UserNickname || "내 계정"}
+							</span>
+						</StyledNavbar>
+						<GhostButton onClick={handleLogout}>로그아웃</GhostButton>
+					</NavUser>
 				) : (
-					<>
-						<NavItem>
-							<StyledNavbar href="/login">로그인</StyledNavbar>
-						</NavItem>
-						<SellCta>
-							<StyledNavbar href="/account/sign-up">회원가입</StyledNavbar>
-						</SellCta>
-					</>
-				)}
+					<LinkButton href="/login">로그인</LinkButton>
+				))}
 			</NavInner>
 		</Nav>
 	);
