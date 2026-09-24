@@ -66,13 +66,13 @@ admin:
 	@$(COMPOSE) exec apiserver /main promote-admin $(email)
 
 ## Run the same checks as CI (without e2e): go vet/test for every module,
-## then the frontend type-check.
+## then frontend lint, type-check and unit tests.
 test:
 	@echo "== go vet + tests"
 	@docker run --rm -v $(CURDIR)/srcs/server:/app golang:1.22-alpine \
 		sh -c 'set -e; for m in $(GO_MODULES); do echo "-- $$m"; cd /app/$$m; go vet ./...; go test ./...; done; cd /app/e2e && go vet -tags e2e ./...'
-	@echo "== frontend type-check"
-	@cd srcs/frontend && npx tsc --noEmit && echo "tsc ok"
+	@echo "== frontend lint + type-check + unit tests"
+	@cd srcs/frontend && npm run lint && npx tsc --noEmit && npm test
 
 ## API end-to-end tests against the running stack (make up first; needs Go
 ## on the host and docker for the admin promotion step).
