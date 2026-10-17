@@ -161,7 +161,16 @@ func generateDummyData(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	jsonresponse.New(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%d dummy users/products created", count)})
+	users := count
+	if users > len(mockUsers) {
+		users = len(mockUsers)
+	}
+	if err := seedDummyPosts(users); err != nil {
+		jsonresponse.Internal(w, err)
+		return
+	}
+
+	jsonresponse.New(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%d dummy users/products and %d posts created", count, len(mockPosts))})
 }
 
 // deleteDummyData removes only rows created by generateDummyData.
@@ -171,7 +180,11 @@ func deleteDummyData(w http.ResponseWriter, r *http.Request) {
 		{dynamo.TableUsers, "UserId", dummyUserPrefix},
 	}
 
-	deleted := 0
+	deleted, err := deleteDummyPosts()
+	if err != nil {
+		jsonresponse.Internal(w, err)
+		return
+	}
 	for _, t := range targets {
 		items, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{
 			TableName:                 aws.String(t.table),
