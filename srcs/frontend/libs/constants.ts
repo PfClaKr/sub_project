@@ -28,3 +28,24 @@ export const BOARDS: Record<BoardType, { label: string; topics: readonly string[
 export const REPORT_REASONS = ["사기 의심", "스팸·광고", "욕설·혐오", "개인정보 노출", "불법 행위", "기타"] as const;
 
 export const POST_PAGE_SIZE = 20;
+
+// Housing and job posts. Must match graphqlhandler.HousingKinds,
+// JobSectors, EmploymentTypes and JobLanguages.
+export const HOUSING_KINDS = ["쉐어", "스튜디오·원룸", "아파트 전체", "서블렛", "단기·민박"] as const;
+export const JOB_SECTORS = ["식당·카페", "판매·매장", "사무", "과외·강사", "베이비시터", "가이드·통역", "기타"] as const;
+export const EMPLOYMENT_TYPES = ["알바", "정규직", "인턴", "프리랜서"] as const;
+export const JOB_LANGUAGES = ["한국어", "프랑스어", "영어"] as const;
+
+export type ListingType = "housing" | "job";
+export const LISTING_MODES = {
+	housing: [{ value: "offer", label: "방 있어요" }, { value: "seek", label: "방 구해요" }],
+	job: [{ value: "hiring", label: "구인" }, { value: "seeking", label: "구직" }],
+} as const;
+
+export const DEALS = [
+	{ value: "open", label: "모집중" },
+	{ value: "reserved", label: "예약중" },
+	{ value: "closed", label: "완료" },
+] as const;
+
+export const MAX_LISTING_IMAGES = 8;

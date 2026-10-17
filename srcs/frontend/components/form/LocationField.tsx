@@ -23,9 +23,13 @@ export type LocationState = {
 // Paris arrondissement) is shown, outlined on the map; the seller may
 // choose to show the exact spot instead. In area mode the server stores
 // the area centre, never the picked point.
-export function LocationField({ value, onChange }: {
+// areaOnly hides the "exact location" choice (housing never shows an
+// address); exactHint replaces the hint shown for an exact pin.
+export function LocationField({ value, onChange, areaOnly, exactHint }: {
 	value: LocationState;
 	onChange: (next: LocationState) => void;
+	areaOnly?: boolean;
+	exactHint?: string;
 }) {
 	const [query, setQuery] = useState("");
 	const [results, setResults] = useState<Place[]>([]);
@@ -108,14 +112,18 @@ export function LocationField({ value, onChange }: {
 
 	return (
 		<FieldLabel as="div">
-			<Segmented role="group" aria-label="위치 표시 방식">
-				<button type="button" aria-pressed={!value.exact} onClick={() => setExact(false)}><MapIcon size={16} /> 동네만 표시</button>
-				<button type="button" aria-pressed={value.exact} onClick={() => setExact(true)}><MapPin size={16} /> 정확한 위치</button>
-			</Segmented>
+			{!areaOnly && (
+				<Segmented role="group" aria-label="위치 표시 방식">
+					<button type="button" aria-pressed={!value.exact} onClick={() => setExact(false)}><MapIcon size={16} /> 동네만 표시</button>
+					<button type="button" aria-pressed={value.exact} onClick={() => setExact(true)}><MapPin size={16} /> 정확한 위치</button>
+				</Segmented>
+			)}
 			<Hint>
 				{value.exact
-					? "지도에 핀이 그대로 표시돼요. 역이나 공공장소를 추천해요."
-					: "구매자에게는 동네(파리는 구) 경계만 보여요. 정확한 주소는 공개되지 않아요."}
+					? exactHint ?? "지도에 핀이 그대로 표시돼요. 역이나 공공장소를 추천해요."
+					: areaOnly
+						? "동네(파리는 구) 경계만 보여요. 정확한 주소는 채팅으로 알려주세요."
+						: "구매자에게는 동네(파리는 구) 경계만 보여요. 정확한 주소는 공개되지 않아요."}
 			</Hint>
 
 			<PlaceSearch>

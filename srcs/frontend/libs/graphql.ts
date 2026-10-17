@@ -71,3 +71,52 @@ export const POST_DETAIL_FIELDS = `
 	Liked
 	Bookmarked
 `;
+
+// Housing/job lists and pages.
+export const LISTING_CARD_FIELDS = `
+	PostId
+	Type
+	Topic
+	City
+	Title
+	Images
+	AuthorNickname
+	CreatedAt
+	BumpedAt
+	Deal
+	AreaName
+	Latitude
+	Longitude
+	Housing { Mode Kind Rent ChargesIncluded AvailableFrom Furnished Caf }
+	Job { Mode Sector Employment WageType Wage PermitRequired }
+`;
+
+export const LISTING_DETAIL_FIELDS = `
+	PostId
+	Type
+	Topic
+	City
+	Title
+	Body
+	Images
+	Status
+	AuthorId
+	AuthorNickname
+	AuthorImage
+	IsMine
+	CreatedAt
+	UpdatedAt
+	BumpedAt
+	ViewCount
+	Deal
+	ExpiresAt
+	AreaId
+	AreaName
+	Latitude
+	Longitude
+	ExactLocation
+	HasContact
+	Bookmarked
+	Housing { Mode Kind Rent ChargesIncluded Deposit AvailableFrom EndDate MinMonths Size Rooms Furnished Caf Pets }
+	Job { Mode Sector Employment WageType Wage Schedule PermitRequired Languages }
+`;

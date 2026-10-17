@@ -1,5 +1,7 @@
 package eshandler
 
+import "fmt"
+
 // PostQuery selects and orders community posts.
 type PostQuery struct {
 	Q       string
@@ -9,10 +11,26 @@ type PostQuery struct {
 	Country string
 	Solved  *bool // Q&A: only solved / only open questions
 	// Sort: "newest" (default without Q), "popular", or "" for relevance
-	// when Q is set.
+	// when Q is set; housing/job also "rent_asc", "wage_desc",
+	// "available" (soonest move-in first) and "distance" (needs Near).
 	Sort string
 	Page int // 1-based
 	Size int
+
+	// Housing and job filters.
+	Mode          string
+	Topics        []string // housing kinds or job sectors (stored as Topic)
+	MinRent       *float64
+	MaxRent       *float64
+	AvailableBy   string // YYYY-MM-DD: move-in possible on or before
+	Furnished     bool
+	Caf           bool
+	Pets          bool
+	Employment    []string
+	MinWage       *float64 // hourly wage
+	PermitFree    bool     // only jobs that do not require a work permit
+	Near          *GeoFilter
+	IncludeClosed bool // also list deals marked closed (the author's own lists)
 }
 
 var postFields = textFields{Name: "Title", Words: "TitleWords", Chosung: "TitleChosung", Body: "Body"}
@@ -31,6 +49,51 @@ func postFilters(opts PostQuery) []m {
 	}
 	if opts.Solved != nil {
 		filters = append(filters, m{"term": m{"Solved": *opts.Solved}})
+	}
+	if opts.Mode != "" {
+		filters = append(filters, m{"term": m{"Mode": opts.Mode}})
+	}
+	if len(opts.Topics) > 0 {
+		filters = append(filters, m{"terms": m{"Topic": opts.Topics}})
+	}
+	if opts.MinRent != nil || opts.MaxRent != nil {
+		r := m{}
+		if opts.MinRent != nil {
+			r["gte"] = *opts.MinRent
+		}
+		if opts.MaxRent != nil {
+			r["lte"] = *opts.MaxRent
+		}
+		filters = append(filters, m{"range": m{"Rent": r}})
+	}
+	if opts.AvailableBy != "" {
+		filters = append(filters, m{"range": m{"AvailableFrom": m{"lte": opts.AvailableBy}}})
+	}
+	for field, on := range map[string]bool{"Furnished": opts.Furnished, "Caf": opts.Caf, "Pets": opts.Pets} {
+		if on {
+			filters = append(filters, m{"term": m{field: true}})
+		}
+	}
+	if len(opts.Employment) > 0 {
+		filters = append(filters, m{"terms": m{"Employment": opts.Employment}})
+	}
+	if opts.MinWage != nil {
+		filters = append(filters, m{"term": m{"WageType": "hourly"}}, m{"range": m{"Wage": m{"gte": *opts.MinWage}}})
+	}
+	if opts.PermitFree {
+		filters = append(filters, m{"bool": m{"must_not": m{"term": m{"PermitRequired": true}}}})
+	}
+	if opts.Near != nil && opts.Near.Km == 0 && opts.Near.AreaId != "" {
+		filters = append(filters, m{"term": m{"AreaId": opts.Near.AreaId}})
+	} else if opts.Near != nil && opts.Near.Km > 0 {
+		filters = append(filters, m{"geo_distance": m{
+			"distance": fmt.Sprintf("%gkm", opts.Near.Km),
+			"Location": m{"lat": opts.Near.Lat, "lon": opts.Near.Lng},
+		}})
+	}
+	// Community posts have no Deal, so this only drops closed listings.
+	if !opts.IncludeClosed {
+		filters = append(filters, m{"bool": m{"must_not": m{"term": m{"Deal": "closed"}}}})
 	}
 	return filters
 }
@@ -85,8 +148,22 @@ func buildPostQuery(opts PostQuery, fuzzy bool) m {
 		"track_total_hits": true,
 		"_source":          []string{"PostId"},
 	}
-	newest := []m{{"CreatedAt": m{"order": "desc"}}}
+	newest := []m{{"SortAt": m{"order": "desc"}}}
 	switch {
+	case opts.Sort == "rent_asc":
+		body["query"] = query
+		body["sort"] = []m{{"Rent": m{"order": "asc", "missing": "_last"}}, newest[0]}
+	case opts.Sort == "wage_desc":
+		body["query"] = query
+		body["sort"] = []m{{"Wage": m{"order": "desc", "missing": "_last"}}, newest[0]}
+	case opts.Sort == "available":
+		body["query"] = query
+		body["sort"] = []m{{"AvailableFrom": m{"order": "asc", "missing": "_last"}}, newest[0]}
+	case opts.Sort == "distance" && opts.Near != nil && (opts.Near.Lat != 0 || opts.Near.Lng != 0):
+		body["query"] = query
+		body["sort"] = []m{{"_geo_distance": m{
+			"Location": m{"lat": opts.Near.Lat, "lon": opts.Near.Lng}, "order": "asc", "unit": "km",
+		}}, newest[0]}
 	case opts.Sort == "popular":
 		body["query"] = popular(query, q == "")
 	case opts.Sort == "newest" || q == "":
@@ -94,7 +171,7 @@ func buildPostQuery(opts PostQuery, fuzzy bool) m {
 		body["sort"] = newest
 	default: // relevance, newer first on ties
 		body["query"] = query
-		body["sort"] = []m{{"_score": "desc"}, {"CreatedAt": m{"order": "desc"}}}
+		body["sort"] = []m{{"_score": "desc"}, newest[0]}
 	}
 	return body
 }

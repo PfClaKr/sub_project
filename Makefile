@@ -65,12 +65,12 @@ admin:
 	@test -n "$(email)" || { echo "usage: make admin email=you@example.com"; exit 1; }
 	@$(COMPOSE) exec apiserver /main promote-admin $(email)
 
-## Run the same checks as CI (without e2e): go vet/test for every module,
+## Run the same checks as CI (without e2e): gofmt, go vet/test for every module,
 ## then frontend lint, type-check and unit tests.
 test:
 	@echo "== go vet + tests"
 	@docker run --rm -v $(CURDIR)/srcs/server:/app golang:1.22-alpine \
-		sh -c 'set -e; for m in $(GO_MODULES); do echo "-- $$m"; cd /app/$$m; go vet ./...; go test ./...; done; cd /app/e2e && go vet -tags e2e ./...'
+		sh -c 'set -e; for m in $(GO_MODULES) e2e; do test -z "$$(gofmt -l /app/$$m)" || { echo "gofmt needed:"; gofmt -l /app/$$m; exit 1; }; done; for m in $(GO_MODULES); do echo "-- $$m"; cd /app/$$m; go vet ./...; go test ./...; done; cd /app/e2e && go vet -tags e2e ./...'
 	@echo "== frontend lint + type-check + unit tests"
 	@cd srcs/frontend && npm run lint && npx tsc --noEmit && npm test
 

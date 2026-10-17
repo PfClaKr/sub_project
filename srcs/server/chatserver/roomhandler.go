@@ -218,7 +218,8 @@ func getOrCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
 		jsonresponse.Error(w, http.StatusBadRequest, kind.ownSelf)
 		return
 	}
-	if kind.closedMsg != "" && dynamo.S(out.Item, kind.status) != "active" {
+	// Posts take new conversations only while active and not closed.
+	if kind.closedMsg != "" && (dynamo.S(out.Item, kind.status) != "active" || dynamo.S(out.Item, "Deal") == "closed") {
 		jsonresponse.Error(w, http.StatusConflict, kind.closedMsg)
 		return
 	}

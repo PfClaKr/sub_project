@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"apiserver/eshandler"
+	"apiserver/geohandler"
 	"apiserver/graphqlhandler"
 
 	"local.com/dynamo"
@@ -48,7 +49,95 @@ var mockPosts = []mockPost{
 		"9월 신학기 전에 신청하면 좋아요. 필요한 서류는 학생증, 증명사진, 주소 증명이에요.", false, false, 11, nil},
 }
 
+type mockListing struct {
+	typ, topic, city, title, body string
+	lat, lng                      float64
+	exact                         bool
+	fields                        dynamo.Item
+	images                        int
+}
+
+func num(f float64) *dynamodb.AttributeValue {
+	return &dynamodb.AttributeValue{N: aws.String(strconv.FormatFloat(f, 'f', -1, 64))}
+}
+
+func flag(b bool) *dynamodb.AttributeValue { return &dynamodb.AttributeValue{BOOL: aws.Bool(b)} }
+
+func str(s string) *dynamodb.AttributeValue { return &dynamodb.AttributeValue{S: aws.String(s)} }
+
+func inDays(d int) string { return time.Now().AddDate(0, 0, d).Format("2006-01-02") }
+
+var mockListings = []mockListing{
+	{"housing", "쉐어", "파리", "15구 메트로 6분, 채광 좋은 쉐어 방", "한국인 2명과 함께 사는 3룸 아파트의 방 하나예요. 조용하고 깨끗하게 지내실 분이면 좋겠어요.",
+		48.8414, 2.2920, false, dynamo.Item{"Mode": str("offer"), "Kind": str("쉐어"), "Rent": num(690), "ChargesIncluded": flag(true), "Deposit": num(690),
+			"AvailableFrom": str(inDays(10)), "MinMonths": num(6), "Size": num(12), "Furnished": flag(true), "Caf": flag(true), "Pets": flag(false)}, 3},
+	{"housing", "스튜디오·원룸", "파리", "11구 스튜디오, 리모델링 완료", "오베르캄프 근처 22m² 스튜디오입니다. 학생 환영해요.",
+		48.8635, 2.3790, false, dynamo.Item{"Mode": str("offer"), "Kind": str("스튜디오·원룸"), "Rent": num(980), "ChargesIncluded": flag(false), "Deposit": num(1960),
+			"AvailableFrom": str(inDays(25)), "Size": num(22), "Rooms": num(1), "Furnished": flag(true), "Caf": flag(true), "Pets": flag(false)}, 2},
+	{"housing", "서블렛", "일드프랑스", "방학 동안 서블렛 (불로뉴)", "7~8월 한국에 다녀오는 동안 방을 내놓아요. 고양이 밥만 챙겨주실 분!",
+		48.8350, 2.2400, false, dynamo.Item{"Mode": str("offer"), "Kind": str("서블렛"), "Rent": num(550), "ChargesIncluded": flag(true),
+			"AvailableFrom": str(inDays(40)), "EndDate": str(inDays(100)), "Furnished": flag(true), "Pets": flag(true)}, 2},
+	{"housing", "쉐어", "파리", "13구·14구 쉐어 구해요 (학생, 비흡연)", "9월부터 1년 지낼 방을 찾고 있어요. 최대 700유로까지 생각해요.",
+		48.8322, 2.3561, false, dynamo.Item{"Mode": str("seek"), "Kind": str("쉐어"), "Rent": num(700), "AvailableFrom": str(inDays(30)), "MinMonths": num(12)}, 0},
+	{"job", "식당·카페", "파리", "오페라 한식당 주말 홀서빙 구해요", "토·일 점심 근무, 한국어 가능하신 분. 식사 제공.",
+		48.8700, 2.3320, true, dynamo.Item{"Mode": str("hiring"), "Sector": str("식당·카페"), "Employment": str("알바"), "WageType": str("hourly"), "Wage": num(12.5),
+			"Schedule": str("토·일 11시~16시"), "PermitRequired": flag(true), "Languages": {L: []*dynamodb.AttributeValue{str("한국어"), str("프랑스어")}}}, 0},
+	{"job", "과외·강사", "파리", "초등학생 한국어 과외 선생님 찾아요", "15구 거주, 주 2회 1시간씩 한국어 읽기·쓰기 봐주실 분.",
+		48.8420, 2.2990, false, dynamo.Item{"Mode": str("hiring"), "Sector": str("과외·강사"), "Employment": str("프리랜서"), "WageType": str("hourly"), "Wage": num(20),
+			"Schedule": str("주 2회 평일 저녁"), "PermitRequired": flag(false), "Languages": {L: []*dynamodb.AttributeValue{str("한국어")}}}, 0},
+	{"job", "가이드·통역", "파리", "한-불 통역 가능합니다 (전시회, 상담)", "통번역 석사 과정 중이에요. 박람회·병원 동행 통역 가능해요.",
+		48.8566, 2.3522, false, dynamo.Item{"Mode": str("seeking"), "Sector": str("가이드·통역"), "Employment": str("프리랜서"), "WageType": str("negotiable"),
+			"PermitRequired": flag(false), "Languages": {L: []*dynamodb.AttributeValue{str("한국어"), str("프랑스어"), str("영어")}}}, 0},
+}
+
+// seedDummyListings adds housing and job posts. Neighbourhoods come from
+// OpenStreetMap when reachable; otherwise the plain point is kept.
+func seedDummyListings(users int) error {
+	now := time.Now()
+	for i, l := range mockListings {
+		postId := fmt.Sprintf("%slisting-%d", dummyPostPrefix, i+1)
+		created := now.Add(-time.Duration(i) * 3 * time.Hour).UnixMilli()
+		item := dynamo.Item{
+			"PostId": str(postId), "Type": str(l.typ), "Topic": str(l.topic), "Country": str(graphqlhandler.DefaultCountry),
+			"City": str(l.city), "AuthorId": str(fmt.Sprintf("%s%d", dummyUserPrefix, (i+3)%users+1)), "Anonymous": flag(false),
+			"Title": str(l.title), "Body": str(l.body), "Status": str(graphqlhandler.PostActive), "Deal": str(graphqlhandler.DealOpen),
+			"CreatedAt": num(float64(created)), "UpdatedAt": num(float64(created)),
+			"ExpiresAt":      num(float64(now.Add(graphqlhandler.ListingLifetime).UnixMilli())),
+			"ExpiryNotified": flag(false), "CommentCount": num(0), "LikeCount": num(0), "ViewCount": num(float64(10 + i*7)),
+			"Latitude": num(l.lat), "Longitude": num(l.lng), "ExactLocation": flag(l.exact),
+		}
+		if l.typ == "housing" {
+			item["Housing"] = &dynamodb.AttributeValue{M: l.fields}
+		} else {
+			item["Job"] = &dynamodb.AttributeValue{M: l.fields}
+		}
+		if area, err := geohandler.Resolve(l.lat, l.lng); err == nil {
+			item["AreaId"], item["AreaName"] = str(area.AreaId), str(area.Label())
+			if !l.exact {
+				item["Latitude"], item["Longitude"] = num(area.CenterLat), num(area.CenterLng)
+			}
+		}
+		if l.images > 0 {
+			var imgs []*dynamodb.AttributeValue
+			for k := 0; k < l.images; k++ {
+				imgs = append(imgs, str(fmt.Sprintf("https://picsum.photos/seed/room%d%c/800/600", i+1, 'a'+k)))
+			}
+			item["Images"] = &dynamodb.AttributeValue{L: imgs}
+		}
+		if _, err := svc.PutItem(&dynamodb.PutItemInput{TableName: aws.String(dynamo.TablePosts), Item: item}); err != nil {
+			return err
+		}
+		if err := eshandler.IndexPost(eshandler.PostDocFromItem(item)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func seedDummyPosts(users int) error {
+	if err := seedDummyListings(users); err != nil {
+		return err
+	}
 	ts := time.Now().UnixMilli()
 	for i, p := range mockPosts {
 		postId := fmt.Sprintf("%s%d", dummyPostPrefix, i+1)
@@ -109,8 +198,14 @@ func seedDummyPosts(users int) error {
 // deleteDummyPosts removes the seeded posts with their comments.
 func deleteDummyPosts() (int, error) {
 	deleted := 0
+	var ids []string
 	for i := range mockPosts {
-		postId := fmt.Sprintf("%s%d", dummyPostPrefix, i+1)
+		ids = append(ids, fmt.Sprintf("%s%d", dummyPostPrefix, i+1))
+	}
+	for i := range mockListings {
+		ids = append(ids, fmt.Sprintf("%slisting-%d", dummyPostPrefix, i+1))
+	}
+	for _, postId := range ids {
 		comments, err := dynamo.QueryAll(svc, &dynamodb.QueryInput{
 			TableName:                 aws.String(dynamo.TableComments),
 			KeyConditionExpression:    aws.String("PostId = :p"),

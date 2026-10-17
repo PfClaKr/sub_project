@@ -96,16 +96,43 @@ export type AppNotification = {
 	CreatedAt: number;
 };
 
+export type HousingInfo = {
+	Mode: "offer" | "seek";
+	Kind: string;
+	Rent: number;
+	ChargesIncluded?: boolean;
+	Deposit?: number;
+	AvailableFrom: string; // YYYY-MM-DD
+	EndDate?: string;
+	MinMonths?: number;
+	Size?: number;
+	Rooms?: number;
+	Furnished?: boolean;
+	Caf?: boolean;
+	Pets?: boolean;
+};
+
+export type JobInfo = {
+	Mode: "hiring" | "seeking";
+	Sector: string;
+	Employment: string;
+	WageType: "hourly" | "monthly" | "negotiable";
+	Wage?: number;
+	Schedule?: string;
+	PermitRequired?: boolean;
+	Languages?: string[];
+};
+
 export type Post = {
 	PostId: string;
-	Type: "free" | "qna";
+	Type: "free" | "qna" | "housing" | "job";
 	Topic: string;
 	City?: string;
 	Title: string;
 	Body?: string;
 	BodyPreview?: string;
 	Images?: string[];
-	Status?: "active" | "hidden" | "deleted";
+	Status?: "active" | "hidden" | "deleted" | "expired";
 	Anonymous?: boolean;
 	// Empty for anonymous posts.
 	AuthorId?: string;
@@ -121,6 +148,18 @@ export type Post = {
 	Solved?: boolean;
 	Liked?: boolean;
 	Bookmarked?: boolean;
+	// Housing and job posts only.
+	Housing?: HousingInfo;
+	Job?: JobInfo;
+	Deal?: "open" | "reserved" | "closed";
+	ExpiresAt?: number;
+	BumpedAt?: number;
+	AreaId?: string;
+	AreaName?: string;
+	Latitude?: number;
+	Longitude?: number;
+	ExactLocation?: boolean;
+	HasContact?: boolean;
 };
 
 export type PostPage = {

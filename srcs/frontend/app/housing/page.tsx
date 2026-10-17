@@ -1,18 +1,18 @@
 import { Metadata } from "next";
-import { ComingSoon } from "@/components/ComingSoon";
-import { PageHeader } from "@/styles/styledLayout";
+import { Suspense } from "react";
+import { ListingBoard } from "@/components/listing/ListingBoard";
+import { PostListSkeleton } from "@/components/community/PostList";
 
 export const metadata: Metadata = {
-	title: "집",
+	title: "집 구하기",
+	description: "파리와 프랑스의 쉐어, 원룸, 서블렛을 조건과 지도로 찾아보세요.",
 };
 
+// useSearchParams in the board needs a Suspense boundary.
 export default function Page() {
 	return (
-		<div>
-			<PageHeader>
-				<h1>집</h1>
-			</PageHeader>
-			<ComingSoon section="housing" />
-		</div>
+		<Suspense fallback={<PostListSkeleton />}>
+			<ListingBoard type="housing" />
+		</Suspense>
 	);
 }

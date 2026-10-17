@@ -79,6 +79,10 @@ services:
       S3_PUBLIC_URL: ${S3_PUBLIC_URL:-}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      # Housing/job posts: gross hourly minimum wage (warned below it) and
+      # the account age needed to post. Empty = code defaults.
+      SMIC_HOURLY: ${SMIC_HOURLY:-}
+      LISTING_MIN_ACCOUNT_DAYS: ${LISTING_MIN_ACCOUNT_DAYS:-}
     healthcheck:
       <<: *go-healthcheck
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]

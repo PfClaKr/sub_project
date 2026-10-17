@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CheckCircle2, Heart, MessageSquare } from "lucide-react";
-import { BOARDS } from "@/libs/constants";
+import { boardLabel, postHref } from "@/libs/community";
 import { formatRelative } from "@/libs/format";
 import { Meta, PostRowLink, PostRows, Tag } from "@/styles/styledCommunity";
 import { Skeleton } from "@/styles/styledUi";
@@ -10,9 +10,9 @@ import type { Post } from "@/libs/types";
 
 export function PostRow({ post, showBoard = true }: { post: Post; showBoard?: boolean }) {
 	return (
-		<PostRowLink as={Link} href={`/community/${post.PostId}`}>
+		<PostRowLink as={Link} href={postHref(post)}>
 			<Meta>
-				{showBoard && <Tag>{BOARDS[post.Type]?.label ?? post.Type}</Tag>}
+				{showBoard && <Tag>{boardLabel(post.Type)}</Tag>}
 				<span>{post.Topic}</span>
 				{post.Type === "qna" && (post.Solved
 					? <Tag $tone="done"><CheckCircle2 size={12} aria-hidden /> 해결</Tag>

@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 
 import L from "leaflet";
 import { useEffect } from "react";
-import { Circle, GeoJSON, MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { Circle, GeoJSON, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import palette from "@/theme/colorPalette";
 import { PARIS, type Area, type LatLng } from "@/libs/geo";
 
@@ -116,4 +116,51 @@ export function PreviewMap({ pin, area }: { pin: LatLng | null; area: Area | nul
 			{pin && <Marker position={[pin.lat, pin.lng]} icon={pinIcon} />}
 		</MapContainer>
 	);
+}
+
+export type MapItem = { id: string; lat: number; lng: number; label: string; title: string; href: string };
+
+// FitAll frames every marker once they are known.
+function FitAll({ items }: { items: MapItem[] }) {
+	const map = useMap();
+	const key = items.map(i => i.id).join(",");
+	useEffect(() => {
+		if (items.length === 0) return;
+		const b = L.latLngBounds(items.map(i => [i.lat, i.lng] as [number, number]));
+		map.fitBounds(b, { padding: [32, 32], maxZoom: 13 });
+	}, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+	return null;
+}
+
+// ListingsMap shows listings as bubbles (a price, or a count when several
+// share a neighbourhood centre), each opening a list of links.
+export function ListingsMap({ items }: { items: MapItem[] }) {
+	const groups = new Map<string, MapItem[]>();
+	for (const item of items) {
+		const key = `${item.lat.toFixed(4)},${item.lng.toFixed(4)}`;
+		groups.set(key, [...(groups.get(key) ?? []), item]);
+	}
+	return (
+		<MapContainer center={[PARIS.lat, PARIS.lng]} zoom={12} style={{ height: "100%", width: "100%" }}>
+			<Tiles />
+			<FitAll items={items} />
+			{Array.from(groups.entries()).map(([key, group]) => {
+				const text = group.length > 1 ? `${group.length}개` : group[0].label;
+				const icon = L.divIcon({ className: "itnyang-bubble", html: `<span>${escapeHtml(text)}</span>`, iconSize: [0, 0] });
+				return (
+					<Marker key={key} position={[group[0].lat, group[0].lng]} icon={icon}>
+						<Popup>
+							<div className="itnyang-popup">
+								{group.map(i => <a key={i.id} href={i.href}>{i.label} · {i.title}</a>)}
+							</div>
+						</Popup>
+					</Marker>
+				);
+			})}
+		</MapContainer>
+	);
+}
+
+function escapeHtml(s: string): string {
+	return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
 }

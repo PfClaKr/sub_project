@@ -334,26 +334,11 @@ func resolveProductSearch(p graphql.ResolveParams) (interface{}, error) {
 	}
 
 	opts := searchOptions(p.Args)
-	// Either "inside this area" (AreaId, DistanceKm 0) or "within N km
-	// of a point" (the area centre or the user's position), as leboncoin.
-	areaId, _ := p.Args["AreaId"].(string)
-	km, _ := p.Args["DistanceKm"].(float64)
-	lat, hasLat := p.Args["Latitude"].(float64)
-	lng, hasLng := p.Args["Longitude"].(float64)
-	switch {
-	case areaId != "" && km == 0:
-		opts.Near = &eshandler.GeoFilter{AreaId: areaId}
-		if hasLat && hasLng {
-			opts.Near.Lat, opts.Near.Lng = lat, lng
-		}
-	case hasLat && hasLng:
-		if lat < -90 || lat > 90 || lng < -180 || lng > 180 || km <= 0 || km > 200 {
-			return nil, errors.New("위치 필터가 올바르지 않아요.")
-		}
-		opts.Near = &eshandler.GeoFilter{Lat: lat, Lng: lng, Km: km}
-	case areaId != "" || km != 0:
-		return nil, errors.New("위치 필터가 올바르지 않아요.")
+	near, err := nearFilter(p.Args)
+	if err != nil {
+		return nil, err
 	}
+	opts.Near = near
 	ids, corrected, err := eshandler.SearchProductIds(query, opts)
 	if err != nil {
 		return nil, internal(err)
@@ -392,6 +377,32 @@ func resolveProductSearch(p graphql.ResolveParams) (interface{}, error) {
 }
 
 // searchOptions reads the filters shared by productSearch and searchProducts.
+// nearFilter reads the place filter: either "inside this area" (AreaId,
+// DistanceKm 0) or "within N km of a point" (the area centre or the
+// user's position), as on leboncoin. nil when there is none.
+func nearFilter(args map[string]interface{}) (*eshandler.GeoFilter, error) {
+	areaId, _ := args["AreaId"].(string)
+	km, _ := args["DistanceKm"].(float64)
+	lat, hasLat := args["Latitude"].(float64)
+	lng, hasLng := args["Longitude"].(float64)
+	switch {
+	case areaId != "" && km == 0:
+		near := &eshandler.GeoFilter{AreaId: areaId}
+		if hasLat && hasLng {
+			near.Lat, near.Lng = lat, lng
+		}
+		return near, nil
+	case hasLat && hasLng:
+		if lat < -90 || lat > 90 || lng < -180 || lng > 180 || km <= 0 || km > 200 {
+			return nil, errors.New("위치 필터가 올바르지 않아요.")
+		}
+		return &eshandler.GeoFilter{Lat: lat, Lng: lng, Km: km}, nil
+	case areaId != "" || km != 0:
+		return nil, errors.New("위치 필터가 올바르지 않아요.")
+	}
+	return nil, nil
+}
+
 func searchOptions(args map[string]interface{}) eshandler.SearchOptions {
 	opts := eshandler.SearchOptions{Size: 60}
 	opts.Category, _ = args["Category"].(string)

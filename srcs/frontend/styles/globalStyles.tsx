@@ -123,6 +123,24 @@ const GlobalStyle = createGlobalStyle`
 		border-radius: 50%;
 		background: #ffffff;
 	}
+	/* Listings map: a price or count bubble per place. */
+	.itnyang-bubble span {
+		display: inline-block;
+		transform: translate(-50%, -50%);
+		padding: 4px 9px;
+		border-radius: 999px;
+		background: ${palette.primary};
+		color: #ffffff;
+		font-size: 12px;
+		font-weight: 700;
+		white-space: nowrap;
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+	}
+	.itnyang-popup a {
+		display: block;
+		padding: 2px 0;
+		color: ${palette.primary};
+	}
 	.leaflet-container {
 		font: inherit;
 		border-radius: ${radius.md};

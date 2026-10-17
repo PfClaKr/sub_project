@@ -61,34 +61,6 @@ export const ListActions = styled.div`
 	margin-bottom: 12px;
 `;
 
-export const ComingSoonBox = styled.section`
-	padding: 40px 24px;
-	text-align: center;
-	background-color: ${palette.surface};
-	border-radius: ${radius.lg};
-
-	svg {
-		color: ${palette.primary};
-	}
-	h2 {
-		margin: 12px 0 8px;
-		color: ${palette.heading};
-	}
-	p {
-		margin: 0 auto;
-		max-width: 460px;
-		color: ${palette.muted};
-		line-height: 1.6;
-	}
-	ul {
-		display: inline-block;
-		margin: 16px 0 0;
-		padding-left: 20px;
-		text-align: left;
-		color: ${palette.text};
-		line-height: 1.8;
-	}
-`;
 
 export const SuspendedBar = styled.div`
 	padding: 10px 16px;

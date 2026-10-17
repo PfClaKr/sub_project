@@ -9,3 +9,5 @@ const loading = () => <Skeleton $h="100%" />;
 
 export const PickerMap = dynamic(() => import("./LeafletMaps").then(m => m.PickerMap), { ssr: false, loading });
 export const PreviewMap = dynamic(() => import("./LeafletMaps").then(m => m.PreviewMap), { ssr: false, loading });
+export const ListingsMap = dynamic(() => import("./LeafletMaps").then(m => m.ListingsMap), { ssr: false, loading });
+export type { MapItem } from "./LeafletMaps";

@@ -170,7 +170,7 @@ func generateDummyData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonresponse.New(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%d dummy users/products and %d posts created", count, len(mockPosts))})
+	jsonresponse.New(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%d dummy users/products and %d posts created", count, len(mockPosts)+len(mockListings))})
 }
 
 // deleteDummyData removes only rows created by generateDummyData.

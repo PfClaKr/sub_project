@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { CATEGORIES, FREE_TOPICS, QNA_TOPICS, REGIONS, REPORT_REASONS, STATUSES, STATUS_SELLING } from "./constants";
+import {
+	CATEGORIES, EMPLOYMENT_TYPES, FREE_TOPICS, HOUSING_KINDS, JOB_LANGUAGES, JOB_SECTORS, QNA_TOPICS, REGIONS, REPORT_REASONS, STATUSES, STATUS_SELLING,
+} from "./constants";
 
 // Values the frontend and the apiserver must agree on. Reading the Go
 // source keeps them from drifting apart silently.
@@ -10,6 +12,7 @@ const readGo = (file: string) =>
 const goSource = readGo("graphqlResolve.go");
 const communitySource = readGo("community.go");
 const reportSource = readGo("reports.go");
+const listingSource = readGo("listings.go");
 
 function goStrings(pattern: RegExp, source = goSource): string[] {
 	const block = source.match(pattern)?.[1] ?? "";
@@ -39,5 +42,13 @@ describe("frontend ↔ apiserver contract", () => {
 
 	it("uses the same report reasons", () => {
 		expect(goStrings(/var ReportReasons = \[\]string\{([^}]*)\}/, reportSource)).toEqual([...REPORT_REASONS]);
+	});
+
+	it("uses the same housing and job values", () => {
+		const list = (name: string) => goStrings(new RegExp(`var ${name} = \\[\\]string\\{([^}]*)\\}`), listingSource);
+		expect(list("HousingKinds")).toEqual([...HOUSING_KINDS]);
+		expect(list("JobSectors")).toEqual([...JOB_SECTORS]);
+		expect(list("EmploymentTypes")).toEqual([...EMPLOYMENT_TYPES]);
+		expect(list("JobLanguages")).toEqual([...JOB_LANGUAGES]);
 	});
 });

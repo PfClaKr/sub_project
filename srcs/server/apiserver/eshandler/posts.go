@@ -14,7 +14,7 @@ import (
 // rebuilds the index from the Posts table.
 const (
 	postsAlias   = "posts"
-	postsVersion = "posts_v1"
+	postsVersion = "posts_v2"
 )
 
 // Only this much of a body is indexed; enough for matching, keeps
@@ -36,6 +36,27 @@ type PostDoc struct {
 	CreatedAt    int64  `json:"CreatedAt"` // ms
 	LikeCount    int    `json:"LikeCount"`
 	CommentCount int    `json:"CommentCount"`
+	// SortAt is the "newest" order: the creation time, or the last bump
+	// of a housing/job post.
+	SortAt int64 `json:"SortAt"`
+
+	// Housing and job posts (empty for community posts).
+	Deal           string    `json:"Deal,omitempty"` // open, reserved, closed
+	Mode           string    `json:"Mode,omitempty"` // offer/seek, hiring/seeking
+	ExpiresAt      int64     `json:"ExpiresAt,omitempty"`
+	Location       *GeoPoint `json:"Location,omitempty"`
+	AreaId         string    `json:"AreaId,omitempty"`
+	Rent           *float64  `json:"Rent,omitempty"`
+	Deposit        *float64  `json:"Deposit,omitempty"`
+	AvailableFrom  string    `json:"AvailableFrom,omitempty"` // YYYY-MM-DD
+	Furnished      bool      `json:"Furnished,omitempty"`
+	Caf            bool      `json:"Caf,omitempty"`
+	Pets           bool      `json:"Pets,omitempty"`
+	Employment     string    `json:"Employment,omitempty"`
+	WageType       string    `json:"WageType,omitempty"`
+	Wage           *float64  `json:"Wage,omitempty"`
+	PermitRequired bool      `json:"PermitRequired,omitempty"`
+
 	// Derived in source().
 	Engagement   int    `json:"Engagement"`
 	TitleWords   string `json:"TitleWords"`
@@ -86,6 +107,57 @@ func PostDocFromItem(item map[string]*dynamodb.AttributeValue) PostDoc {
 	if v := item["Solved"]; v != nil && v.BOOL != nil {
 		doc.Solved = *v.BOOL
 	}
+	doc.SortAt = doc.CreatedAt
+	if b := n("BumpedAt"); b > doc.SortAt {
+		doc.SortAt = b
+	}
+	doc.Deal = s("Deal")
+	doc.ExpiresAt = n("ExpiresAt")
+	doc.AreaId = s("AreaId")
+	if lat, lng := item["Latitude"], item["Longitude"]; lat != nil && lat.N != nil && lng != nil && lng.N != nil {
+		la, _ := strconv.ParseFloat(*lat.N, 64)
+		lo, _ := strconv.ParseFloat(*lng.N, 64)
+		doc.Location = &GeoPoint{Lat: la, Lon: lo}
+	}
+	sub := func(attr string) map[string]*dynamodb.AttributeValue {
+		if v := item[attr]; v != nil && v.M != nil {
+			return v.M
+		}
+		return nil
+	}
+	ms := func(m map[string]*dynamodb.AttributeValue, k string) string {
+		if v := m[k]; v != nil && v.S != nil {
+			return *v.S
+		}
+		return ""
+	}
+	mf := func(m map[string]*dynamodb.AttributeValue, k string) *float64 {
+		if v := m[k]; v != nil && v.N != nil {
+			f, err := strconv.ParseFloat(*v.N, 64)
+			if err == nil {
+				return &f
+			}
+		}
+		return nil
+	}
+	mb := func(m map[string]*dynamodb.AttributeValue, k string) bool {
+		v := m[k]
+		return v != nil && v.BOOL != nil && *v.BOOL
+	}
+	if h := sub("Housing"); h != nil {
+		doc.Mode = ms(h, "Mode")
+		doc.Rent = mf(h, "Rent")
+		doc.Deposit = mf(h, "Deposit")
+		doc.AvailableFrom = ms(h, "AvailableFrom")
+		doc.Furnished, doc.Caf, doc.Pets = mb(h, "Furnished"), mb(h, "Caf"), mb(h, "Pets")
+	}
+	if j := sub("Job"); j != nil {
+		doc.Mode = ms(j, "Mode")
+		doc.Employment = ms(j, "Employment")
+		doc.WageType = ms(j, "WageType")
+		doc.Wage = mf(j, "Wage")
+		doc.PermitRequired = mb(j, "PermitRequired")
+	}
 	return doc
 }
 
@@ -109,6 +181,22 @@ var postIndexSettings = `{
 			"LikeCount": {"type": "integer"},
 			"CommentCount": {"type": "integer"},
 			"Engagement": {"type": "integer"},
+			"SortAt": {"type": "date", "format": "epoch_millis"},
+			"Deal": {"type": "keyword"},
+			"Mode": {"type": "keyword"},
+			"ExpiresAt": {"type": "date", "format": "epoch_millis"},
+			"Location": {"type": "geo_point"},
+			"AreaId": {"type": "keyword"},
+			"Rent": {"type": "double"},
+			"Deposit": {"type": "double"},
+			"AvailableFrom": {"type": "date", "format": "yyyy-MM-dd"},
+			"Furnished": {"type": "boolean"},
+			"Caf": {"type": "boolean"},
+			"Pets": {"type": "boolean"},
+			"Employment": {"type": "keyword"},
+			"WageType": {"type": "keyword"},
+			"Wage": {"type": "double"},
+			"PermitRequired": {"type": "boolean"},
 			"TitleWords": ` + wordsField + `,
 			"TitleChosung": ` + wordsField + `
 		}
