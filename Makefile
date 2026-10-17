@@ -58,6 +58,11 @@ unseed:
 	@curl -s -X DELETE http://localhost:8080/debug/dummy
 	@echo
 
+## Demo accounts (admin + two members) with posts, chats and notifications
+## around them, checked by logging in; prints the logins. Run again to reset.
+demo:
+	@./scripts/demo.sh
+
 GO_MODULES = apiserver loginserver chatserver package/cors package/jwt package/jsonresponse package/dynamo package/mailer package/account package/notify
 
 ## Grant the admin role to an existing account: make admin email=you@example.com
@@ -115,5 +120,5 @@ fclean:
 
 re: fclean up
 
-.PHONY: all up down stop restart ps logs wait health seed unseed admin test e2e fclean re \
+.PHONY: all up down stop restart ps logs wait health seed unseed demo admin test e2e fclean re \
 	prod-deploy prod-ps prod-logs prod-admin rehearsal rehearsal-down vapid
