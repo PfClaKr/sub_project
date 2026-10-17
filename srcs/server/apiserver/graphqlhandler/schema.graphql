@@ -23,6 +23,7 @@ type Query {
   notifications(Before: String): NotificationPage
   # 0 for anonymous visitors.
   unreadCount: Int
+  notifySettings: NotifySettings
   # Community boards. Type: "free", "qna" or "community" (both, default).
   # Sort: "newest" (default), "popular", or relevance when Q is set.
   posts(Type: String, Topic: String, City: String, Q: String, Solved: Boolean, Sort: String, Page: Int, Size: Int): PostPage
@@ -46,6 +47,9 @@ type Mutation {
   updateProfile(UserNickname: String!, ProfileImage: String): User
   # Without SortKeys every notification is marked read. Returns how many changed.
   markNotificationsRead(SortKeys: [String!]): Int
+  # Email per type: immediate, digest or off. EmailEnabled is the master
+  # switch (the unsubscribe link turns it off).
+  updateNotifySettings(EmailEnabled: Boolean, Items: [NotifySettingInput!]): NotifySettings
   createPost(Input: PostInput!): Post
   # Type and Anonymous cannot change after posting.
   updatePost(PostId: String!, Input: PostInput!): Post
@@ -127,6 +131,26 @@ type Notification {
   Link: String
   Read: Boolean
   CreatedAt: Float
+}
+
+type NotifySetting {
+  Type: String
+  Label: String
+  Email: String
+  Push: Boolean
+}
+
+# HasEmail is false for accounts without an address (no mail possible).
+type NotifySettings {
+  EmailEnabled: Boolean
+  HasEmail: Boolean
+  Items: [NotifySetting]
+}
+
+input NotifySettingInput {
+  Type: String!
+  Email: String!
+  Push: Boolean!
 }
 
 # Next is empty on the last page.

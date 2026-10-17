@@ -81,3 +81,50 @@ func markNotificationsReadResolver(p graphql.ResolveParams) (interface{}, error)
 	}
 	return changed, nil
 }
+
+func settingsView(enabled, hasEmail bool, rows []notify.Setting) map[string]interface{} {
+	items := make([]map[string]interface{}, 0, len(rows))
+	for _, r := range rows {
+		items = append(items, map[string]interface{}{"Type": r.Type, "Label": notify.SettingLabels[r.Type], "Email": r.Email, "Push": r.Push})
+	}
+	return map[string]interface{}{"EmailEnabled": enabled, "HasEmail": hasEmail, "Items": items}
+}
+
+func resolveNotifySettings(p graphql.ResolveParams) (interface{}, error) {
+	userId := jwt.UserID(p.Context)
+	if userId == "" {
+		return nil, errLogin
+	}
+	enabled, hasEmail, rows, err := notify.Settings(svc, userId)
+	if err != nil {
+		return nil, internal(err)
+	}
+	return settingsView(enabled, hasEmail, rows), nil
+}
+
+// updateNotifySettingsResolver saves the settings screen. Allowed while
+// suspended: it only concerns the member's own inbox.
+func updateNotifySettingsResolver(p graphql.ResolveParams) (interface{}, error) {
+	userId := jwt.UserID(p.Context)
+	if userId == "" {
+		return nil, errLogin
+	}
+	var enabled *bool
+	if v, ok := p.Args["EmailEnabled"].(bool); ok {
+		enabled = &v
+	}
+	var rows []notify.Setting
+	if list, ok := p.Args["Items"].([]interface{}); ok {
+		for _, raw := range list {
+			m, _ := raw.(map[string]interface{})
+			typ, _ := m["Type"].(string)
+			email, _ := m["Email"].(string)
+			push, _ := m["Push"].(bool)
+			rows = append(rows, notify.Setting{Type: typ, Email: email, Push: push})
+		}
+	}
+	if err := notify.SaveSettings(svc, userId, enabled, rows); err != nil {
+		return nil, internal(err)
+	}
+	return resolveNotifySettings(p)
+}

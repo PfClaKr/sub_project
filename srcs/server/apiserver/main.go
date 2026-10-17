@@ -14,12 +14,14 @@ import (
 	"apiserver/favoriteshandler"
 	"apiserver/geohandler"
 	"apiserver/graphqlhandler"
+	"apiserver/notifyhandler"
 	"apiserver/uploadhandler"
 
 	"local.com/account"
 	"local.com/cors"
 	"local.com/dynamo"
 	"local.com/jwt"
+	"local.com/notify"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -74,6 +76,15 @@ func main() {
 		promoteAdmin(os.Args[2])
 		return
 	}
+	// Prints a new web push key pair for VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY.
+	if len(os.Args) == 2 && os.Args[1] == "vapid-keys" {
+		private, public, err := notify.GenerateVAPIDKeys()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("VAPID_PUBLIC_KEY=%s\nVAPID_PRIVATE_KEY=%s\n", public, private)
+		return
+	}
 
 	createtable.CreateTables(svc)
 	eshandler.InitElasticsearch()
@@ -86,6 +97,8 @@ func main() {
 	uploadhandler.EnsureBucket()
 	// Expire housing/job posts and warn authors three days ahead.
 	go graphqlhandler.RunListingExpiry(context.Background(), 30*time.Minute)
+	// Sends queued notification mails (immediate and digests).
+	go notify.RunEmailWorker(context.Background(), notify.New(svc))
 
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) }).Methods("GET")
@@ -100,6 +113,7 @@ func main() {
 
 	adminhandler.Register(r)
 	geohandler.Register(r)
+	notifyhandler.Register(r)
 
 	// Table dumps and dummy data; never enable outside local dev.
 	if os.Getenv("ENABLE_DEBUG_ROUTES") == "true" {
