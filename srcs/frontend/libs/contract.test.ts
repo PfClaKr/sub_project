@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { LEGAL_VERSION } from "./legal";
 import {
 	CATEGORIES, EMPLOYMENT_TYPES, FREE_TOPICS, HOUSING_KINDS, JOB_LANGUAGES, JOB_SECTORS, QNA_TOPICS, REGIONS, REPORT_REASONS, STATUSES, STATUS_SELLING,
 } from "./constants";
@@ -50,5 +51,10 @@ describe("frontend ↔ apiserver contract", () => {
 		expect(list("JobSectors")).toEqual([...JOB_SECTORS]);
 		expect(list("EmploymentTypes")).toEqual([...EMPLOYMENT_TYPES]);
 		expect(list("JobLanguages")).toEqual([...JOB_LANGUAGES]);
+	});
+
+	it("stores the terms version the legal pages show", () => {
+		const signup = readFileSync(fileURLToPath(new URL("../../server/loginserver/signuphandler/signuphandler.go", import.meta.url)), "utf8");
+		expect(signup.match(/const TermsVersion = "([^"]+)"/)?.[1]).toBe(LEGAL_VERSION);
 	});
 });

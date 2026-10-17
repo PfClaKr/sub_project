@@ -8,6 +8,9 @@ import { FormColumn, FieldLabel, Hint, TwoColumns } from "@/styles/styledForm";
 import { DEFAULT_REGION, REGIONS } from "@/libs/constants";
 import { ErrorText } from "@/styles/styledUi";
 import { PasswordInput } from "./PasswordInput";
+import Link from "next/link";
+import { MIN_AGE } from "@/libs/legal";
+import { ConsentRow } from "@/styles/styledForm";
 
 export const SignUpForm = () => {
 	const router = useRouter();
@@ -45,6 +48,7 @@ export const SignUpForm = () => {
 					usernickname: form.get("nickname"),
 					residence: form.get("residence"),
 					residencedetail: form.get("residencedetail"),
+					agree: form.get("agree") === "on",
 				}),
 				credentials: "include",
 			});
@@ -102,6 +106,13 @@ export const SignUpForm = () => {
 			<FieldLabel>비밀번호 확인
 				<PasswordInput name="passwordConfirm" autoComplete="new-password" required minLength={8} maxLength={72} />
 			</FieldLabel>
+			<ConsentRow>
+				<input type="checkbox" name="agree" required />
+				<span>
+					만 {MIN_AGE}세 이상이며, <Link href="/terms" target="_blank">이용약관</Link>과{" "}
+					<Link href="/privacy" target="_blank">개인정보처리방침</Link>에 동의해요. (필수)
+				</span>
+			</ConsentRow>
 			{error && <ErrorText role="alert">{error}</ErrorText>}
 			<button type="submit" disabled={submitting || emailTaken}>{submitting ? "가입 중..." : "가입하기"}</button>
 		</FormColumn>
