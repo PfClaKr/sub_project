@@ -63,7 +63,13 @@ export type Room = {
 	ProductStatus?: string;
 	SellerNickname?: string;
 	BuyerNickname?: string;
+	// GET /room/{chatId} only: the viewer blocked the other member /
+	// either side blocked the other.
+	BlockedByMe?: boolean;
+	Blocked?: boolean;
 };
+
+export type BlockedUser = { UserId: string; UserNickname: string; CreatedAt: number };
 
 export type Message = {
 	MessageId: string;
