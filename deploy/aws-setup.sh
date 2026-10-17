@@ -58,7 +58,7 @@ aws iam put-user-policy --user-name "$USER_NAME" --policy-name itnyang-app --pol
 			\"Effect\": \"Allow\",
 			\"Action\": [
 				\"dynamodb:CreateTable\", \"dynamodb:DescribeTable\",
-				\"dynamodb:DescribeTimeToLive\", \"dynamodb:UpdateTimeToLive\",
+				\"dynamodb:DescribeTimeToLive\", \"dynamodb:UpdateTimeToLive\", \"dynamodb:UpdateTable\",
 				\"dynamodb:GetItem\", \"dynamodb:BatchGetItem\", \"dynamodb:Query\", \"dynamodb:Scan\",
 				\"dynamodb:PutItem\", \"dynamodb:UpdateItem\", \"dynamodb:DeleteItem\",
 				\"dynamodb:BatchWriteItem\", \"dynamodb:ConditionCheckItem\"

@@ -124,3 +124,16 @@ func TestSearchSortAndGeo(t *testing.T) {
 		t.Errorf("area filter must be a term on AreaId: %s", inArea)
 	}
 }
+
+func TestBrowseAndCountQueries(t *testing.T) {
+	js := func(v interface{}) string { b, _ := json.Marshal(v); return string(b) }
+	q := js(buildBrowseQuery(SearchOptions{Category: "가구", Size: 12, From: 24}))
+	for _, want := range []string{`"from":24`, `"size":12`, `"ProductCategory":"가구"`, `"ProductCreatedAt"`} {
+		if !strings.Contains(q, want) {
+			t.Errorf("browse query lacks %s: %s", want, q)
+		}
+	}
+	if c := js(buildCountQuery(true)); !strings.Contains(c, `"must_not"`) || !strings.Contains(c, "판매완료") {
+		t.Errorf("selling count = %s", c)
+	}
+}

@@ -89,11 +89,14 @@ func getRoom(chatId string) (*ChatRoom, error) {
 	return &room, nil
 }
 
-// findLegacyRoom finds product rooms created before deterministic ids.
+// findLegacyRoom finds product rooms created before deterministic ids,
+// among the buyer's rooms (BuyerIndex).
 func findLegacyRoom(productId, buyerId string) (*ChatRoom, error) {
-	items, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{
-		TableName:        aws.String(dynamo.TableChatRooms),
-		FilterExpression: aws.String("ProductId = :p AND UserBuyer = :b"),
+	items, err := dynamo.QueryAll(svc, &dynamodb.QueryInput{
+		TableName:              aws.String(dynamo.TableChatRooms),
+		IndexName:              aws.String("BuyerIndex"),
+		KeyConditionExpression: aws.String("UserBuyer = :b"),
+		FilterExpression:       aws.String("ProductId = :p"),
 		ExpressionAttributeValues: dynamo.Item{
 			":p": {S: aws.String(productId)},
 			":b": {S: aws.String(buyerId)},
@@ -281,19 +284,24 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	jsonresponse.New(w, http.StatusOK, views[0])
 }
 
-// roomsHandler lists every chat room the user participates in.
-// MVP: scan; replace with GSIs on UserSeller/UserBuyer later.
+// roomsHandler lists every chat room the user participates in: the rooms
+// where they own the subject plus those they started (two GSI queries).
 func roomsHandler(w http.ResponseWriter, r *http.Request) {
 	userId := jwt.UserID(r.Context())
 
-	items, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{
-		TableName:                 aws.String(dynamo.TableChatRooms),
-		FilterExpression:          aws.String("UserSeller = :u OR UserBuyer = :u"),
-		ExpressionAttributeValues: dynamo.Item{":u": {S: aws.String(userId)}},
-	})
-	if err != nil {
-		jsonresponse.Internal(w, err)
-		return
+	var items []dynamo.Item
+	for index, attr := range map[string]string{"SellerIndex": "UserSeller", "BuyerIndex": "UserBuyer"} {
+		found, err := dynamo.QueryAll(svc, &dynamodb.QueryInput{
+			TableName:                 aws.String(dynamo.TableChatRooms),
+			IndexName:                 aws.String(index),
+			KeyConditionExpression:    aws.String(attr + " = :u"),
+			ExpressionAttributeValues: dynamo.Item{":u": {S: aws.String(userId)}},
+		})
+		if err != nil {
+			jsonresponse.Internal(w, err)
+			return
+		}
+		items = append(items, found...)
 	}
 
 	rooms := []ChatRoom{}
@@ -314,8 +322,7 @@ func roomsHandler(w http.ResponseWriter, r *http.Request) {
 	jsonresponse.New(w, http.StatusOK, views)
 }
 
-// historyHandler returns a room's messages, oldest first.
-// MVP: scan filtered by ChatId; replace with a GSI query later.
+// historyHandler returns a room's messages, oldest first (ChatIndex).
 func historyHandler(w http.ResponseWriter, r *http.Request) {
 	userId := jwt.UserID(r.Context())
 	chatId := mux.Vars(r)["chatId"]
@@ -330,9 +337,10 @@ func historyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{
+	items, err := dynamo.QueryAll(svc, &dynamodb.QueryInput{
 		TableName:                 aws.String(dynamo.TableChatMessage),
-		FilterExpression:          aws.String("ChatId = :c"),
+		IndexName:                 aws.String("ChatIndex"),
+		KeyConditionExpression:    aws.String("ChatId = :c"),
 		ExpressionAttributeValues: dynamo.Item{":c": {S: aws.String(chatId)}},
 	})
 	if err != nil {
