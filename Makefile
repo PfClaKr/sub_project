@@ -79,6 +79,31 @@ test:
 e2e:
 	@cd srcs/server/e2e && E2E_COMPOSE_FILE=$(CURDIR)/docker/Docker-compose.yaml go test -tags e2e -count=1 ./...
 
+## Production stack (deploy/README.md). On the server: make prod-deploy.
+PROD = docker compose -f ./deploy/docker-compose.prod.yml
+prod-deploy:
+	@./deploy/deploy.sh
+
+prod-ps:
+	@$(PROD) ps
+
+prod-logs:
+	@$(PROD) logs -f --tail=100 $(s)
+
+prod-admin:
+	@test -n "$(email)" || { echo "usage: make prod-admin email=you@example.com"; exit 1; }
+	@$(PROD) exec apiserver /main promote-admin $(email)
+
+## The production stack locally, with DynamoDB Local/MinIO/MailHog in place
+## of AWS: https://localhost:8443 (Caddy internal CA), mails on :8026.
+REHEARSAL = docker compose -p itnyang-rehearsal -f ./deploy/docker-compose.prod.yml \
+	-f ./deploy/docker-compose.rehearsal.yml --env-file ./deploy/rehearsal.env
+rehearsal:
+	@$(REHEARSAL) up -d --build --wait
+
+rehearsal-down:
+	@$(REHEARSAL) down -v --remove-orphans
+
 ## Full wipe: containers, network AND data volumes. Destroys local data!
 fclean:
 	@echo "Removing containers and volumes.."
@@ -86,4 +111,5 @@ fclean:
 
 re: fclean up
 
-.PHONY: all up down stop restart ps logs wait health seed unseed admin test e2e fclean re
+.PHONY: all up down stop restart ps logs wait health seed unseed admin test e2e fclean re \
+	prod-deploy prod-ps prod-logs prod-admin rehearsal rehearsal-down

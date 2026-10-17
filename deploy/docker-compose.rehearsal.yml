@@ -1,0 +1,37 @@
+# Runs the production stack locally without AWS (make rehearsal):
+# DynamoDB Local, MinIO and MailHog stand in for DynamoDB, S3 and SES,
+# and Caddy serves https://localhost:8443 with its internal CA.
+services:
+  apiserver:
+    depends_on:
+      dynamodb:
+        condition: service_started
+      minio:
+        condition: service_healthy
+
+  loginserver:
+    depends_on:
+      mailhog:
+        condition: service_started
+
+  dynamodb:
+    image: amazon/dynamodb-local
+
+  minio:
+    image: minio/minio
+    command: server /data
+    ports:
+      - "9002:9000"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8026:8025"
