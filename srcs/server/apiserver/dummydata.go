@@ -112,7 +112,16 @@ func generateDummyData(w http.ResponseWriter, r *http.Request) {
 		jsonresponse.Error(w, http.StatusBadRequest, "count must be 1-100")
 		return
 	}
+	if err := seedDummy(count); err != nil {
+		jsonresponse.Internal(w, err)
+		return
+	}
+	jsonresponse.New(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%d dummy users/products and %d posts created", count, len(mockPosts)+len(mockListings))})
+}
 
+// seedDummy writes the dummy users, products and posts (also used by
+// make demo). Ids are fixed, so running it again overwrites them.
+func seedDummy(count int) error {
 	ts := time.Now().Unix()
 	for i := 0; i < count; i++ {
 		u := mockUsers[i%len(mockUsers)]
@@ -131,33 +140,15 @@ func generateDummyData(w http.ResponseWriter, r *http.Request) {
 			"PublishedQuantity": {N: aws.String("1")},
 			"CreatedAt":         {N: aws.String(created)},
 		}
-		product := dynamo.Item{
-			"ProductId":          {S: aws.String(productId)},
-			"UserId":             {S: aws.String(userId)},
-			"ProductStatus":      {S: aws.String(p.status)},
-			"ProductName":        {S: aws.String(p.name)},
-			"ProductDescription": {S: aws.String(p.description)},
-			"ProductPrice":       {N: aws.String(strconv.Itoa(p.price))},
-			"ProductCategory":    {S: aws.String(p.category)},
-			"ProductRegion":      {S: aws.String(p.region)},
-			"ProductImage": {SS: []*string{
-				aws.String(fmt.Sprintf("https://picsum.photos/seed/product%da/600/600", i+1)),
-				aws.String(fmt.Sprintf("https://picsum.photos/seed/product%db/600/600", i+1)),
-			}},
-			"PreferedLocation": {S: aws.String(p.location)},
-			"ProductCreatedAt": {N: aws.String(created)},
-			"ProductUpdatedAt": {N: aws.String(created)},
-		}
+		product := productItem(productId, userId, p.name, p.description, p.category, p.region, p.location, p.status, p.price, created)
 
 		for table, item := range map[string]dynamo.Item{dynamo.TableUsers: user, dynamo.TableProduct: product} {
 			if _, err := svc.PutItem(&dynamodb.PutItemInput{TableName: aws.String(table), Item: item}); err != nil {
-				jsonresponse.Internal(w, err)
-				return
+				return err
 			}
 		}
 		if err := eshandler.IndexProduct(eshandler.DocFromItem(product)); err != nil {
-			jsonresponse.Internal(w, err)
-			return
+			return err
 		}
 	}
 
@@ -165,12 +156,28 @@ func generateDummyData(w http.ResponseWriter, r *http.Request) {
 	if users > len(mockUsers) {
 		users = len(mockUsers)
 	}
-	if err := seedDummyPosts(users); err != nil {
-		jsonresponse.Internal(w, err)
-		return
-	}
+	return seedDummyPosts(users)
+}
 
-	jsonresponse.New(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%d dummy users/products and %d posts created", count, len(mockPosts)+len(mockListings))})
+// productItem builds a product row with two placeholder photos.
+func productItem(productId, userId, name, description, category, region, location, status string, price int, created string) dynamo.Item {
+	return dynamo.Item{
+		"ProductId":          {S: aws.String(productId)},
+		"UserId":             {S: aws.String(userId)},
+		"ProductStatus":      {S: aws.String(status)},
+		"ProductName":        {S: aws.String(name)},
+		"ProductDescription": {S: aws.String(description)},
+		"ProductPrice":       {N: aws.String(strconv.Itoa(price))},
+		"ProductCategory":    {S: aws.String(category)},
+		"ProductRegion":      {S: aws.String(region)},
+		"ProductImage": {SS: []*string{
+			aws.String(fmt.Sprintf("https://picsum.photos/seed/%sa/600/600", productId)),
+			aws.String(fmt.Sprintf("https://picsum.photos/seed/%sb/600/600", productId)),
+		}},
+		"PreferedLocation": {S: aws.String(location)},
+		"ProductCreatedAt": {N: aws.String(created)},
+		"ProductUpdatedAt": {N: aws.String(created)},
+	}
 }
 
 // deleteDummyData removes only rows created by generateDummyData.

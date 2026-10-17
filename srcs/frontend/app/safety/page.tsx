@@ -8,9 +8,9 @@ export const metadata: Metadata = {
 	description: "집 구하기·알바·중고거래에서 자주 일어나는 사기 수법과 피하는 방법, 신고처를 정리했어요.",
 };
 
-// Static guide linked from every housing/job page. Official contacts are
-// links to the official sites rather than copied numbers, so they stay
-// current; check them before launch (docs/community-plan.md 12).
+// Static guide linked from every housing/job page. Contacts checked on
+// the official sites on 2026-10-17 (embassy numbers from its home page);
+// re-check them when the guide changes.
 export default function Page() {
 	return (
 		<div style={{ maxWidth: 760 }}>
@@ -50,10 +50,13 @@ export default function Page() {
 				<SectionTitle>피해를 입었다면</SectionTitle>
 				<SafetyList items={[
 					["잇냥에 신고하기", "글·댓글·채팅방의 '신고' 버튼을 눌러주세요. 운영진이 확인하고 작성자를 제한해요. 대화 내용과 송금 기록은 지우지 말고 보관하세요."],
-					["프랑스 경찰·온라인 신고", "온라인 사기는 정부 신고 사이트(PHAROS, internet-signalement.gouv.fr)와 cybermalveillance.gouv.fr에서 신고·상담할 수 있어요. 금전 피해는 가까운 경찰서(commissariat)에 고소(plainte)할 수 있어요. 긴급 상황은 17 또는 112."],
-					["대사관 영사 조력", "주프랑스 대한민국 대사관 영사과에서 사건 사고 관련 안내를 받을 수 있어요. 연락처는 대사관 공식 홈페이지에서 확인하세요."],
+					["프랑스 경찰·온라인 신고", "사이버 사기 피해는 경찰·헌병대의 공식 지원 사이트 17Cyber에서 무엇을 해야 하는지 진단받고 신고 방법을 안내받을 수 있어요. 사기 글이나 불법 콘텐츠는 정부 신고 사이트 PHAROS(internet-signalement.gouv.fr)에 신고하세요. 금전 피해는 가까운 경찰서(commissariat)에 고소(plainte)할 수 있어요."],
+					["긴급 전화", "경찰 17, 유럽 공통 긴급번호 112. 말하기 어렵다면 문자 114로 신고할 수 있어요."],
+					["대사관 영사 조력", "주프랑스 대한민국 대사관 영사과: 근무시간(9:30~18:00) +33 1 47 53 01 01, 근무시간 외 긴급 +33 6 80 28 53 96. 영사콜센터(서울, 24시간) +82 2 3210 0404. 대사관이나 영사콜센터를 사칭하는 전화도 있으니 이 번호로 직접 걸어 확인하세요."],
 				]} />
 				<p style={{ marginTop: 16 }}>
+					<a href="https://www.17cyber.gouv.fr" target="_blank" rel="noopener noreferrer">17Cyber</a>
+					{" · "}
 					<a href="https://www.internet-signalement.gouv.fr" target="_blank" rel="noopener noreferrer">PHAROS</a>
 					{" · "}
 					<a href="https://www.cybermalveillance.gouv.fr" target="_blank" rel="noopener noreferrer">cybermalveillance.gouv.fr</a>

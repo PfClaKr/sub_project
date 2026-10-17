@@ -1,6 +1,7 @@
 package graphqlhandler
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 
 	"local.com/dynamo"
+	"local.com/jwt"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/graphql-go/graphql"
@@ -221,4 +223,16 @@ func GraphqlHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
+}
+
+// Run executes an operation in-process as userId, through the same
+// resolvers as /graphql (make demo uses it to create content).
+func Run(userId, query string, vars map[string]interface{}) (map[string]interface{}, error) {
+	ctx := jwt.WithClaims(context.Background(), &jwt.Claims{Username: userId})
+	result := graphql.Do(graphql.Params{Schema: schema, RequestString: query, VariableValues: vars, Context: ctx})
+	if len(result.Errors) > 0 {
+		return nil, result.Errors[0]
+	}
+	data, _ := result.Data.(map[string]interface{})
+	return data, nil
 }

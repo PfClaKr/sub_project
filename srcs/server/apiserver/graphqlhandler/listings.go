@@ -86,14 +86,14 @@ func minAccountAge() time.Duration {
 	return time.Duration(days) * 24 * time.Hour
 }
 
-// smicHourly is the gross legal minimum hourly wage in France. It changes
-// every year (at least on 1 January): set SMIC_HOURLY and check the
-// default before launch.
+// smicHourly is the gross legal minimum hourly wage in mainland France.
+// It changes on 1 January and also mid-year when inflation passes 2%
+// (as on 1 June 2026): set SMIC_HOURLY or update the default.
 func smicHourly() float64 {
 	if v, err := strconv.ParseFloat(os.Getenv("SMIC_HOURLY"), 64); err == nil && v > 0 {
 		return v
 	}
-	return 11.88 // 2025-01-01
+	return 12.31 // since 2026-06-01 (12.02 from 2026-01-01)
 }
 
 // canPostListing checks account age; admins are exempt.
