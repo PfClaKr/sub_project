@@ -1,0 +1,164 @@
+name: mobile
+
+# Android and iOS shells (srcs/mobile, Capacitor). Each job builds the app
+# and screenshots it on an emulator / simulator; the screenshots and the
+# installable debug APK are attached to the run as artifacts.
+on:
+  push:
+    branches: [main]
+    paths: ['srcs/mobile/**', '.github/workflows/mobile.yml']
+  pull_request:
+    paths: ['srcs/mobile/**', '.github/workflows/mobile.yml']
+  workflow_dispatch:
+    inputs:
+      server_url:
+        description: 'Build the APK for this site URL instead (skips the emulator screenshots)'
+        required: false
+        default: ''
+
+concurrency:
+  group: mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      COMPOSE_FILE: docker/Docker-compose.yaml
+      SERVER_URL: ${{ inputs.server_url || 'http://localhost:3000' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            srcs/mobile/package-lock.json
+            srcs/frontend/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Sync the app
+        working-directory: srcs/mobile
+        env:
+          CAP_SERVER_URL: ${{ env.SERVER_URL }}
+        run: |
+          npm ci
+          npm run sync -- android
+      - name: Build the debug APK
+        working-directory: srcs/mobile/android
+        run: ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: itnyang-android-debug-apk
+          path: srcs/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+
+      # The emulator loads http://localhost:3000; adb reverse maps it (and
+      # the API ports) to this runner, where the stack runs with demo data.
+      - name: Start the backend
+        if: inputs.server_url == ''
+        run: docker compose up -d --build --wait --wait-timeout 600 apiserver loginserver chatserver mailhog
+      - name: Build and start the web app
+        if: inputs.server_url == ''
+        working-directory: srcs/frontend
+        env:
+          API_INTERNAL_URL: http://localhost:8080
+          LOGIN_INTERNAL_URL: http://localhost:7070
+          CHAT_INTERNAL_URL: http://localhost:9090
+        run: |
+          npm ci
+          npm run build
+          nohup npm run start > ../../next.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000 >/dev/null && break; sleep 2; done
+      - name: Demo data
+        if: inputs.server_url == ''
+        run: ./scripts/demo.sh
+      - name: Enable KVM
+        if: inputs.server_url == ''
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Screenshots on the emulator
+        if: inputs.server_url == ''
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash srcs/mobile/scripts/android-ci.sh
+      - uses: actions/upload-artifact@v4
+        if: always() && inputs.server_url == ''
+        with:
+          name: android-screenshots
+          path: screenshots/android
+          if-no-files-found: ignore
+      - name: Logs
+        if: failure() && inputs.server_url == ''
+        run: |
+          tail -n 100 next.log || true
+          docker compose logs --no-color --tail=100 apiserver loginserver chatserver
+
+  # No Apple account: the app is built for the simulator only (unsigned).
+  # macOS runners have no Docker, so the backend is absent: the screens
+  # are the ones that render without it, plus the offline page.
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            srcs/mobile/package-lock.json
+            srcs/frontend/package-lock.json
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Sync the app
+        working-directory: srcs/mobile
+        env:
+          CAP_SERVER_URL: http://localhost:4000
+        run: |
+          npm ci
+          npm run sync -- ios
+      - name: Build for the simulator
+        working-directory: srcs/mobile/ios/App
+        run: |
+          xcodebuild -project App.xcodeproj -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tail -n 30
+          test -d build/Build/Products/Debug-iphonesimulator/App.app
+      - name: Build and start the web app
+        working-directory: srcs/frontend
+        env:
+          API_INTERNAL_URL: http://localhost:8080
+          LOGIN_INTERNAL_URL: http://localhost:7070
+          CHAT_INTERNAL_URL: http://localhost:9090
+        run: |
+          npm ci
+          npm run build
+          nohup npm run start > ../../next.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/login >/dev/null && break; sleep 2; done
+      - name: Screenshots on the simulator
+        run: |
+          srcs/mobile/scripts/ios-screenshots.sh \
+            srcs/mobile/ios/App/build/Build/Products/Debug-iphonesimulator/App.app \
+            screenshots/ios route.txt \
+            home=/ login=/login signup=/account/sign-up safety=/safety terms=/terms community=/community
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-screenshots
+          path: screenshots/ios
+          if-no-files-found: ignore
