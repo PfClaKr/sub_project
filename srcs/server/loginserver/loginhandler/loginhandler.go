@@ -72,10 +72,10 @@ func verifyPassword(storedHash, salt, password string) bool {
 	return subtle.ConstantTimeCompare([]byte(storedHash), []byte(legacyHash(password, salt))) == 1
 }
 
-// clientIP is the address the rate limiter keys on. Behind a reverse
+// ClientIP is the address the rate limiter keys on. Behind a reverse
 // proxy (TRUST_PROXY=true) every request comes from the proxy, so the
 // last X-Forwarded-For entry, which the proxy itself appended, is used.
-func clientIP(r *http.Request) string {
+func ClientIP(r *http.Request) string {
 	if os.Getenv("TRUST_PROXY") == "true" {
 		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 			parts := strings.Split(xff, ",")
@@ -101,7 +101,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ip := clientIP(r)
+	ip := ClientIP(r)
 	if limiter.Blocked(ip) {
 		jsonresponse.Error(w, http.StatusTooManyRequests, "로그인 시도가 너무 많아요. 잠시 후 다시 시도해주세요.")
 		return
