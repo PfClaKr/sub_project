@@ -8,6 +8,10 @@ x-go-env: &go-env
   JWT_SECRET: local_dev_secret
   # Set to "true" when served over HTTPS.
   COOKIE_SECURE: "false"
+  # Web push keys for local development only (make vapid makes new ones).
+  VAPID_PUBLIC_KEY: BBUoQmFK3ckrkIoQRCnLtCNKvdQAHtG2ipALfWdlSAfFnbCxsq8c5SuJ5cFkIMeqRcCsSmO3pJkvIHmbEJ85JDE
+  VAPID_PRIVATE_KEY: vGoZwWGtUXtML1epGBUwbz_3qeQP_OVDsbuqmifmqBU
+  VAPID_SUBJECT: mailto:dev@itnyang.local
 
 x-go-healthcheck: &go-healthcheck
   interval: 5s
@@ -73,6 +77,15 @@ services:
       S3_BUCKET: product-images
       S3_ACCESS_KEY: minioadmin
       S3_SECRET_KEY: minioadmin
+      # Notification mails (MailHog). Short intervals so e2e runs fast;
+      # production uses the defaults (1m worker, 15m digest).
+      SMTP_HOST: mailhog
+      SMTP_PORT: "1025"
+      SMTP_FROM: no-reply@itnyang.local
+      PUBLIC_APP_URL: http://localhost:3000
+      PUBLIC_API_URL: http://localhost:8080
+      NOTIFY_EMAIL_INTERVAL: 2s
+      NOTIFY_DIGEST_DELAY: 8s
     healthcheck:
       <<: *go-healthcheck
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
@@ -83,6 +96,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      mailhog:
+        condition: service_started
 
   loginserver:
     build:
