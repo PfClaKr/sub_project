@@ -95,3 +95,54 @@ export type AppNotification = {
 	Read: boolean;
 	CreatedAt: number;
 };
+
+export type Post = {
+	PostId: string;
+	Type: "free" | "qna";
+	Topic: string;
+	City?: string;
+	Title: string;
+	Body?: string;
+	BodyPreview?: string;
+	Images?: string[];
+	Status?: "active" | "hidden" | "deleted";
+	Anonymous?: boolean;
+	// Empty for anonymous posts.
+	AuthorId?: string;
+	AuthorNickname?: string;
+	AuthorImage?: string;
+	IsMine?: boolean;
+	CreatedAt: number;
+	UpdatedAt?: number;
+	CommentCount?: number;
+	LikeCount?: number;
+	ViewCount?: number;
+	AcceptedCommentId?: string;
+	Solved?: boolean;
+	Liked?: boolean;
+	Bookmarked?: boolean;
+};
+
+export type PostPage = {
+	Items: Post[];
+	Page: number;
+	TotalPages: number;
+	Total: number;
+	Corrected?: boolean;
+};
+
+export type PostComment = {
+	CommentId: string;
+	PostId?: string;
+	ParentId?: string;
+	Body: string;
+	DisplayName: string;
+	AuthorId?: string;
+	AuthorImage?: string;
+	Anonymous?: boolean;
+	IsMine?: boolean;
+	IsPostAuthor?: boolean;
+	Deleted?: boolean;
+	Accepted?: boolean;
+	CreatedAt: number;
+};

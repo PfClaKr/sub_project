@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatPrice, formatRelative, imageUrl, toMs } from "./format";
+import { formatDateTime, formatPrice, formatRelative, formatTime, imageUrl, toMs } from "./format";
 
 describe("formatPrice", () => {
 	it("formats euros without useless decimals", () => {
@@ -48,5 +48,14 @@ describe("imageUrl", () => {
 		expect(imageUrl("default_profile_image.png")).toBeNull();
 		expect(imageUrl("javascript:alert(1)")).toBeNull();
 		expect(imageUrl(undefined)).toBeNull();
+	});
+});
+
+describe("time formats", () => {
+	it("use a 24-hour clock so server and browser render the same text", () => {
+		const ts = Date.UTC(2026, 9, 17, 15, 4); // 17:04 in Paris (CEST)
+		expect(formatTime(ts)).toBe("17:04");
+		expect(formatDateTime(ts)).toContain("17:04");
+		expect(formatDateTime(ts)).not.toMatch(/AM|PM|오전|오후/);
 	});
 });

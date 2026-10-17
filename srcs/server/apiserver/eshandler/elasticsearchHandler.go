@@ -97,8 +97,12 @@ func (d ProductDoc) body() ProductDoc {
 // "서랍" finds "서랍장"), a space-free 2-3 gram field for spacing
 // variants, and whitespace fields holding jamo/chosung words computed
 // in Go (edge n-grams give prefix matching for autocomplete).
-const indexSettings = `{
-	"settings": {
+// analysisSettings is shared by every index: nori for meaning (mixed
+// decompounding at index time so "서랍" finds "서랍장"), a space-free 2-3
+// gram analyzer for spacing variants, and whitespace analyzers for the
+// jamo/chosung words computed in Go (edge n-grams give prefix matching
+// for autocomplete).
+const analysisSettings = `{
 		"index": {
 			"number_of_shards": 1,
 			"number_of_replicas": 0,
@@ -123,7 +127,16 @@ const indexSettings = `{
 				}
 			}
 		}
-	},
+	}`
+
+// wordsField maps a Go-computed jamo or chosung field.
+const wordsField = `{
+				"type": "text", "analyzer": "words",
+				"fields": {"prefix": {"type": "text", "analyzer": "words_prefix", "search_analyzer": "words"}}
+			}`
+
+var indexSettings = `{
+	"settings": ` + analysisSettings + `,
 	"mappings": {
 		"properties": {
 			"ProductId": {"type": "keyword"},
@@ -139,14 +152,8 @@ const indexSettings = `{
 			"ProductPrice": {"type": "double"},
 			"Location": {"type": "geo_point"},
 			"AreaId": {"type": "keyword"},
-			"NameWords": {
-				"type": "text", "analyzer": "words",
-				"fields": {"prefix": {"type": "text", "analyzer": "words_prefix", "search_analyzer": "words"}}
-			},
-			"NameChosung": {
-				"type": "text", "analyzer": "words",
-				"fields": {"prefix": {"type": "text", "analyzer": "words_prefix", "search_analyzer": "words"}}
-			}
+			"NameWords": ` + wordsField + `,
+			"NameChosung": ` + wordsField + `
 		}
 	}
 }`
@@ -192,22 +199,52 @@ func do(req esapi.Request) ([]byte, int, error) {
 	return body, res.StatusCode, nil
 }
 
-// EnsureIndex makes the alias point at indexVersion, building it from
-// load() (all products from DynamoDB) when it does not exist yet.
+// indexSpec describes one alias and the versioned index behind it.
+type indexSpec struct {
+	alias, version, settings string
+	legacy                   []string // indices from before aliases, deleted once
+}
+
+var productsIndex = indexSpec{alias: aliasName, version: indexVersion, legacy: []string{legacyIndex}}
+
+// searchDoc is a document bulk-loaded into an index.
+type searchDoc interface {
+	docID() string
+	source() interface{}
+}
+
+func (d ProductDoc) docID() string       { return d.ProductId }
+func (d ProductDoc) source() interface{} { return d.body() }
+
+// EnsureIndex makes the products alias point at indexVersion, building it
+// from load() (all products from DynamoDB) when it does not exist yet.
 func EnsureIndex(load func() ([]ProductDoc, error)) error {
-	body, aliasStatus, err := do(esapi.IndicesGetAliasRequest{Name: []string{aliasName}})
-	if err == nil && strings.Contains(string(body), `"`+indexVersion+`"`) {
+	spec := productsIndex
+	spec.settings = indexSettings
+	return ensureIndex(spec, func() ([]searchDoc, error) {
+		products, err := load()
+		docs := make([]searchDoc, len(products))
+		for i, p := range products {
+			docs[i] = p
+		}
+		return docs, err
+	})
+}
+
+func ensureIndex(ix indexSpec, load func() ([]searchDoc, error)) error {
+	body, aliasStatus, err := do(esapi.IndicesGetAliasRequest{Name: []string{ix.alias}})
+	if err == nil && strings.Contains(string(body), `"`+ix.version+`"`) {
 		return nil
 	}
 	if err != nil && aliasStatus != 404 {
 		return err
 	}
 
-	if _, status, err := do(esapi.IndicesExistsRequest{Index: []string{indexVersion}}); err != nil && status != 404 {
+	if _, status, err := do(esapi.IndicesExistsRequest{Index: []string{ix.version}}); err != nil && status != 404 {
 		return err
 	} else if status == 404 {
-		if _, _, err := do(esapi.IndicesCreateRequest{Index: indexVersion, Body: strings.NewReader(indexSettings)}); err != nil {
-			return fmt.Errorf("create %s: %w", indexVersion, err)
+		if _, _, err := do(esapi.IndicesCreateRequest{Index: ix.version, Body: strings.NewReader(ix.settings)}); err != nil {
+			return fmt.Errorf("create %s: %w", ix.version, err)
 		}
 	}
 
@@ -215,15 +252,15 @@ func EnsureIndex(load func() ([]ProductDoc, error)) error {
 	if err != nil {
 		return err
 	}
-	if err := bulkIndex(indexVersion, docs); err != nil {
+	if err := bulkIndex(ix.version, docs); err != nil {
 		return err
 	}
-	log.Printf("elasticsearch: indexed %d products into %s", len(docs), indexVersion)
+	log.Printf("elasticsearch: indexed %d documents into %s", len(docs), ix.version)
 
 	// Atomically move the alias; old versions are deleted afterwards.
 	actions := []map[string]interface{}{
-		{"remove": map[string]string{"index": "*", "alias": aliasName}},
-		{"add": map[string]string{"index": indexVersion, "alias": aliasName}},
+		{"remove": map[string]string{"index": "*", "alias": ix.alias}},
+		{"add": map[string]string{"index": ix.version, "alias": ix.alias}},
 	}
 	if aliasStatus == 404 {
 		actions = actions[1:] // nothing to remove yet
@@ -236,30 +273,32 @@ func EnsureIndex(load func() ([]ProductDoc, error)) error {
 	if aliasStatus == 404 {
 		body = nil
 	}
-	for _, old := range oldIndices(body) {
+	for _, old := range oldIndices(body, ix.version) {
 		do(esapi.IndicesDeleteRequest{Index: []string{old}})
 	}
-	do(esapi.IndicesDeleteRequest{Index: []string{legacyIndex}, IgnoreUnavailable: esapi.BoolPtr(true)})
+	if len(ix.legacy) > 0 {
+		do(esapi.IndicesDeleteRequest{Index: ix.legacy, IgnoreUnavailable: esapi.BoolPtr(true)})
+	}
 	return nil
 }
 
 // oldIndices lists indices the alias pointed to before, from the
 // GET _alias response ({"index": {"aliases": {...}}}).
-func oldIndices(aliasResponse []byte) []string {
+func oldIndices(aliasResponse []byte, current string) []string {
 	var parsed map[string]json.RawMessage
 	if json.Unmarshal(aliasResponse, &parsed) != nil {
 		return nil
 	}
 	var out []string
 	for name := range parsed {
-		if name != indexVersion && name != "error" && name != "status" {
+		if name != current && name != "error" && name != "status" {
 			out = append(out, name)
 		}
 	}
 	return out
 }
 
-func bulkIndex(index string, docs []ProductDoc) error {
+func bulkIndex(index string, docs []searchDoc) error {
 	for start := 0; start < len(docs); start += 500 {
 		end := start + 500
 		if end > len(docs) {
@@ -268,8 +307,8 @@ func bulkIndex(index string, docs []ProductDoc) error {
 		var buf bytes.Buffer
 		enc := json.NewEncoder(&buf)
 		for _, d := range docs[start:end] {
-			enc.Encode(map[string]interface{}{"index": map[string]string{"_index": index, "_id": d.ProductId}})
-			enc.Encode(d.body())
+			enc.Encode(map[string]interface{}{"index": map[string]string{"_index": index, "_id": d.docID()}})
+			enc.Encode(d.source())
 		}
 		body, _, err := do(esapi.BulkRequest{Body: &buf, Refresh: "true"})
 		if err != nil {

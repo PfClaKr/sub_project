@@ -1,17 +1,18 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { CATEGORIES, REGIONS, STATUSES, STATUS_SELLING } from "./constants";
+import { CATEGORIES, FREE_TOPICS, QNA_TOPICS, REGIONS, REPORT_REASONS, STATUSES, STATUS_SELLING } from "./constants";
 
 // Values the frontend and the apiserver must agree on. Reading the Go
 // source keeps them from drifting apart silently.
-const goSource = readFileSync(
-	fileURLToPath(new URL("../../server/apiserver/graphqlhandler/graphqlResolve.go", import.meta.url)),
-	"utf8",
-);
+const readGo = (file: string) =>
+	readFileSync(fileURLToPath(new URL(`../../server/apiserver/graphqlhandler/${file}`, import.meta.url)), "utf8");
+const goSource = readGo("graphqlResolve.go");
+const communitySource = readGo("community.go");
+const reportSource = readGo("reports.go");
 
-function goStrings(pattern: RegExp): string[] {
-	const block = goSource.match(pattern)?.[1] ?? "";
+function goStrings(pattern: RegExp, source = goSource): string[] {
+	const block = source.match(pattern)?.[1] ?? "";
 	return Array.from(block.matchAll(/"([^"]+)"/g), m => m[1]);
 }
 
@@ -29,5 +30,14 @@ describe("frontend ↔ apiserver contract", () => {
 			.concat(goSource.includes(`StatusSelling: true`) ? [STATUS_SELLING] : []);
 		expect(new Set(statuses)).toEqual(new Set(STATUSES));
 		expect(goSource).toContain(`const StatusSelling = "${STATUS_SELLING}"`);
+	});
+
+	it("uses the same community topics", () => {
+		expect(goStrings(/var FreeTopics = \[\]string\{([^}]*)\}/, communitySource)).toEqual([...FREE_TOPICS]);
+		expect(goStrings(/var QnaTopics = \[\]string\{([^}]*)\}/, communitySource)).toEqual([...QNA_TOPICS]);
+	});
+
+	it("uses the same report reasons", () => {
+		expect(goStrings(/var ReportReasons = \[\]string\{([^}]*)\}/, reportSource)).toEqual([...REPORT_REASONS]);
 	});
 });

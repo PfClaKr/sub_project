@@ -1,16 +1,10 @@
 'use client';
 
-import { BedDouble, Briefcase, MessagesSquare } from "lucide-react";
+import { BedDouble, Briefcase } from "lucide-react";
 import { ComingSoonBox } from "@/styles/styledNotification";
 
 // Placeholder for sections still being built (docs/community-plan.md).
 const CONTENT = {
-	community: {
-		icon: MessagesSquare,
-		title: "커뮤니티를 준비하고 있어요",
-		intro: "파리 생활의 궁금한 점을 묻고 답하는 공간이 곧 열려요.",
-		points: ["체류증·CAF·은행 같은 생활 Q&A와 채택 답변", "비슷한 질문 추천으로 빠르게 답 찾기", "부담 없는 익명 질문"],
-	},
 	housing: {
 		icon: BedDouble,
 		title: "집 구하기를 준비하고 있어요",
