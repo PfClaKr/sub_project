@@ -10,11 +10,12 @@ import (
 // because gorilla/websocket forbids concurrent writers.
 type Client struct {
 	chatId string
+	userId string
 	send   chan []byte
 }
 
-func newClient(chatId string) *Client {
-	return &Client{chatId: chatId, send: make(chan []byte, 32)}
+func newClient(chatId, userId string) *Client {
+	return &Client{chatId: chatId, userId: userId, send: make(chan []byte, 32)}
 }
 
 // Hub tracks clients per chat room and fans messages out to them.
@@ -66,4 +67,16 @@ func (h *Hub) Broadcast(chatId string, payload []byte) {
 			log.Printf("chat %s: dropping message for slow client", chatId)
 		}
 	}
+}
+
+// Online reports whether the member has the room open right now.
+func (h *Hub) Online(chatId, userId string) bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	for c := range h.rooms[chatId] {
+		if c.userId == userId {
+			return true
+		}
+	}
+	return false
 }
