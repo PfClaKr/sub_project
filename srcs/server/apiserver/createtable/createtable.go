@@ -122,6 +122,12 @@ var tables = []tableDef{
 		schema:  hashRangeKey("UserId", "EndpointHash"),
 		attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("EndpointHash", "S")},
 	},
+	{
+		// Member UserId blocked member BlockedId (chat).
+		name:    dynamo.TableBlocks,
+		schema:  hashRangeKey("UserId", "BlockedId"),
+		attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("BlockedId", "S")},
+	},
 }
 
 // obsoleteIndexes were created by earlier versions and are not queried;
