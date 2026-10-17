@@ -2,7 +2,7 @@ import { API_URL } from "@/libs/config";
 
 // adminAction sends a write to the admin API from the browser and
 // returns a user-facing error message, or "" on success.
-export async function adminAction(method: "PATCH" | "DELETE", path: string, body?: unknown): Promise<string> {
+export async function adminAction(method: "PATCH" | "DELETE" | "POST" | "PUT", path: string, body?: unknown): Promise<string> {
 	try {
 		const res = await fetch(`${API_URL}/admin${path}`, {
 			method,

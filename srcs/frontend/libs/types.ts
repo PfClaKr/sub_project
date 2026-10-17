@@ -182,6 +182,7 @@ export type PostComment = {
 	IsMine?: boolean;
 	IsPostAuthor?: boolean;
 	Deleted?: boolean;
+	Hidden?: boolean;
 	Accepted?: boolean;
 	CreatedAt: number;
 };

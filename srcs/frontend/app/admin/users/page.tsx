@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { AdminListFilters } from "@/components/admin/AdminListFilters";
 import { AdminPagination } from "@/components/admin/AdminPagination";
-import { RoleControl, UserDeleteControl } from "@/components/admin/Controls";
+import { RoleControl, SuspensionControl, UserDeleteControl } from "@/components/admin/Controls";
 import { Avatar } from "@/components/ui/Avatar";
 import { adminGet, currentSession, isAdmin, type AdminPage } from "@/libs/adminApi";
 import { apiQuery, param, type SearchParams } from "@/libs/adminParams";
@@ -14,12 +14,13 @@ export const metadata: Metadata = { title: "회원" };
 type User = {
 	UserId: string; UserNickname: string; Email: string; Role: string;
 	ProfileImage: string; CreatedAt: number; PublishedQuantity: number;
+	Status: "active" | "suspended"; SuspendedUntil: number;
 };
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: SearchParams }) {
 	if (!(await isAdmin())) return null;
 	const [list, me] = await Promise.all([
-		adminGet<AdminPage<User>>(`/users${apiQuery(searchParams, ["q", "role", "page"])}`),
+		adminGet<AdminPage<User>>(`/users${apiQuery(searchParams, ["q", "role", "status", "page"])}`),
 		currentSession(),
 	]);
 
@@ -32,12 +33,15 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
 				selects={[{
 					name: "role", label: "권한", value: param(searchParams, "role"),
 					options: [{ value: "", label: "전체" }, { value: "user", label: "회원" }, { value: "admin", label: "관리자" }],
+				}, {
+					name: "status", label: "상태", value: param(searchParams, "status"),
+					options: [{ value: "", label: "전체" }, { value: "active", label: "정상" }, { value: "suspended", label: "정지" }],
 				}]}
 			/>
 			<TableWrap>
 				<Table>
 					<thead>
-						<tr><th>회원</th><th>이메일</th><th>권한</th><th>등록 상품</th><th>가입일</th><th>관리</th></tr>
+						<tr><th>회원</th><th>이메일</th><th>권한</th><th>등록 상품</th><th>가입일</th><th>이용 정지</th><th>관리</th></tr>
 					</thead>
 					<tbody>
 						{list.Items.map(u => {
@@ -62,6 +66,11 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
 										</Link>
 									</td>
 									<td>{formatDate(u.CreatedAt)}</td>
+									<td>
+										{self || u.Role === "admin"
+											? "—"
+											: <SuspensionControl userId={u.UserId} nickname={u.UserNickname} suspended={u.Status === "suspended"} until={u.SuspendedUntil} />}
+									</td>
 									<td>
 										{self || u.Role === "admin"
 											? null

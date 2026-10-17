@@ -134,12 +134,15 @@ export const FilterForm = styled.form`
 		width: 240px;
 		max-width: 100%;
 	}
-	select {
-		width: auto;
-	}
 	input, select {
 		height: 40px;
 		padding: 0 10px;
+	}
+	/* Keep room for the global select chevron. */
+	select {
+		width: auto;
+		min-width: 120px;
+		padding-right: 36px;
 	}
 	button {
 		height: 40px;
