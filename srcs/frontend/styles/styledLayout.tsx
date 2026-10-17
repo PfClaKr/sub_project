@@ -50,3 +50,20 @@ export const FooterBar = styled.footer`
 		margin: 2px 0;
 	}
 `;
+
+export const FooterLinks = styled.nav`
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 6px 18px;
+	margin-bottom: 12px;
+
+	a {
+		color: ${palette.text};
+		font-weight: 600;
+		text-decoration: none;
+	}
+	a:hover {
+		color: ${palette.primary};
+	}
+`;
