@@ -9,10 +9,10 @@ import { RequireLogin } from "@/components/ui/RequireLogin";
 import { EmptyState, ErrorText, GhostButton, Skeleton } from "@/styles/styledUi";
 import { ListActions, NoticeItem, NoticeList } from "@/styles/styledNotification";
 import { gql } from "@/libs/graphql";
-import { formatRelative } from "@/libs/format";
 import { useNotifications } from "@/libs/notifications";
 import { notificationHref, notificationTitle } from "@/libs/notificationText";
 import type { AppNotification, NotificationType } from "@/libs/types";
+import { TimeAgo } from "@/components/ui/TimeAgo";
 
 const ICONS: Record<NotificationType, LucideIcon> = {
 	comment: MessageSquare,
@@ -94,7 +94,7 @@ function List() {
 								<div>
 									<strong>{notificationTitle(n)}</strong>
 									{n.Preview && <p>{n.Preview}</p>}
-									<small>{formatRelative(n.CreatedAt)}{n.Read ? "" : " · 읽지 않음"}</small>
+									<small><TimeAgo ts={n.CreatedAt} />{n.Read ? "" : " · 읽지 않음"}</small>
 								</div>
 							</NoticeItem>
 						</li>

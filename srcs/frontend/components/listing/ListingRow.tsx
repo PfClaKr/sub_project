@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { BedDouble, Briefcase, MapPin } from "lucide-react";
 import { dealLabel, LISTING_PATH, modeLabel, moveInLabel, rentLabel, wageLabel } from "@/libs/listing";
-import { formatRelative, imageUrl } from "@/libs/format";
+import { imageUrl } from "@/libs/format";
 import { ListingCard, ListingCards } from "@/styles/styledListing";
 import { Meta, Tag } from "@/styles/styledCommunity";
 import type { ListingType } from "@/libs/constants";
 import type { Post } from "@/libs/types";
+import { TimeAgo } from "@/components/ui/TimeAgo";
 
 export function ListingRow({ post }: { post: Post }) {
 	const type = post.Type as ListingType;
@@ -17,7 +18,7 @@ export function ListingRow({ post }: { post: Post }) {
 	const j = post.Job;
 	return (
 		<ListingCard as={Link} href={`${LISTING_PATH[type]}/${post.PostId}`} $closed={post.Deal === "closed"}>
-			{thumb ? <img className="thumb" src={thumb} alt="" loading="lazy" /> : <span className="thumb"><Icon size={28} aria-hidden /></span>}
+			{thumb ? <img className="thumb" src={thumb} alt="" loading="lazy" /> : <span className="icon"><Icon size={22} aria-hidden /></span>}
 			<div>
 				<Meta>
 					<Tag>{modeLabel(type, h?.Mode ?? j?.Mode)}</Tag>
@@ -28,12 +29,12 @@ export function ListingRow({ post }: { post: Post }) {
 				<strong>{h ? rentLabel(h) : j ? wageLabel(j) : ""}</strong>
 				<Meta style={{ marginTop: 4 }}>
 					{h && <span>{moveInLabel(h.AvailableFrom)}</span>}
-					{h?.Furnished && <span>가구</span>}
+					{h?.Furnished && <span>가구 포함</span>}
 					{h?.Caf && <span>CAF</span>}
 					{j && <span>{j.Employment}</span>}
 					{j?.PermitRequired && <span>체류증 필요</span>}
 					<span><MapPin size={12} aria-hidden /> {post.AreaName || post.City}</span>
-					<span>{formatRelative(Math.max(post.BumpedAt ?? 0, post.CreatedAt))}</span>
+					<span><TimeAgo ts={Math.max(post.BumpedAt ?? 0, post.CreatedAt)} /></span>
 				</Meta>
 			</div>
 		</ListingCard>

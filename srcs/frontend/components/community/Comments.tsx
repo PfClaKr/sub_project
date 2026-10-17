@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { gql } from "@/libs/graphql";
 import { nestComments, splitLinks, type CommentNode } from "@/libs/community";
-import { formatRelative } from "@/libs/format";
 import { useSession } from "@/libs/session";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { Avatar } from "@/components/ui/Avatar";
@@ -13,6 +12,7 @@ import { CommentForm, CommentItem, CommentSection, Tag, TextButton } from "@/sty
 import { ErrorText, LinkButton, Muted, Skeleton } from "@/styles/styledUi";
 import { ReportButton } from "./ReportButton";
 import type { Post, PostComment } from "@/libs/types";
+import { TimeAgo } from "@/components/ui/TimeAgo";
 
 const FIELDS = `CommentId ParentId Body DisplayName AuthorId AuthorImage Anonymous IsMine IsPostAuthor Deleted Hidden Accepted CreatedAt`;
 
@@ -101,7 +101,7 @@ export function Comments({ post, onPostChange }: Props) {
 						<Avatar src={c.AuthorImage} name={c.DisplayName} size={24} />
 						<strong>{c.DisplayName}</strong>
 						{c.IsPostAuthor && !c.Anonymous && <Tag>글쓴이</Tag>}
-						<Muted>{formatRelative(c.CreatedAt)}</Muted>
+						<Muted><TimeAgo ts={c.CreatedAt} /></Muted>
 					</header>
 					<p><LinkedText text={c.Body} /></p>
 					{!pinned && (
