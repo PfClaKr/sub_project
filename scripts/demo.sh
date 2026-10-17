@@ -2,16 +2,23 @@
 # make demo: demo accounts plus content around them on the local stack,
 # then a login check of each account through the real APIs.
 # Running it again resets the demo accounts to the same state.
+# DEMO_COMPOSE / DEMO_WEB / DEMO_API / DEMO_AUTH / DEMO_CHAT / DEMO_MAIL point
+# it at another stack (scripts/phone.sh uses the production rehearsal),
+# DEMO_CURL_OPTS adds curl flags (-k for its self-signed certificate).
 set -euo pipefail
 
-COMPOSE="docker compose -f ./docker/Docker-compose.yaml"
+COMPOSE="${DEMO_COMPOSE:-docker compose -f ./docker/Docker-compose.yaml}"
 PASSWORD="${DEMO_PASSWORD:-itnyang1234}"
 ADMIN_EMAIL="${DEMO_ADMIN_EMAIL:-admin@itnyang.test}"
 USER_EMAIL="${DEMO_USER_EMAIL:-user@itnyang.test}"
 FRIEND_EMAIL="${DEMO_FRIEND_EMAIL:-friend@itnyang.test}"
-API=http://localhost:8080
-AUTH=http://localhost:7070
-CHAT=http://localhost:9090
+WEB="${DEMO_WEB:-http://localhost:3000}"
+API="${DEMO_API:-http://localhost:8080}"
+AUTH="${DEMO_AUTH:-http://localhost:7070}"
+CHAT="${DEMO_CHAT:-http://localhost:9090}"
+MAIL="${DEMO_MAIL:-http://localhost:8025}"
+# shellcheck disable=SC2086
+curl() { command curl ${DEMO_CURL_OPTS:-} "$@"; }
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
@@ -75,13 +82,13 @@ free=$(gql "$WORK/user" "{ posts(Type: \\\"free\\\") { Total } }" | number Total
 check "커뮤니티 목록 (검색엔진)" "$([ "${free:-0}" -ge 1 ] && echo 1 || echo 0)" "(자유게시판 ${free:-0}개)"
 housing=$(gql "$WORK/user" "{ listings(Type: \\\"housing\\\") { Total } }" | number Total)
 check "집 목록" "$([ "${housing:-0}" -ge 1 ] && echo 1 || echo 0)" "(${housing:-0}개)"
-web=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/community)
+web=$(curl -s -o /dev/null -w '%{http_code}' "$WEB/community")
 check "웹 페이지" "$([ "$web" = 200 ] && echo 1 || echo 0)" "(/community HTTP $web)"
 
 cat <<EOF
 
   ──────────────────────────────────────────────────────
-   잇냥 데모        http://localhost:3000
+   잇냥 데모        $WEB
   ──────────────────────────────────────────────────────
    관리자     $ADMIN_EMAIL   /  $PASSWORD
               (메뉴의 '관리자' → 신고 처리, 회원 정지)
@@ -89,7 +96,7 @@ cat <<EOF
               상품 3개, 글·댓글, 채팅 3개, 알림이 있어요
    일반회원2  $FRIEND_EMAIL  /  $PASSWORD   (파리새내기)
               일반회원과 채팅해볼 때 쓰세요
-   메일함     http://localhost:8025  (알림 메일, 가입 인증 메일)
+   메일함     $MAIL  (알림 메일, 가입 인증 메일)
   ──────────────────────────────────────────────────────
    다시 실행하면 데모 계정의 글·채팅·알림이 처음 상태로 돌아가요.
 EOF

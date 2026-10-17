@@ -53,10 +53,13 @@ services:
     build:
       context: ../srcs/frontend
       dockerfile: ../../docker/frontend/Dockerfile.prod
+      # Paths, not URLs: the browser calls the services on whatever origin
+      # served the page (Caddy proxies /svc/*), so the image does not depend
+      # on the domain.
       args:
-        NEXT_PUBLIC_API_URL: ${APP_URL}/svc/api
-        NEXT_PUBLIC_LOGIN_URL: ${APP_URL}/svc/auth
-        NEXT_PUBLIC_CHAT_URL: ${APP_URL}/svc/chat
+        NEXT_PUBLIC_API_URL: /svc/api
+        NEXT_PUBLIC_LOGIN_URL: /svc/auth
+        NEXT_PUBLIC_CHAT_URL: /svc/chat
     restart: unless-stopped
     environment:
       TZ: Europe/Paris
