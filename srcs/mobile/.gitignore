@@ -1,3 +1,3 @@
 node_modules/
 # Written by scripts/prepare.mjs at sync time.
-www/app-config.js
+www/offline.html

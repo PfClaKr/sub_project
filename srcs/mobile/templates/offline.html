@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- Template: scripts/prepare.mjs writes www/offline.html from it. -->
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -51,7 +52,7 @@
 </head>
 <body>
 	<main>
-		<img class="logo" src="icon.png" alt="" width="72" height="72">
+		<img class="logo" src="{{ICON}}" alt="" width="72" height="72">
 		<h1>잇냥에 연결할 수 없어요</h1>
 		<p>인터넷 연결을 확인한 뒤<br>다시 시도해주세요.</p>
 		<button type="button" id="retry">다시 시도</button>
@@ -63,7 +64,7 @@
 			<button type="submit">연결</button>
 		</form>
 	</main>
-	<script src="app-config.js"></script>
+	<script>{{CONFIG}}</script>
 	<script>
 		var KEY = "itnyang.serverUrl";
 		var saved = null;

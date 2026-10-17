@@ -42,12 +42,15 @@ adb("shell", "am", "start", "-n", `${pkg}/.MainActivity`);
 await sleep(8000);
 await shot("offline");
 
-// 2. Map the runner's services into the emulator and retry from the page.
+// 2. Map the runner's services into the emulator and start again: the
+//    app now opens the site. (Retrying from the offline page would work
+//    too, but the WebView then moves to a new DevTools target.)
 for (const p of ports) adb("reverse", `tcp:${p}`, `tcp:${p}`);
+adb("shell", "am", "force-stop", pkg);
+adb("shell", "am", "start", "-n", `${pkg}/.MainActivity`);
 const webview = await device.webView({ pkg }, { timeout: 60_000 });
 const page = await webview.page();
 page.setDefaultTimeout(60_000);
-await page.click("#retry");
 await page.waitForURL(`${base}/**`);
 
 // Next.js navigation: wait for the network to settle, then a moment for
