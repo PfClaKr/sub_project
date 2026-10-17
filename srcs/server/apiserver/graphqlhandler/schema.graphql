@@ -23,6 +23,14 @@ type Query {
   notifications(Before: String): NotificationPage
   # 0 for anonymous visitors.
   unreadCount: Int
+  # Community boards. Type: "free", "qna" or "community" (both, default).
+  # Sort: "newest" (default), "popular", or relevance when Q is set.
+  posts(Type: String, Topic: String, City: String, Q: String, Solved: Boolean, Sort: String, Page: Int, Size: Int): PostPage
+  post(PostId: String!): Post
+  comments(PostId: String!): [Comment]
+  similarQuestions(Title: String!): [Post]
+  myPosts(Type: String): [Post]
+  myBookmarks: [Post]
 }
 
 type Mutation {
@@ -33,6 +41,18 @@ type Mutation {
   updateProfile(UserNickname: String!, ProfileImage: String): User
   # Without SortKeys every notification is marked read. Returns how many changed.
   markNotificationsRead(SortKeys: [String!]): Int
+  createPost(Input: PostInput!): Post
+  # Type and Anonymous cannot change after posting.
+  updatePost(PostId: String!, Input: PostInput!): Post
+  deletePost(PostId: String!): Boolean
+  likePost(PostId: String!, On: Boolean!): Post
+  bookmarkPost(PostId: String!, On: Boolean!): Boolean
+  viewPost(PostId: String!): Int
+  createComment(PostId: String!, Body: String!, ParentId: String, Anonymous: Boolean): Comment
+  deleteComment(PostId: String!, CommentId: String!): Boolean
+  acceptAnswer(PostId: String!, CommentId: String!): Post
+  # TargetType: post, comment ("<postId>#<commentId>"), product, user.
+  report(TargetType: String!, TargetId: String!, Reason: String!, Detail: String): Boolean
 }
 
 type Product {
@@ -98,4 +118,70 @@ type Notification {
 type NotificationPage {
   Items: [Notification]
   Next: String
+}
+
+# Community post. AuthorId is empty for anonymous posts; IsMine tells the
+# viewer whether they wrote it. Liked/Bookmarked are only set on post().
+type Post {
+  PostId: String
+  Type: String
+  Topic: String
+  City: String
+  Title: String
+  Body: String
+  BodyPreview: String
+  Images: [String]
+  Status: String
+  Anonymous: Boolean
+  AuthorId: String
+  AuthorNickname: String
+  AuthorImage: String
+  IsMine: Boolean
+  CreatedAt: Float
+  UpdatedAt: Float
+  CommentCount: Float
+  LikeCount: Float
+  ViewCount: Float
+  AcceptedCommentId: String
+  Solved: Boolean
+  Liked: Boolean
+  Bookmarked: Boolean
+}
+
+type PostPage {
+  Items: [Post]
+  Page: Int
+  TotalPages: Int
+  Total: Int
+  Corrected: Boolean
+}
+
+# DisplayName is the nickname, the numbered anonymous label, the
+# anonymous-author label or the deleted-member label (see comments.go);
+# deleted comments come back empty, only as parents of replies.
+# (graphql-go's lexer mishandles non-ASCII text in comments.)
+type Comment {
+  CommentId: String
+  PostId: String
+  ParentId: String
+  Body: String
+  DisplayName: String
+  AuthorId: String
+  AuthorImage: String
+  Anonymous: Boolean
+  IsMine: Boolean
+  IsPostAuthor: Boolean
+  Deleted: Boolean
+  Accepted: Boolean
+  CreatedAt: Float
+}
+
+input PostInput {
+  Type: String!
+  Topic: String!
+  City: String
+  Title: String!
+  Body: String!
+  Images: [String!]
+  Anonymous: Boolean
 }
