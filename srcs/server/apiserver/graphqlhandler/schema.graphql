@@ -8,7 +8,8 @@ type Query {
   # Sort: relevance (default) | newest | price_asc | price_desc | distance.
   # Place filter: AreaId alone = inside that town / arrondissement;
   # Latitude/Longitude + DistanceKm = within that distance.
-  productSearch(ProductName: String!, Category: String, Region: String, MinPrice: Float, MaxPrice: Float, Sort: String, AreaId: String, Latitude: Float, Longitude: Float, DistanceKm: Float): ProductSearchResult
+  # An empty ProductName browses (newest first by default), 40 per Page.
+  productSearch(ProductName: String!, Category: String, Region: String, MinPrice: Float, MaxPrice: Float, Sort: String, AreaId: String, Latitude: Float, Longitude: Float, DistanceKm: Float, Page: Int): ProductSearchResult
   # Kept for the current search page; prefer productSearch. An empty
   # Keyword lists everything matching the filters. Sort "recent" = newest.
   searchProducts(Keyword: String, Category: String, Region: String, MinPrice: Float, MaxPrice: Float, Sort: String): [Product]
@@ -108,6 +109,8 @@ type MarketStats {
 type ProductSearchResult {
   Products: [Product]
   Corrected: Boolean
+  # Browse only: another page follows.
+  HasNext: Boolean
 }
 
 # Email and credentials are intentionally not exposed.

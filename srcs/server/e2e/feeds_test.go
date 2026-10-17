@@ -39,6 +39,22 @@ func TestProductFeeds(t *testing.T) {
 		t.Error("category filter ignored")
 	}
 
+	// The 중고 tab: productSearch without a keyword browses, newest first,
+	// with the same filters and a HasNext flag.
+	var browse struct {
+		Products []product
+		HasNext  bool
+	}
+	gql(t, newClient(), `query($c: String) { productSearch(ProductName: "", Category: $c) { HasNext Products { ProductId } } }`, map[string]interface{}{"c": "도서"}).field(t, "productSearch", &browse)
+	if got := ids(browse.Products); len(got) < 2 || got[0] != newer.ProductId || !contains(got, older.ProductId) {
+		t.Errorf("browse = %v, want the newest first and both products", got)
+	}
+	var cheap struct{ Products []product }
+	gql(t, newClient(), `query($c: String) { productSearch(ProductName: "", Category: $c, MaxPrice: 15, Sort: "price_desc") { Products { ProductId } } }`, map[string]interface{}{"c": "도서"}).field(t, "productSearch", &cheap)
+	if got := ids(cheap.Products); contains(got, newer.ProductId) || !contains(got, older.ProductId) {
+		t.Errorf("browse with MaxPrice 15 = %v, want only the €10 product of the two", got)
+	}
+
 	var mine []product
 	gql(t, newClient(), `query($u: String!) { userProducts(UserId: $u) { ProductId } }`, map[string]interface{}{"u": seller.ID}).field(t, "userProducts", &mine)
 	if got := ids(mine); len(got) != 2 || got[0] != newer.ProductId || got[1] != older.ProductId {
