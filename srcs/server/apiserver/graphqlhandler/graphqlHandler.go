@@ -27,19 +27,22 @@ type resolver = func(graphql.ResolveParams) (interface{}, error)
 // resolvers maps "<Root>.<field>" to its implementation. Every root
 // field declared in schema.graphql must have an entry.
 var resolvers = map[string]resolver{
-	"Query.product":                resolveProduct,
-	"Query.productSearch":          resolveProductSearch,
-	"Query.searchSuggestions":      resolveSearchSuggestions,
-	"Query.searchProducts":         resolveSearchProducts,
-	"Query.recentProducts":         resolveRecentProducts,
-	"Query.userProducts":           resolveUserProducts,
-	"Query.user":                   resolveUser,
-	"Query.marketStats":            resolveMarketStats,
-	"Mutation.createProduct":       createProductResolver,
-	"Mutation.updateProduct":       updateProductResolver,
-	"Mutation.updateProductStatus": updateProductStatusResolver,
-	"Mutation.deleteProduct":       deleteProductResolver,
-	"Mutation.updateProfile":       updateProfileResolver,
+	"Query.product":                  resolveProduct,
+	"Query.productSearch":            resolveProductSearch,
+	"Query.searchSuggestions":        resolveSearchSuggestions,
+	"Query.searchProducts":           resolveSearchProducts,
+	"Query.recentProducts":           resolveRecentProducts,
+	"Query.userProducts":             resolveUserProducts,
+	"Query.user":                     resolveUser,
+	"Query.marketStats":              resolveMarketStats,
+	"Query.notifications":            resolveNotifications,
+	"Query.unreadCount":              resolveUnreadCount,
+	"Mutation.createProduct":         createProductResolver,
+	"Mutation.updateProduct":         updateProductResolver,
+	"Mutation.updateProductStatus":   updateProductStatusResolver,
+	"Mutation.deleteProduct":         deleteProductResolver,
+	"Mutation.updateProfile":         updateProfileResolver,
+	"Mutation.markNotificationsRead": markNotificationsReadResolver,
 }
 
 func init() {
@@ -62,22 +65,24 @@ func buildSchema(sdl []byte) (graphql.Schema, error) {
 	}
 
 	types := map[string]*graphql.Object{}
+	inputs := map[string]*graphql.InputObject{}
 	var roots []*ast.ObjectDefinition
 	for _, def := range doc.Definitions {
-		obj, ok := def.(*ast.ObjectDefinition)
-		if !ok {
-			continue
+		switch def := def.(type) {
+		case *ast.InputObjectDefinition:
+			inputs[def.Name.Value] = buildInput(def, inputs)
+		case *ast.ObjectDefinition:
+			if def.Name.Value == "Query" || def.Name.Value == "Mutation" {
+				roots = append(roots, def)
+				continue
+			}
+			types[def.Name.Value] = buildObject(def, types, inputs, false)
 		}
-		if obj.Name.Value == "Query" || obj.Name.Value == "Mutation" {
-			roots = append(roots, obj)
-			continue
-		}
-		types[obj.Name.Value] = buildObject(obj, types, false)
 	}
 
 	cfg := graphql.SchemaConfig{}
 	for _, obj := range roots {
-		built := buildObject(obj, types, true)
+		built := buildObject(obj, types, inputs, true)
 		if obj.Name.Value == "Query" {
 			cfg.Query = built
 		} else {
@@ -87,7 +92,17 @@ func buildSchema(sdl []byte) (graphql.Schema, error) {
 	return graphql.NewSchema(cfg)
 }
 
-func buildObject(def *ast.ObjectDefinition, types map[string]*graphql.Object, root bool) *graphql.Object {
+// buildInput builds an SDL "input" type. Resolvers receive it as a
+// map[string]interface{} argument.
+func buildInput(def *ast.InputObjectDefinition, inputs map[string]*graphql.InputObject) *graphql.InputObject {
+	fields := graphql.InputObjectConfigFieldMap{}
+	for _, f := range def.Fields {
+		fields[f.Name.Value] = &graphql.InputObjectFieldConfig{Type: inputType(f.Type, inputs)}
+	}
+	return graphql.NewInputObject(graphql.InputObjectConfig{Name: def.Name.Value, Fields: fields})
+}
+
+func buildObject(def *ast.ObjectDefinition, types map[string]*graphql.Object, inputs map[string]*graphql.InputObject, root bool) *graphql.Object {
 	fields := graphql.Fields{}
 	for _, f := range def.Fields {
 		field := &graphql.Field{
@@ -95,7 +110,7 @@ func buildObject(def *ast.ObjectDefinition, types map[string]*graphql.Object, ro
 			Args: graphql.FieldConfigArgument{},
 		}
 		for _, arg := range f.Arguments {
-			field.Args[arg.Name.Value] = &graphql.ArgumentConfig{Type: inputType(arg.Type)}
+			field.Args[arg.Name.Value] = &graphql.ArgumentConfig{Type: inputType(arg.Type, inputs)}
 		}
 		if root {
 			key := def.Name.Value + "." + f.Name.Value
@@ -140,13 +155,17 @@ func outputType(t ast.Type, types map[string]*graphql.Object) graphql.Output {
 	return graphql.String
 }
 
-func inputType(t ast.Type) graphql.Input {
+// Input types, like object types, must be declared before use.
+func inputType(t ast.Type, inputs map[string]*graphql.InputObject) graphql.Input {
 	switch t := t.(type) {
 	case *ast.List:
-		return graphql.NewList(inputType(t.Type))
+		return graphql.NewList(inputType(t.Type, inputs))
 	case *ast.NonNull:
-		return graphql.NewNonNull(inputType(t.Type))
+		return graphql.NewNonNull(inputType(t.Type, inputs))
 	case *ast.Named:
+		if in, ok := inputs[t.Name.Value]; ok {
+			return in
+		}
 		return scalar(t.Name.Value)
 	}
 	return graphql.String
