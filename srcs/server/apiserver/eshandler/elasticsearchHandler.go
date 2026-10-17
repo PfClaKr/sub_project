@@ -439,3 +439,20 @@ func Suggest(prefix string, size int) ([]string, error) {
 	}
 	return out, nil
 }
+
+// CountProducts counts indexed products (selling: only those for sale).
+func CountProducts(selling bool) (int, error) {
+	b, err := json.Marshal(buildCountQuery(selling))
+	if err != nil {
+		return 0, err
+	}
+	body, _, err := do(esapi.CountRequest{Index: []string{aliasName}, Body: bytes.NewReader(b)})
+	if err != nil {
+		return 0, err
+	}
+	var res struct {
+		Count int `json:"count"`
+	}
+	err = json.Unmarshal(body, &res)
+	return res.Count, err
+}

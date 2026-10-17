@@ -33,6 +33,7 @@ type SearchOptions struct {
 	Sort string
 	Near *GeoFilter
 	Size int
+	From int // offset for paging (browse only)
 }
 
 // GeoFilter keeps products inside an area (AreaId, Km 0) or within Km
@@ -177,11 +178,21 @@ func buildBrowseQuery(opts SearchOptions) m {
 		sort = sortClause(SearchOptions{Sort: "newest"})
 	}
 	return m{
+		"from":    opts.From,
 		"size":    size,
 		"_source": []string{"ProductId"},
 		"query":   withFilters(m{"match_all": m{}}, opts),
 		"sort":    sort,
 	}
+}
+
+// buildCountQuery counts products, or only those still for sale (no
+// status, or 판매중; older rows have no status).
+func buildCountQuery(selling bool) m {
+	if !selling {
+		return m{"query": m{"match_all": m{}}}
+	}
+	return m{"query": m{"bool": m{"must_not": m{"terms": m{"ProductStatus": []string{"예약중", "판매완료"}}}}}}
 }
 
 // buildSuggestQuery matches names whose words start with the typed

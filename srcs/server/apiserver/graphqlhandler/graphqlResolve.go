@@ -194,6 +194,22 @@ func finishProducts(items []dynamo.Item, wantSeller bool) ([]map[string]interfac
 	return products, nil
 }
 
+// productsInOrder batch-reads products and keeps the order of ids (search
+// ranking), skipping products deleted since they were indexed.
+func productsInOrder(ids []string, proj string) ([]dynamo.Item, error) {
+	found, err := dynamo.BatchGet(svc, dynamo.TableProduct, "ProductId", ids, proj)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]dynamo.Item, 0, len(found))
+	for _, id := range ids {
+		if item, ok := found[id]; ok {
+			items = append(items, item)
+		}
+	}
+	return items, nil
+}
+
 func sortNewestFirst(items []dynamo.Item) {
 	createdAt := func(item dynamo.Item) float64 {
 		if v := item["ProductCreatedAt"]; v != nil && v.N != nil {
@@ -271,8 +287,9 @@ func resolveProduct(p graphql.ResolveParams) (interface{}, error) {
 	return products[0], nil
 }
 
-// MVP: full scan sorted in memory. Replace with a GSI query on
-// ProductCreatedAt once data grows.
+// resolveRecentProducts is the home feed: newest first, optionally one
+// category, paged with Limit/Offset. Elasticsearch does the ordering and
+// paging; only the page's products are read from DynamoDB.
 func resolveRecentProducts(p graphql.ResolveParams) (interface{}, error) {
 	limit := 8
 	if l, ok := p.Args["Limit"].(float64); ok && l > 0 {
@@ -280,49 +297,41 @@ func resolveRecentProducts(p graphql.ResolveParams) (interface{}, error) {
 	}
 	offset := 0
 	if o, ok := p.Args["Offset"].(float64); ok && o > 0 {
-		offset = int(o)
+		offset = int(math.Min(o, 5000))
 	}
-
-	proj, wantSeller := productProjection(p, "ProductCreatedAt")
-	input := &dynamodb.ScanInput{
-		TableName:            aws.String(dynamo.TableProduct),
-		ProjectionExpression: aws.String(proj),
-	}
-	if c, ok := p.Args["Category"].(string); ok && c != "" {
-		input.FilterExpression = aws.String("ProductCategory = :c")
-		input.ExpressionAttributeValues = dynamo.Item{":c": {S: aws.String(c)}}
-	}
-	items, err := dynamo.ScanAll(svc, input)
+	opts := eshandler.SearchOptions{Sort: "newest", Size: limit, From: offset}
+	opts.Category, _ = p.Args["Category"].(string)
+	ids, err := eshandler.BrowseProductIds(opts)
 	if err != nil {
 		return nil, internal(err)
 	}
-
-	sortNewestFirst(items)
-	if offset >= len(items) {
-		items = nil
-	} else {
-		items = items[offset:]
-	}
-	if len(items) > limit {
-		items = items[:limit]
+	proj, wantSeller := productProjection(p, "ProductId")
+	items, err := productsInOrder(ids, proj)
+	if err != nil {
+		return nil, internal(err)
 	}
 	return finishProducts(items, wantSeller)
 }
 
-// MVP: scan filtered by UserId; replace with a GSI query later.
+// resolveUserProducts lists a member's products, newest first, through
+// the Product UserIndex (exact and immediate, unlike the search index).
 func resolveUserProducts(p graphql.ResolveParams) (interface{}, error) {
 	userId, _ := p.Args["UserId"].(string)
+	if userId == "" {
+		return []interface{}{}, nil
+	}
 	proj, wantSeller := productProjection(p, "ProductCreatedAt")
-	items, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{
+	items, err := dynamo.QueryAll(svc, &dynamodb.QueryInput{
 		TableName:                 aws.String(dynamo.TableProduct),
-		ProjectionExpression:      aws.String(proj),
-		FilterExpression:          aws.String("UserId = :u"),
+		IndexName:                 aws.String("UserIndex"),
+		KeyConditionExpression:    aws.String("UserId = :u"),
 		ExpressionAttributeValues: dynamo.Item{":u": {S: aws.String(userId)}},
+		ProjectionExpression:      aws.String(proj),
+		ScanIndexForward:          aws.Bool(false),
 	})
 	if err != nil {
 		return nil, internal(err)
 	}
-	sortNewestFirst(items)
 	return finishProducts(items, wantSeller)
 }
 
@@ -357,17 +366,9 @@ func resolveProductSearch(p graphql.ResolveParams) (interface{}, error) {
 	if wantSeller {
 		fields = append(fields, "UserId")
 	}
-	found, err := dynamo.BatchGet(svc, dynamo.TableProduct, "ProductId", ids, projection(fields, productAttrs, "ProductId"))
+	items, err := productsInOrder(ids, projection(fields, productAttrs, "ProductId"))
 	if err != nil {
 		return nil, internal(err)
-	}
-
-	// Keep Elasticsearch relevance order; skip ids deleted meanwhile.
-	items := make([]dynamo.Item, 0, len(found))
-	for _, id := range ids {
-		if item, ok := found[id]; ok {
-			items = append(items, item)
-		}
 	}
 	products, err := finishProducts(items, wantSeller)
 	if err != nil {
@@ -438,15 +439,9 @@ func resolveSearchProducts(p graphql.ResolveParams) (interface{}, error) {
 		return nil, internal(err)
 	}
 	proj, wantSeller := productProjection(p, "ProductId")
-	found, err := dynamo.BatchGet(svc, dynamo.TableProduct, "ProductId", ids, proj)
+	items, err := productsInOrder(ids, proj)
 	if err != nil {
 		return nil, internal(err)
-	}
-	items := make([]dynamo.Item, 0, len(found))
-	for _, id := range ids {
-		if item, ok := found[id]; ok {
-			items = append(items, item)
-		}
 	}
 	return finishProducts(items, wantSeller)
 }
@@ -477,30 +472,26 @@ func resolveMarketStats(p graphql.ResolveParams) (interface{}, error) {
 	if marketStatsCache.value != nil && time.Since(marketStatsCache.at) < time.Minute {
 		return marketStatsCache.value, nil
 	}
-	products, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{
-		TableName:            aws.String(dynamo.TableProduct),
-		ProjectionExpression: aws.String("ProductStatus"),
-	})
+	// Counts come from the search index and table metadata, so the home
+	// page never reads whole tables.
+	products, err := eshandler.CountProducts(false)
 	if err != nil {
 		return nil, internal(err)
 	}
-	users, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{
-		TableName:            aws.String(dynamo.TableUsers),
-		ProjectionExpression: aws.String("UserId"),
-	})
+	selling, err := eshandler.CountProducts(true)
 	if err != nil {
 		return nil, internal(err)
 	}
-	selling := 0
-	for _, it := range products {
-		if s := dynamo.S(it, "ProductStatus"); s == "" || s == StatusSelling {
-			selling++
-		}
+	// ItemCount is refreshed by DynamoDB about every six hours: fine for
+	// a "neighbours" figure, free to read.
+	table, err := svc.DescribeTable(&dynamodb.DescribeTableInput{TableName: aws.String(dynamo.TableUsers)})
+	if err != nil {
+		return nil, internal(err)
 	}
 	marketStatsCache.value = map[string]interface{}{
-		"Products": float64(len(products)),
+		"Products": float64(products),
 		"Selling":  float64(selling),
-		"Users":    float64(len(users)),
+		"Users":    float64(aws.Int64Value(table.Table.ItemCount)),
 	}
 	marketStatsCache.at = time.Now()
 	return marketStatsCache.value, nil
