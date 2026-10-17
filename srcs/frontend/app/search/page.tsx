@@ -1,29 +1,24 @@
 import { Metadata } from "next";
 import { SearchInput } from "@/components/SearchInput";
-import { PageHeader, Section, SectionTitle, Row } from "@/styles/styledLayout";
-import { Chip } from "@/styles/styledUi";
-import { CATEGORIES } from "@/libs/constants";
+import { ProductResults, type ProductSearchParams } from "@/components/search/ProductResults";
+import { PageHeader } from "@/styles/styledLayout";
 
 export const metadata: Metadata = {
-	title: "상품찾기",
+	title: "중고거래",
+	description: "파리 한인들이 올린 중고 물건을 카테고리, 동네, 가격으로 찾아보세요.",
 };
 
-export default function SearchPage() {
+// The 중고 tab: every product, newest first, with the same filters as a
+// keyword search.
+export default function SearchPage({ searchParams }: { searchParams: ProductSearchParams }) {
 	return (
 		<div>
 			<PageHeader>
-				<h1>상품찾기</h1>
-				<p>찾는 물건 이름으로 검색해보세요.</p>
+				<h1>중고거래</h1>
+				<p>이웃이 올린 물건을 둘러보거나 찾는 물건을 검색해보세요.</p>
 			</PageHeader>
 			<SearchInput />
-			<Section>
-				<SectionTitle>카테고리로 둘러보기</SectionTitle>
-				<Row>
-					{CATEGORIES.map(c => (
-						<Chip key={c} href={`/?category=${encodeURIComponent(c)}`}>{c}</Chip>
-					))}
-				</Row>
-			</Section>
+			<ProductResults q="" searchParams={searchParams} />
 		</div>
 	);
 }

@@ -41,7 +41,7 @@ export function CategoryTiles({ active }: { active?: string }) {
 					const Icon = CATEGORY_ICONS[c];
 					return (
 					<Reveal key={c} delay={i * 50}>
-						<Tile href={`/?category=${encodeURIComponent(c)}#recent`} $active={active === c} scroll={false}>
+						<Tile href={`/search?category=${encodeURIComponent(c)}`} $active={active === c}>
 							<span aria-hidden="true"><Icon /></span>
 							{c}
 						</Tile>

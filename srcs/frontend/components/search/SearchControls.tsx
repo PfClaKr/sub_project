@@ -22,10 +22,15 @@ const SORTS = [
 	{ value: "distance", label: "가까운순", needsPlace: true },
 ];
 
+// Without a keyword there is no relevance: the default is newest.
+const BROWSE_SORTS = [{ value: "", label: "최신순" }, ...SORTS.slice(2)];
+
 // SearchControls edits the sort and the place filter through the URL
 // (area, place, lat, lng, km), so results stay shareable and the server
 // page runs the query. Like leboncoin's "Localisation" + "Rayon".
-export function SearchControls({ total }: { total: number }) {
+// browse: no keyword (the 중고 tab), so newest is the default order and
+// the count is per page.
+export function SearchControls({ total, browse = false }: { total: number; browse?: boolean }) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const params = useSearchParams();
@@ -48,13 +53,14 @@ export function SearchControls({ total }: { total: number }) {
 			if (v) next.set(k, v);
 			else next.delete(k);
 		}
+		next.delete("page");
 		const q = next.toString();
 		router.push(q ? `${pathname}?${q}` : pathname, { scroll: false });
 	};
 
 	return (
 		<Toolbar>
-			<Muted>{total}개의 상품</Muted>
+			{!browse && <Muted>{total}개의 상품</Muted>}
 			<span style={{ flex: 1 }} />
 			<Popover>
 				<FilterButton $on={filterCount > 0} onClick={() => setFiltersOpen(o => !o)} aria-expanded={filtersOpen}>
@@ -102,7 +108,7 @@ export function SearchControls({ total }: { total: number }) {
 				)}
 			</Popover>
 			<select aria-label="정렬" value={sort} onChange={e => update({ sort: e.target.value || null })}>
-				{SORTS.filter(s => !s.needsPlace || hasPlace).map(s => (
+				{(browse ? BROWSE_SORTS : SORTS).filter(s => !s.needsPlace || hasPlace).map(s => (
 					<option key={s.value} value={s.value}>{s.label}</option>
 				))}
 			</select>
