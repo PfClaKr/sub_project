@@ -41,6 +41,19 @@ func loadSearchDocs() ([]eshandler.ProductDoc, error) {
 	return docs, nil
 }
 
+// loadPostDocs reads every community post for the posts index.
+func loadPostDocs() ([]eshandler.PostDoc, error) {
+	items, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{TableName: aws.String(dynamo.TablePosts)})
+	if err != nil {
+		return nil, err
+	}
+	docs := make([]eshandler.PostDoc, 0, len(items))
+	for _, item := range items {
+		docs = append(docs, eshandler.PostDocFromItem(item))
+	}
+	return docs, nil
+}
+
 // promoteAdmin is the only way to create an admin (there is no public
 // route for it): docker compose exec apiserver /main promote-admin <email>
 func promoteAdmin(email string) {
@@ -64,6 +77,9 @@ func main() {
 	eshandler.InitElasticsearch()
 	if err := eshandler.EnsureIndex(loadSearchDocs); err != nil {
 		log.Fatalf("search index: %v", err)
+	}
+	if err := eshandler.EnsurePostsIndex(loadPostDocs); err != nil {
+		log.Fatalf("posts index: %v", err)
 	}
 	uploadhandler.EnsureBucket()
 

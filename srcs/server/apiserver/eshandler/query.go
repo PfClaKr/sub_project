@@ -94,49 +94,62 @@ func sortClause(opts SearchOptions) []m {
 	return nil
 }
 
-// buildSearchQuery returns nil when there is nothing to search for.
+// textFields names the fields of one index that free-text queries use.
+type textFields struct {
+	Name    string // nori text with a .compact subfield
+	Words   string // jamo words (whitespace analyzer, .prefix subfield)
+	Chosung string // chosung words (same)
+	Body    string // longer nori text, weakly weighted
+}
+
+var productFields = textFields{Name: "ProductName", Words: "NameWords", Chosung: "NameChosung", Body: "ProductDescription"}
+
+// textShould builds the free-text clauses for an already cleaned query.
 //
 // Clauses, strongest first: exact phrase, nori terms (and synonyms),
 // chosung, jamo prefix of the last word being typed, space-free
-// n-grams, description. fuzzy adds typo-tolerant jamo matching; it is
+// n-grams, body text. fuzzy adds typo-tolerant jamo matching; it is
 // only used as a fallback because one wrong jamo also turns real words
 // into other real words (거울 → 겨울).
+func textShould(q string, f textFields, fuzzy bool) []m {
+	if IsChosungQuery(q) {
+		return []m{
+			{"match": m{f.Chosung: m{"query": q, "operator": "and", "boost": 6}}},
+			{"match": m{f.Chosung + ".prefix": m{"query": q, "operator": "and", "boost": 4}}},
+		}
+	}
+	jamo := JamoWords(q)
+	should := []m{
+		{"match_phrase": m{f.Name: m{"query": q, "slop": 1, "boost": 6}}},
+		// With up to two terms all must match; beyond that 75%.
+		{"match": m{f.Name: m{"query": q, "minimum_should_match": "2<75%", "boost": 4}}},
+		{"match": m{f.Words + ".prefix": m{"query": jamo, "operator": "and", "boost": 2}}},
+		{"match": m{f.Name + ".compact": m{"query": q, "minimum_should_match": "80%", "boost": 1}}},
+		{"match": m{f.Body: m{"query": q, "minimum_should_match": "2<75%", "boost": 0.3}}},
+	}
+	if fuzzy {
+		// AUTO:5,9 on jamo ≈ one wrong jamo for a 2-3 syllable word.
+		should = append(should, m{"match": m{f.Words: m{
+			"query": jamo, "operator": "and", "boost": 2,
+			"fuzziness": "AUTO:5,9", "prefix_length": 1, "max_expansions": 20,
+		}}})
+	}
+	for _, alt := range expandSynonyms(q) {
+		should = append(should,
+			m{"match": m{f.Name: m{"query": alt, "minimum_should_match": "2<75%", "boost": 3}}},
+			m{"match": m{f.Words: m{"query": JamoWords(alt), "operator": "and", "boost": 1.5}}},
+		)
+	}
+	return should
+}
+
+// buildSearchQuery returns nil when there is nothing to search for.
 func buildSearchQuery(raw string, opts SearchOptions, fuzzy bool) m {
 	q := cleanQuery(raw)
 	if q == "" {
 		return nil
 	}
-
-	var should []m
-	if IsChosungQuery(q) {
-		should = append(should,
-			m{"match": m{"NameChosung": m{"query": q, "operator": "and", "boost": 6}}},
-			m{"match": m{"NameChosung.prefix": m{"query": q, "operator": "and", "boost": 4}}},
-		)
-	} else {
-		jamo := JamoWords(q)
-		should = append(should,
-			m{"match_phrase": m{"ProductName": m{"query": q, "slop": 1, "boost": 6}}},
-			// With up to two terms all must match; beyond that 75%.
-			m{"match": m{"ProductName": m{"query": q, "minimum_should_match": "2<75%", "boost": 4}}},
-			m{"match": m{"NameWords.prefix": m{"query": jamo, "operator": "and", "boost": 2}}},
-			m{"match": m{"ProductName.compact": m{"query": q, "minimum_should_match": "80%", "boost": 1}}},
-			m{"match": m{"ProductDescription": m{"query": q, "minimum_should_match": "2<75%", "boost": 0.3}}},
-		)
-		if fuzzy {
-			// AUTO:5,9 on jamo ≈ one wrong jamo for a 2-3 syllable word.
-			should = append(should, m{"match": m{"NameWords": m{
-				"query": jamo, "operator": "and", "boost": 2,
-				"fuzziness": "AUTO:5,9", "prefix_length": 1, "max_expansions": 20,
-			}}})
-		}
-		for _, alt := range expandSynonyms(q) {
-			should = append(should,
-				m{"match": m{"ProductName": m{"query": alt, "minimum_should_match": "2<75%", "boost": 3}}},
-				m{"match": m{"NameWords": m{"query": JamoWords(alt), "operator": "and", "boost": 1.5}}},
-			)
-		}
-	}
+	should := textShould(q, productFields, fuzzy)
 
 	size := opts.Size
 	if size <= 0 {
