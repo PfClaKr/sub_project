@@ -7,6 +7,7 @@ import { useSession } from "@/libs/session";
 import { gql, PRODUCT_CARD_FIELDS } from "@/libs/graphql";
 import { uploadImages } from "@/libs/upload";
 import { RequireLogin } from "@/components/ui/RequireLogin";
+import { MyActivity } from "@/components/community/MyActivity";
 import { Avatar } from "@/components/ui/Avatar";
 import ProductGrid, { ProductGridSkeleton } from "@/components/product/ProductGrid";
 import { Section, SectionTitle, Row } from "@/styles/styledLayout";
@@ -155,6 +156,10 @@ export const MyAccount = () => (
 						<LinkButton href="/sell" $ghost>+ 새 상품</LinkButton>
 					</Row>
 					<MyProducts userId={session.UserId} />
+				</Section>
+				<Section id="activity">
+					<SectionTitle>커뮤니티 활동</SectionTitle>
+					<MyActivity />
 				</Section>
 			</>
 		)}

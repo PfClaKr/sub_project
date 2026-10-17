@@ -40,3 +40,34 @@ export const PRODUCT_CARD_FIELDS = `
 	PreferedLocation
 	ProductCreatedAt
 `;
+
+// Field list shared by every community post list.
+export const POST_LIST_FIELDS = `
+	PostId
+	Type
+	Topic
+	City
+	Title
+	BodyPreview
+	AuthorNickname
+	Anonymous
+	CreatedAt
+	CommentCount
+	LikeCount
+	Solved
+`;
+
+export const POST_DETAIL_FIELDS = `
+	${POST_LIST_FIELDS}
+	Body
+	Images
+	Status
+	AuthorId
+	AuthorImage
+	IsMine
+	UpdatedAt
+	ViewCount
+	AcceptedCommentId
+	Liked
+	Bookmarked
+`;

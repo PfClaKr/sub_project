@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import BottomTabs from "@/components/BottomTabs";
 import { SuspendedBanner } from "@/components/ui/SuspendedBanner";
 import { NotificationProvider } from "@/libs/notifications";
+import { RegionProvider } from "@/libs/region";
 import StyledComponentsRegistry from "@/libs/registry";
 import { SessionProvider } from "@/libs/session";
 import { ConfirmProvider } from "@/components/ui/ConfirmDialog";
@@ -14,9 +15,9 @@ import { Main } from "@/styles/styledLayout";
 export const metadata: Metadata = {
 	title: {
 		template: "%s | 잇냥",
-		default: "잇냥 - 파리 한인 중고마켓",
+		default: "잇냥 - 파리 한인 중고마켓·커뮤니티",
 	},
-	description: "파리에 사는 한인들끼리 중고 물건을 사고파는 곳, 잇냥.",
+	description: "파리에 사는 한인들끼리 중고 물건을 사고팔고, 생활 정보를 묻고 답하는 곳, 잇냥.",
 	applicationName: "잇냥",
 	appleWebApp: { capable: true, title: "잇냥", statusBarStyle: "default" },
 };
@@ -39,13 +40,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 					<ServiceWorkerRegistrar />
 					<SessionProvider>
 						<NotificationProvider>
-							<ConfirmProvider>
-								<Navigation />
-								<SuspendedBanner />
-								<Main>{children}</Main>
-								<Footer />
-								<BottomTabs />
-							</ConfirmProvider>
+							<RegionProvider>
+								<ConfirmProvider>
+									<Navigation />
+									<SuspendedBanner />
+									<Main>{children}</Main>
+									<Footer />
+									<BottomTabs />
+								</ConfirmProvider>
+							</RegionProvider>
 						</NotificationProvider>
 					</SessionProvider>
 				</StyledComponentsRegistry>

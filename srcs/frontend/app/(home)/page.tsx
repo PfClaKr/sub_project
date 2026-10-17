@@ -3,6 +3,7 @@ import { CategoryChips } from "@/components/product/CategoryChips";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { CallToAction, CategoryTiles, HowItWorks, MarketStats } from "@/components/landing/LandingSections";
 import { Reveal } from "@/components/landing/Reveal";
+import { HubCommunity } from "@/components/community/HubCommunity";
 import { SectionHead } from "@/styles/styledLanding";
 import { EmptyState, ErrorText, LinkButton, Pagination } from "@/styles/styledUi";
 import { gql, PRODUCT_CARD_FIELDS } from "@/libs/graphql";
@@ -42,6 +43,7 @@ export default async function HomePage({ searchParams }: Props) {
 		<div>
 			<LandingHero />
 			<MarketStats stats={data?.marketStats ?? null} />
+			<HubCommunity />
 
 			<section id="recent" aria-labelledby="recent-title" style={{ scrollMarginTop: 80 }}>
 				<SectionHead>

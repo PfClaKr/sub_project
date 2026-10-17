@@ -22,10 +22,13 @@ const dateFormat = new Intl.DateTimeFormat("ko-KR", {
 	day: "numeric",
 });
 
+// 24-hour clock: the "오전/오후" text differs between ICU versions (the
+// server's Node vs the browser), which breaks hydration.
 const timeFormat = new Intl.DateTimeFormat("ko-KR", {
 	timeZone: "Europe/Paris",
 	hour: "2-digit",
 	minute: "2-digit",
+	hourCycle: "h23",
 });
 
 const dateTimeFormat = new Intl.DateTimeFormat("ko-KR", {
@@ -35,6 +38,7 @@ const dateTimeFormat = new Intl.DateTimeFormat("ko-KR", {
 	day: "2-digit",
 	hour: "2-digit",
 	minute: "2-digit",
+	hourCycle: "h23",
 });
 
 export function formatDateTime(ts: number | undefined): string {
