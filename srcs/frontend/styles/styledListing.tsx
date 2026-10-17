@@ -37,9 +37,17 @@ export const ListingCard = styled.a<{ $closed?: boolean }>`
 		border-radius: ${radius.md};
 		object-fit: cover;
 		background-color: ${palette.surface};
+	}
+	/* No photo (most job posts): a small icon instead of an empty box. */
+	.icon {
+		flex: none;
+		width: 48px;
+		height: 48px;
+		border-radius: ${radius.md};
 		display: grid;
 		place-items: center;
-		color: ${palette.muted};
+		background-color: ${palette.primarySoft};
+		color: ${palette.primary};
 	}
 	h3 {
 		margin: 4px 0;

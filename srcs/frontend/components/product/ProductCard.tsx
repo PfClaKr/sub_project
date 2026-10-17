@@ -12,13 +12,13 @@ import {
 } from "@/styles/styledProductCard";
 import { StatusBadge } from "@/styles/styledUi";
 import { STATUS_SELLING } from "@/libs/constants";
-import { formatPrice, formatRelative, imageUrl } from "@/libs/format";
+import { formatPrice, imageUrl } from "@/libs/format";
 import type { Product } from "@/libs/types";
+import { TimeAgo } from "@/components/ui/TimeAgo";
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product, showSeller = true }: { product: Product; showSeller?: boolean }) {
 	const thumb = imageUrl(product.ProductImage?.[0]);
 	const status = product.ProductStatus ?? STATUS_SELLING;
-	const meta = [product.PreferedLocation, formatRelative(product.ProductCreatedAt)].filter(Boolean).join(" · ");
 
 	return (
 		<Card $dimmed={status === "판매완료"}>
@@ -33,8 +33,11 @@ export default function ProductCard({ product }: { product: Product }) {
 			<InfoContainer>
 				<Title title={product.ProductName}>{product.ProductName}</Title>
 				<Price>{formatPrice(product.ProductPrice)}</Price>
-				{meta && <Subtitle>{meta}</Subtitle>}
-				{product.SellerNickname && <Subtitle>{product.SellerNickname}</Subtitle>}
+				<Subtitle>
+					{product.PreferedLocation}{product.PreferedLocation && product.ProductCreatedAt ? " · " : ""}
+					<TimeAgo ts={product.ProductCreatedAt} />
+				</Subtitle>
+				{showSeller && product.SellerNickname && <Subtitle>{product.SellerNickname}</Subtitle>}
 			</InfoContainer>
 		</Card>
 	);

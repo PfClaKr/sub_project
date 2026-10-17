@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/libs/session";
 import { gql } from "@/libs/graphql";
-import { Actions } from "@/styles/styledDetail";
+import { Actions, ReserveActionSpace, StickyActions } from "@/styles/styledDetail";
+import { formatPrice } from "@/libs/format";
 import { DangerButton, ErrorText, LinkButton, Skeleton, StatusBadge } from "@/styles/styledUi";
 import { ChatButton } from "@/components/button/ChatButton";
 import { FavoriteButton } from "@/components/button/FavoriteButton";
@@ -12,10 +13,11 @@ import { StatusSelector } from "./StatusSelector";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 
 // Owners manage the listing; everyone else can save it or start a chat.
-export function ProductActions({ productId, ownerId, status }: {
+export function ProductActions({ productId, ownerId, status, price }: {
 	productId: string;
 	ownerId?: string;
 	status: string;
+	price?: number;
 }) {
 	const { session, loading } = useSession();
 	const router = useRouter();
@@ -68,10 +70,12 @@ export function ProductActions({ productId, ownerId, status }: {
 			{currentStatus !== "판매중" && (
 				<div><StatusBadge $status={currentStatus}>{currentStatus}</StatusBadge></div>
 			)}
-			<Actions>
+			<StickyActions>
+				{price !== undefined && <span className="price">{formatPrice(price)}</span>}
 				<FavoriteButton productId={productId} />
 				<ChatButton productId={productId} disabled={currentStatus === "판매완료"} />
-			</Actions>
+			</StickyActions>
+			<ReserveActionSpace />
 		</>
 	);
 }

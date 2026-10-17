@@ -335,11 +335,13 @@ func resolveUserProducts(p graphql.ResolveParams) (interface{}, error) {
 	return finishProducts(items, wantSeller)
 }
 
+// BrowsePageSize is the page size of productSearch without a keyword.
+const BrowsePageSize = 40
+
 func resolveProductSearch(p graphql.ResolveParams) (interface{}, error) {
 	query := strings.TrimSpace(p.Args["ProductName"].(string))
-	empty := map[string]interface{}{"Products": []map[string]interface{}{}, "Corrected": false}
-	if query == "" || utf8.RuneCountInString(query) > 100 {
-		return empty, nil
+	if utf8.RuneCountInString(query) > 100 {
+		return map[string]interface{}{"Products": []map[string]interface{}{}, "Corrected": false, "HasNext": false}, nil
 	}
 
 	opts := searchOptions(p.Args)
@@ -348,7 +350,22 @@ func resolveProductSearch(p graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 	opts.Near = near
-	ids, corrected, err := eshandler.SearchProductIds(query, opts)
+	var ids []string
+	corrected, hasNext := false, false
+	if query == "" {
+		// One extra row tells whether another page follows.
+		page, _ := p.Args["Page"].(int)
+		if page < 1 {
+			page = 1
+		}
+		opts.Size, opts.From = BrowsePageSize+1, (page-1)*BrowsePageSize
+		ids, err = eshandler.BrowseProductIds(opts)
+		if len(ids) > BrowsePageSize {
+			ids, hasNext = ids[:BrowsePageSize], true
+		}
+	} else {
+		ids, corrected, err = eshandler.SearchProductIds(query, opts)
+	}
 	if err != nil {
 		return nil, internal(err)
 	}
@@ -374,7 +391,7 @@ func resolveProductSearch(p graphql.ResolveParams) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return map[string]interface{}{"Products": products, "Corrected": corrected}, nil
+	return map[string]interface{}{"Products": products, "Corrected": corrected, "HasNext": hasNext}, nil
 }
 
 // searchOptions reads the filters shared by productSearch and searchProducts.

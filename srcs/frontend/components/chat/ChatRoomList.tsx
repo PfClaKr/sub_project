@@ -6,9 +6,10 @@ import { RoomList } from "@/styles/styledChat";
 import { EmptyState, ErrorText, LinkButton, Skeleton, StatusBadge } from "@/styles/styledUi";
 import { RequireLogin } from "@/components/ui/RequireLogin";
 import { CHAT_URL } from "@/libs/config";
-import { formatRelative, imageUrl } from "@/libs/format";
+import { imageUrl } from "@/libs/format";
 import { mineLabel, subjectOf, subjectTitle } from "@/libs/subjects";
 import type { Room, Session } from "@/libs/types";
+import { TimeAgo } from "@/components/ui/TimeAgo";
 
 function Rooms({ session }: { session: Session }) {
 	const [rooms, setRooms] = useState<Room[] | null>(null);
@@ -49,7 +50,7 @@ function Rooms({ session }: { session: Session }) {
 							<div style={{ minWidth: 0 }}>
 								<strong>{partner || "알 수 없는 사용자"}</strong>
 								<small>
-									{selling ? `${mineLabel(kind)} · ` : ""}{subjectTitle(room)} · {formatRelative(room.CreatedAt)}
+									{selling ? `${mineLabel(kind)} · ` : ""}{subjectTitle(room)} · <TimeAgo ts={room.CreatedAt} />
 								</small>
 							</div>
 							{kind === "product" && room.ProductStatus && room.ProductStatus !== "판매중" && (

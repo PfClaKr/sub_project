@@ -12,7 +12,7 @@ export default function AccountSignUpPage() {
 	return (
 		<AuthCard>
 			<h1>회원가입</h1>
-			<p>잇냥에서 파리 한인들과 물건을 사고팔아요.</p>
+			<p>파리 한인들과 물건을 사고팔고, 생활 정보를 나눠요.</p>
 			<GoogleButton label="Google로 시작하기" />
 			<SignUpForm />
 			<FormFooter>

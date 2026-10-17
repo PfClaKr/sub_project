@@ -10,14 +10,13 @@ import { gql, PRODUCT_CARD_FIELDS } from "@/libs/graphql";
 import { CATEGORIES, PAGE_SIZE } from "@/libs/constants";
 import type { Product } from "@/libs/types";
 
-type Props = { searchParams: { category?: string; page?: string } };
+type Props = { searchParams: { category?: string } };
 type Stats = { Products: number; Selling: number; Users: number };
 
 // The landing page is also the app's home: hero and search on top, then
 // the live listings, then the "how it works" pitch for newcomers.
 export default async function HomePage({ searchParams }: Props) {
 	const category = CATEGORIES.find(c => c === searchParams.category);
-	const page = Math.max(1, Number(searchParams.page) || 1);
 
 	// Ask for one extra item to know whether a next page exists.
 	const { data, error } = await gql<{ recentProducts: Product[]; marketStats: Stats | null }>(
@@ -25,19 +24,11 @@ export default async function HomePage({ searchParams }: Props) {
 			recentProducts(Limit: $limit, Offset: $offset, Category: $category) { ${PRODUCT_CARD_FIELDS} }
 			marketStats { Products Selling Users }
 		}`,
-		{ limit: PAGE_SIZE + 1, offset: (page - 1) * PAGE_SIZE, category },
+		{ limit: PAGE_SIZE + 1, offset: 0, category },
 	);
 	const all = data?.recentProducts ?? [];
 	const products = all.slice(0, PAGE_SIZE);
 	const hasNext = all.length > PAGE_SIZE;
-
-	const pageHref = (p: number) => {
-		const q = new URLSearchParams();
-		if (category) q.set("category", category);
-		if (p > 1) q.set("page", String(p));
-		const s = q.toString();
-		return `${s ? `/?${s}` : "/"}#recent`;
-	};
 
 	return (
 		<div>
@@ -64,11 +55,11 @@ export default async function HomePage({ searchParams }: Props) {
 					<Reveal><ProductGrid products={products} /></Reveal>
 				)}
 
-				{(page > 1 || hasNext) && (
-					<Pagination aria-label="페이지">
-						{page > 1 && <LinkButton href={pageHref(page - 1)} $ghost>← 이전</LinkButton>}
-						<span>{page} 페이지</span>
-						{hasNext && <LinkButton href={pageHref(page + 1)} $ghost>다음 →</LinkButton>}
+				{hasNext && (
+					<Pagination>
+						<LinkButton href={category ? `/search?category=${encodeURIComponent(category)}` : "/search"} $ghost>
+							{category ?? "중고"} 물건 더 보기 →
+						</LinkButton>
 					</Pagination>
 				)}
 			</section>

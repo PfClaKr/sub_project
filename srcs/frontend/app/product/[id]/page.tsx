@@ -8,9 +8,10 @@ import { LocationPreview } from "@/components/product/detail/LocationPreview";
 import { Breadcrumb, DetailLayout, InfoPanel, BigPrice, Facts, Description } from "@/styles/styledDetail";
 import { ErrorText } from "@/styles/styledUi";
 import { gql } from "@/libs/graphql";
-import { formatDate, formatPrice, formatRelative } from "@/libs/format";
+import { formatPrice } from "@/libs/format";
 import { STATUS_SELLING } from "@/libs/constants";
 import type { Product, User } from "@/libs/types";
+import { TimeAgo } from "@/components/ui/TimeAgo";
 
 type Props = { params: { id: string } };
 
@@ -71,9 +72,9 @@ export default async function ProductDetailPage({ params }: Props) {
 	return (
 		<article>
 			<Breadcrumb aria-label="위치">
-				<Link href="/">홈</Link>
+				<Link href="/search">중고거래</Link>
 				{product.ProductCategory && (
-					<> › <Link href={`/?category=${encodeURIComponent(product.ProductCategory)}`}>{product.ProductCategory}</Link></>
+					<> › <Link href={`/search?category=${encodeURIComponent(product.ProductCategory)}`}>{product.ProductCategory}</Link></>
 				)}
 			</Breadcrumb>
 			<DetailLayout>
@@ -87,9 +88,9 @@ export default async function ProductDetailPage({ params }: Props) {
 						<dt>거래 장소</dt><dd>{product.PreferedLocation ?? "-"}</dd>
 						<dt>판매 상태</dt><dd>{status}</dd>
 						<dt>게시일</dt>
-						<dd title={formatDate(product.ProductCreatedAt)}>{formatRelative(product.ProductCreatedAt)}</dd>
+						<dd><TimeAgo ts={product.ProductCreatedAt} /></dd>
 					</Facts>
-					<ProductActions productId={product.ProductId} ownerId={product.UserId} status={status} />
+					<ProductActions productId={product.ProductId} ownerId={product.UserId} status={status} price={product.ProductPrice} />
 					{seller && <SellerCard user={seller} />}
 				</InfoPanel>
 			</DetailLayout>

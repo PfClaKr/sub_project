@@ -7,6 +7,7 @@ import { useSession } from "@/libs/session";
 import { FormColumn, FieldLabel, Hint, TwoColumns } from "@/styles/styledForm";
 import { DEFAULT_REGION, REGIONS } from "@/libs/constants";
 import { ErrorText } from "@/styles/styledUi";
+import { PasswordInput } from "./PasswordInput";
 
 export const SignUpForm = () => {
 	const router = useRouter();
@@ -96,10 +97,10 @@ export const SignUpForm = () => {
 				</FieldLabel>
 			</TwoColumns>
 			<FieldLabel>비밀번호 <Hint>8자 이상</Hint>
-				<input type="password" name="password" autoComplete="new-password" required minLength={8} maxLength={72} />
+				<PasswordInput name="password" autoComplete="new-password" required minLength={8} maxLength={72} />
 			</FieldLabel>
 			<FieldLabel>비밀번호 확인
-				<input type="password" name="passwordConfirm" autoComplete="new-password" required minLength={8} maxLength={72} />
+				<PasswordInput name="passwordConfirm" autoComplete="new-password" required minLength={8} maxLength={72} />
 			</FieldLabel>
 			{error && <ErrorText role="alert">{error}</ErrorText>}
 			<button type="submit" disabled={submitting || emailTaken}>{submitting ? "가입 중..." : "가입하기"}</button>

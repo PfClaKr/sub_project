@@ -22,7 +22,8 @@ export const AuthCard = styled.div`
 		margin: 0 0 4px;
 		font-size: 24px;
 	}
-	> p {
+	/* Only the subtitle: FormFooter is a <p> too. */
+	> h1 + p {
 		margin: 0 0 20px;
 		color: ${palette.muted};
 	}
@@ -111,6 +112,33 @@ export const Adorned = styled.div`
 	}
 `;
 
+// Password field with a show/hide button on the right.
+export const PasswordBox = styled.div`
+	position: relative;
+
+	input {
+		padding-right: 44px;
+	}
+	button {
+		position: absolute;
+		right: 4px;
+		top: 50%;
+		transform: translateY(-50%);
+		display: grid;
+		place-items: center;
+		width: 36px;
+		height: 36px;
+		padding: 0;
+		border: none;
+		background: none;
+		color: ${palette.muted};
+	}
+	button:hover:not(:disabled) {
+		background: none;
+		color: ${palette.primary};
+	}
+`;
+
 export const Counter = styled.span`
 	align-self: flex-end;
 	font-size: 12px;
@@ -124,4 +152,69 @@ export const SubmitButton = styled.button`
 	padding: 14px;
 	font-size: 16px;
 	border-radius: ${radius.md};
+`;
+
+// Write pages: the form, and on wide screens a sticky column of tips.
+export const WriteGrid = styled.div`
+	display: grid;
+	grid-template-columns: minmax(0, 680px) minmax(240px, 300px);
+	justify-content: space-between;
+	gap: 32px;
+	align-items: start;
+
+	@media (max-width: 900px) {
+		grid-template-columns: minmax(0, 1fr);
+
+		aside {
+			display: none;
+		}
+	}
+`;
+
+export const TipsCard = styled.aside`
+	position: sticky;
+	top: 88px;
+	padding: 20px;
+	border-radius: ${radius.lg};
+	background-color: ${palette.surface};
+
+	h2 {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin: 0 0 12px;
+		font-size: 16px;
+		color: ${palette.heading};
+	}
+	ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	li {
+		display: flex;
+		gap: 8px;
+		font-size: 14px;
+		line-height: 1.5;
+		color: ${palette.text};
+	}
+	li svg {
+		flex: none;
+		margin-top: 3px;
+		color: ${palette.primary};
+	}
+	.safety {
+		margin-top: 16px;
+		padding-top: 14px;
+		border-top: 1px solid ${palette.border};
+		font-size: 13px;
+		color: ${palette.muted};
+	}
+	.safety a {
+		color: ${palette.primary};
+		font-weight: 600;
+	}
 `;

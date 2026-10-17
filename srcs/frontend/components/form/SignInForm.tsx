@@ -8,6 +8,7 @@ import { FormColumn, FieldLabel } from "@/styles/styledForm";
 import { ErrorText } from "@/styles/styledUi";
 import { safeNext } from "@/libs/redirect";
 import { ResendVerification } from "@/components/auth/ResendVerification";
+import { PasswordInput } from "./PasswordInput";
 
 // Runs in the browser so the loginserver's Set-Cookie reaches it.
 export const SignInForm = ({ next }: { next?: string }) => {
@@ -51,7 +52,7 @@ export const SignInForm = ({ next }: { next?: string }) => {
 				<input type="email" name="email" autoComplete="email" required />
 			</FieldLabel>
 			<FieldLabel>비밀번호
-				<input type="password" name="password" autoComplete="current-password" required />
+				<PasswordInput name="password" autoComplete="current-password" required />
 			</FieldLabel>
 			{error && <ErrorText role="alert">{error}</ErrorText>}
 			{unverified && <ResendVerification email={unverified} />}

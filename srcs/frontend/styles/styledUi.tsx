@@ -189,3 +189,56 @@ export const AvatarPicker = styled.label`
 		background: ${palette.primary};
 	}
 `;
+
+// Shortcut tiles (my page): icon over a label, six in a row, two rows of
+// three on phones.
+export const MenuGrid = styled.ul`
+	display: grid;
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+	gap: 10px;
+	margin: 20px 0 0;
+	padding: 0;
+	list-style: none;
+
+	@media (max-width: 600px) {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+`;
+
+export const MenuTile = styled(Link)`
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	padding: 14px 8px;
+	border: 1px solid ${palette.border};
+	border-radius: ${radius.md};
+	color: ${palette.text};
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	transition: border-color 0.15s, background-color 0.15s;
+
+	svg {
+		color: ${palette.primary};
+	}
+	&:hover {
+		border-color: ${palette.primary};
+		background-color: ${palette.primarySoft};
+	}
+	.count {
+		position: absolute;
+		top: 8px;
+		right: calc(50% - 22px);
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		border-radius: 9px;
+		background-color: ${palette.danger};
+		color: #fff;
+		font-size: 11px;
+		line-height: 18px;
+		text-align: center;
+	}
+`;

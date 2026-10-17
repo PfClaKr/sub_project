@@ -1,6 +1,6 @@
 'use client';
 
-import styled from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
 import palette, { radius, breakpoint } from "@/theme/colorPalette";
 
 export const Breadcrumb = styled.nav`
@@ -26,6 +26,16 @@ export const DetailLayout = styled.div`
 	@media (max-width: ${breakpoint.md}) {
 		grid-template-columns: minmax(0, 1fr);
 		gap: 20px;
+	}
+`;
+
+// Left column content that should follow the info panel on phones, like
+// the map of a listing without photos (the title comes first).
+export const SideSlot = styled.div<{ $afterOnMobile?: boolean }>`
+	min-width: 0;
+
+	@media (max-width: ${breakpoint.md}) {
+		order: ${p => (p.$afterOnMobile ? 2 : 0)};
 	}
 `;
 
@@ -118,6 +128,49 @@ export const Actions = styled.div`
 
 	> * {
 		flex: 1 1 140px;
+	}
+`;
+
+// On phones the buyer's actions stay above the bottom tab bar while the
+// page scrolls, with the price beside them.
+export const StickyActions = styled(Actions)`
+	.price {
+		display: none;
+	}
+
+	@media (max-width: ${breakpoint.sm}) {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: calc(56px + env(safe-area-inset-bottom));
+		z-index: 9;
+		flex-wrap: nowrap;
+		align-items: center;
+		padding: 10px 16px;
+		background-color: ${palette.bg};
+		border-top: 1px solid ${palette.border};
+		box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.06);
+
+		> * {
+			flex: 1 1 auto;
+		}
+		.price {
+			display: block;
+			flex: 0 0 auto;
+			margin-right: 4px;
+			font-size: 18px;
+			font-weight: 800;
+			color: ${palette.heading};
+		}
+	}
+`;
+
+// Keeps the end of the page clear of StickyActions on phones.
+export const ReserveActionSpace = createGlobalStyle`
+	@media (max-width: ${breakpoint.sm}) {
+		body {
+			padding-bottom: 64px;
+		}
 	}
 `;
 

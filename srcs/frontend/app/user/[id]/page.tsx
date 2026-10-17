@@ -47,7 +47,7 @@ export default async function UserPage({ params }: Props) {
 				<SectionTitle>판매 상품 {products.length}개</SectionTitle>
 				{products.length === 0
 					? <EmptyState><p>아직 올린 상품이 없어요.</p></EmptyState>
-					: <ProductGrid products={products} />}
+					: <ProductGrid products={products} showSeller={false} />}
 			</Section>
 		</div>
 	);

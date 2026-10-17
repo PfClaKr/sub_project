@@ -6,9 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { Bookmark, Eye, Map as MapIcon, MapPin, Phone, ShieldAlert } from "lucide-react";
 import { DEALS, type ListingType } from "@/libs/constants";
 import { gql, LISTING_DETAIL_FIELDS } from "@/libs/graphql";
-import { formatDate, formatPrice, formatRelative } from "@/libs/format";
+import { formatDate, formatPrice } from "@/libs/format";
 import { fetchArea, type Area } from "@/libs/geo";
-import { dealLabel, expiryInfo, LISTING_PATH, modeLabel, moveInLabel, rentLabel, wageLabel } from "@/libs/listing";
+import { dealLabel, expiryInfo, LISTING_LABEL, LISTING_PATH, modeLabel, moveInLabel, rentLabel, wageLabel } from "@/libs/listing";
 import { useSession } from "@/libs/session";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { Avatar } from "@/components/ui/Avatar";
@@ -17,12 +17,13 @@ import { ImageGallery } from "@/components/product/detail/ImageGallery";
 import { PreviewMap } from "@/components/map";
 import { LinkedText } from "@/components/community/Comments";
 import { ReportButton } from "@/components/community/ReportButton";
-import { BigPrice, DetailLayout, Description, Facts, InfoPanel } from "@/styles/styledDetail";
+import { BigPrice, Breadcrumb, DetailLayout, Description, Facts, InfoPanel, SideSlot } from "@/styles/styledDetail";
 import { LocationSummary, MapBox } from "@/styles/styledLocation";
 import { Meta, Tag, TextButton, ToggleButton } from "@/styles/styledCommunity";
 import { OwnerPanel, SafetyBanner } from "@/styles/styledListing";
 import { EmptyState, ErrorText, GhostButton, LinkButton, Muted, Skeleton } from "@/styles/styledUi";
 import type { Post } from "@/libs/types";
+import { TimeAgo } from "@/components/ui/TimeAgo";
 
 const QUERY = `query Listing($id: String!) { listing(PostId: $id) { ${LISTING_DETAIL_FIELDS} } }`;
 
@@ -215,10 +216,14 @@ export function ListingDetail({ type, postId, initial }: { type: ListingType; po
 
 	return (
 		<div>
+			<Breadcrumb aria-label="위치">
+				<Link href={LISTING_PATH[type]}>{LISTING_LABEL[type]}</Link>
+				{post.Topic && <> › <Link href={`${LISTING_PATH[type]}?kind=${encodeURIComponent(post.Topic)}`}>{post.Topic}</Link></>}
+			</Breadcrumb>
 			<DetailLayout>
 				{post.Images && post.Images.length > 0
 					? <ImageGallery images={post.Images} name={post.Title} />
-					: <ListingLocation post={post} />}
+					: <SideSlot $afterOnMobile><ListingLocation post={post} /></SideSlot>}
 				<InfoPanel>
 					<Meta>
 						<Link href={`${LISTING_PATH[type]}?mode=${h?.Mode ?? j?.Mode}`}><Tag>{modeLabel(type, h?.Mode ?? j?.Mode)}</Tag></Link>
@@ -235,7 +240,7 @@ export function ListingDetail({ type, postId, initial }: { type: ListingType; po
 						<div style={{ flex: 1 }}>
 							{post.AuthorId ? <Link href={`/user/${post.AuthorId}`}><strong>{post.AuthorNickname}</strong></Link> : <strong>{post.AuthorNickname}</strong>}
 							<Meta>
-								<span>{formatRelative(Math.max(post.BumpedAt ?? 0, post.CreatedAt))}</span>
+								<span><TimeAgo ts={Math.max(post.BumpedAt ?? 0, post.CreatedAt)} /></span>
 								<span><Eye size={13} aria-hidden /> {post.ViewCount ?? 0}</span>
 							</Meta>
 						</div>

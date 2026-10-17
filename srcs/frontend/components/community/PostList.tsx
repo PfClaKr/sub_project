@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { CheckCircle2, Heart, MessageSquare } from "lucide-react";
 import { boardLabel, postHref } from "@/libs/community";
-import { formatRelative } from "@/libs/format";
 import { Meta, PostRowLink, PostRows, Tag } from "@/styles/styledCommunity";
 import { Skeleton } from "@/styles/styledUi";
 import type { Post } from "@/libs/types";
+import { TimeAgo } from "@/components/ui/TimeAgo";
 
 export function PostRow({ post, showBoard = true }: { post: Post; showBoard?: boolean }) {
 	return (
@@ -22,7 +22,7 @@ export function PostRow({ post, showBoard = true }: { post: Post; showBoard?: bo
 			{post.BodyPreview && <p>{post.BodyPreview}</p>}
 			<Meta style={{ marginTop: 6 }}>
 				<span>{post.AuthorNickname}</span>
-				<span>{formatRelative(post.CreatedAt)}</span>
+				<span><TimeAgo ts={post.CreatedAt} /></span>
 				{post.City && <span>{post.City}</span>}
 				<span aria-label={`댓글 ${post.CommentCount ?? 0}개`}><MessageSquare size={13} aria-hidden /> {post.CommentCount ?? 0}</span>
 				<span aria-label={`공감 ${post.LikeCount ?? 0}개`}><Heart size={13} aria-hidden /> {post.LikeCount ?? 0}</span>

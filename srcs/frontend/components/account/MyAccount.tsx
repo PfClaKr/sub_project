@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState, FormEvent } from "react";
-import { Camera } from "lucide-react";
+import { Bell, Camera, FileText, Heart, MessageCircle, PlusSquare, Settings } from "lucide-react";
+import { useNotifications } from "@/libs/notifications";
 import { AvatarPicker } from "@/styles/styledUi";
 import { useSession } from "@/libs/session";
 import { gql, PRODUCT_CARD_FIELDS } from "@/libs/graphql";
@@ -12,7 +13,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import ProductGrid, { ProductGridSkeleton } from "@/components/product/ProductGrid";
 import { Section, SectionTitle, Row } from "@/styles/styledLayout";
 import { FieldLabel } from "@/styles/styledForm";
-import { EmptyState, ErrorText, GhostButton, LinkButton, Muted } from "@/styles/styledUi";
+import { EmptyState, ErrorText, GhostButton, LinkButton, MenuGrid, MenuTile, Muted } from "@/styles/styledUi";
 import type { Product, Session } from "@/libs/types";
 
 function ProfileEditor({ session }: { session: Session }) {
@@ -123,25 +124,37 @@ function MyProducts({ userId }: { userId: string }) {
 			</EmptyState>
 		);
 	}
-	return <ProductGrid products={products} />;
+	return <ProductGrid products={products} showSeller={false} />;
 }
 
 // Shortcuts the phone header has no room for (logout, wishlist, alerts).
 function AccountLinks() {
 	const { logout } = useSession();
+	const { unread } = useNotifications();
 	// Full reload: drops pages cached for the logged-in user.
 	const handleLogout = async () => {
 		await logout();
 		window.location.assign("/");
 	};
 	return (
-		<Row style={{ flexWrap: "wrap", gap: 8, marginTop: 16 }}>
-			<LinkButton href="/wishlist" $ghost>찜 목록</LinkButton>
-			<LinkButton href="/notifications" $ghost>알림</LinkButton>
-			<LinkButton href="/myaccount/notifications" $ghost>알림 설정</LinkButton>
-			<LinkButton href="/chat" $ghost>채팅</LinkButton>
-			<GhostButton onClick={handleLogout}>로그아웃</GhostButton>
-		</Row>
+		<>
+			<MenuGrid aria-label="바로가기">
+				<li><MenuTile href="/sell"><PlusSquare size={22} aria-hidden />판매하기</MenuTile></li>
+				<li><MenuTile href="/wishlist"><Heart size={22} aria-hidden />찜 목록</MenuTile></li>
+				<li><MenuTile href="/chat"><MessageCircle size={22} aria-hidden />채팅</MenuTile></li>
+				<li>
+					<MenuTile href="/notifications">
+						<Bell size={22} aria-hidden />알림
+						{unread > 0 && <span className="count" aria-label={`읽지 않은 알림 ${unread}개`}>{unread > 99 ? "99+" : unread}</span>}
+					</MenuTile>
+				</li>
+				<li><MenuTile href="#activity"><FileText size={22} aria-hidden />내 글</MenuTile></li>
+				<li><MenuTile href="/myaccount/notifications"><Settings size={22} aria-hidden />알림 설정</MenuTile></li>
+			</MenuGrid>
+			<Row style={{ justifyContent: "flex-end", marginTop: 8 }}>
+				<GhostButton onClick={handleLogout} style={{ border: "none" }}>로그아웃</GhostButton>
+			</Row>
+		</>
 	);
 }
 

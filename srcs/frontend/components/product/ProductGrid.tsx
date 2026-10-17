@@ -6,13 +6,14 @@ import { Grid } from "@/styles/styledProductCard";
 import { Skeleton } from "@/styles/styledUi";
 import type { Product } from "@/libs/types";
 
-export default function ProductGrid({ products }: { products: Product[] }) {
+// showSeller: false on a member's own list, where every card has the same name.
+export default function ProductGrid({ products, showSeller = true }: { products: Product[]; showSeller?: boolean }) {
 	return (
 		<Grid>
 			{products.map(product => (
 				<li key={product.ProductId}>
 					<StyledLink href={`/product/${product.ProductId}`}>
-						<ProductCard product={product} />
+						<ProductCard product={product} showSeller={showSeller} />
 					</StyledLink>
 				</li>
 			))}
