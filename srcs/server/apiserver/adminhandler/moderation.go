@@ -138,6 +138,9 @@ const (
 	ActionDismiss = "dismiss" // nothing wrong: restore if hidden
 	ActionHide    = "hide"    // keep (or make) it hidden
 	ActionDelete  = "delete"  // remove the post, comment or product
+	// ActionResolve closes the reports as handled without touching the
+	// target (chats and members: the admin suspends from the member list).
+	ActionResolve = "resolve"
 )
 
 var errNoTarget = errors.New("대상을 찾을 수 없어요.")
@@ -173,7 +176,7 @@ func applyAction(targetType, targetId, action string) error {
 			return err
 		}
 		return graphqlhandler.RemoveProduct(targetId, owner)
-	case action == ActionDismiss:
+	case action == ActionDismiss, action == ActionResolve:
 		return nil
 	}
 	return errors.New("이 대상에는 할 수 없는 처리예요.")
@@ -194,7 +197,7 @@ func resolveReportsHandler(w http.ResponseWriter, r *http.Request) {
 		jsonresponse.Error(w, http.StatusBadRequest, "처리할 대상을 알려주세요.")
 		return
 	}
-	if body.Action != ActionDismiss && body.Action != ActionHide && body.Action != ActionDelete {
+	if body.Action != ActionDismiss && body.Action != ActionHide && body.Action != ActionDelete && body.Action != ActionResolve {
 		jsonresponse.Error(w, http.StatusBadRequest, "알 수 없는 처리예요.")
 		return
 	}

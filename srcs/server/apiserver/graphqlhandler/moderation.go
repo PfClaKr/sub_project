@@ -225,6 +225,33 @@ func DescribeReportTarget(targetType, targetId string) (*ReportTarget, error) {
 			return nil, err
 		}
 		return &ReportTarget{Title: dynamo.S(out.Item, "UserNickname"), Link: "/user/" + targetId, OwnerId: targetId}, nil
+	case ReportChat:
+		room, err := svc.GetItem(&dynamodb.GetItemInput{
+			TableName:            aws.String(dynamo.TableChatRooms),
+			Key:                  dynamo.Item{"ChatId": {S: aws.String(targetId)}},
+			ProjectionExpression: aws.String("ChatId"),
+		})
+		if err != nil || room.Item == nil {
+			return nil, err
+		}
+		// The last messages as a preview; the owner is the reported member
+		// stored on the report, so OwnerId stays empty here.
+		msgs, err := svc.Query(&dynamodb.QueryInput{
+			TableName:                 aws.String(dynamo.TableChatMessage),
+			IndexName:                 aws.String("ChatIndex"),
+			KeyConditionExpression:    aws.String("ChatId = :c"),
+			ExpressionAttributeValues: dynamo.Item{":c": {S: aws.String(targetId)}},
+			ScanIndexForward:          aws.Bool(false),
+			Limit:                     aws.Int64(3),
+		})
+		if err != nil {
+			return nil, err
+		}
+		var lines []string
+		for i := len(msgs.Items) - 1; i >= 0; i-- {
+			lines = append(lines, dynamo.S(msgs.Items[i], "Content"))
+		}
+		return &ReportTarget{Title: "채팅 대화", Body: preview(strings.Join(lines, " / ")), Link: "/admin/conversations/" + targetId}, nil
 	}
 	return nil, nil
 }
