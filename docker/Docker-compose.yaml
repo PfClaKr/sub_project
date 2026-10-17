@@ -140,11 +140,12 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  # minio/minio is no longer published on Docker Hub; Bitnami's legacy
+  # build is the same server (console on 9001).
   minio:
-    image: minio/minio
+    image: bitnamilegacy/minio:2025.7.23-debian-12-r5
     container_name: minio
     restart: always
-    command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -152,9 +153,9 @@ services:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin
     volumes:
-      - minio-data:/data
+      - minio-data:/bitnami/minio/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-sf", "http://localhost:9000/minio/health/live"]
       interval: 5s
       timeout: 3s
       retries: 30
