@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -71,7 +72,18 @@ func verifyPassword(storedHash, salt, password string) bool {
 	return subtle.ConstantTimeCompare([]byte(storedHash), []byte(legacyHash(password, salt))) == 1
 }
 
+// clientIP is the address the rate limiter keys on. Behind a reverse
+// proxy (TRUST_PROXY=true) every request comes from the proxy, so the
+// last X-Forwarded-For entry, which the proxy itself appended, is used.
 func clientIP(r *http.Request) string {
+	if os.Getenv("TRUST_PROXY") == "true" {
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			parts := strings.Split(xff, ",")
+			if ip := strings.TrimSpace(parts[len(parts)-1]); ip != "" {
+				return ip
+			}
+		}
+	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr

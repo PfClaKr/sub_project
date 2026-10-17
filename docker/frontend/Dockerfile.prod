@@ -1,0 +1,31 @@
+# Production image: `next build` with the standalone output, run by plain
+# node. Build context: srcs/frontend.
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . ./
+# Browser-side endpoints are inlined at build time.
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_LOGIN_URL
+ARG NEXT_PUBLIC_CHAT_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_LOGIN_URL=$NEXT_PUBLIC_LOGIN_URL \
+    NEXT_PUBLIC_CHAT_URL=$NEXT_PUBLIC_CHAT_URL \
+    NEXT_OUTPUT=standalone \
+    NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+FROM node:20-alpine
+RUN apk add --no-cache tzdata
+WORKDIR /app
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
+COPY --from=build /app/public ./public
+USER node
+EXPOSE 3000
+CMD ["node", "server.js"]
