@@ -86,6 +86,16 @@ func main() {
 		return
 	}
 
+	// make demo (after /main demo-account in the loginserver); needs the
+	// running stack's tables and indexes.
+	if len(os.Args) == 5 && os.Args[1] == "demo-seed" {
+		eshandler.InitElasticsearch()
+		if err := demoSeed(os.Args[2], os.Args[3], os.Args[4]); err != nil {
+			log.Fatalf("demo: %v", err)
+		}
+		return
+	}
+
 	createtable.CreateTables(svc)
 	eshandler.InitElasticsearch()
 	if err := eshandler.EnsureIndex(loadSearchDocs); err != nil {
