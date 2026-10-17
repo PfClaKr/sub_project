@@ -24,6 +24,12 @@ type fakeDB struct {
 }
 
 func (f *fakeDB) GetItem(in *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+	if *in.TableName == dynamo.TableUsers && *in.Key["UserId"].S == "banned" {
+		return &dynamodb.GetItemOutput{Item: dynamo.Item{
+			"Status":         {S: aws.String("suspended")},
+			"SuspendedUntil": {N: aws.String("0")},
+		}}, nil
+	}
 	if *in.TableName == dynamo.TableProduct && *in.Key["ProductId"].S == "p1" {
 		return &dynamodb.GetItemOutput{Item: dynamo.Item{
 			"ProductId": {S: aws.String("p1")},
@@ -199,5 +205,20 @@ func TestLocateHidesPointInAreaMode(t *testing.T) {
 	}
 	if pin, err := locate(&geoInput{Lat: 1, Lng: 1, Exact: true}); err != nil || pin["AreaId"] != nil {
 		t.Errorf("exact pin without an area must still save: %v %v", pin, err)
+	}
+}
+
+func TestSuspendedMembersCannotMutate(t *testing.T) {
+	fake := withFake(t)
+	res := run(t, "banned", `mutation { updateProfile(UserNickname: "x") { UserId } }`)
+	if len(res.Errors) == 0 || res.Errors[0].Message != errSuspended.Error() {
+		t.Fatalf("errors = %v, want %q", res.Errors, errSuspended)
+	}
+	if fake.writes != 0 {
+		t.Errorf("suspended member wrote %d times", fake.writes)
+	}
+	// Reading stays open.
+	if res := run(t, "banned", `{ unreadCount }`); len(res.Errors) > 0 {
+		t.Errorf("unreadCount for a suspended member: %v", res.Errors)
 	}
 }

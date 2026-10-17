@@ -15,10 +15,12 @@ require (
 
 require (
 	golang.org/x/crypto v0.24.0
+	local.com/account v0.0.0
 	local.com/cors v0.0.0
 	local.com/dynamo v0.0.0
 	local.com/jsonresponse v0.0.0
 	local.com/jwt v0.0.0
+	local.com/mailer v0.0.0
 )
 
 replace local.com/cors => ../package/cors
@@ -28,3 +30,7 @@ replace local.com/jwt => ../package/jwt
 replace local.com/jsonresponse => ../package/jsonresponse
 
 replace local.com/dynamo => ../package/dynamo
+
+replace local.com/mailer => ../package/mailer
+
+replace local.com/account => ../package/account

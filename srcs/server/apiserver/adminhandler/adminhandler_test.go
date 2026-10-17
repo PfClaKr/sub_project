@@ -123,3 +123,27 @@ func TestPaginate(t *testing.T) {
 		}
 	}
 }
+
+func TestSuspension(t *testing.T) {
+	if rr, _ := serve(t, "member", "PUT", "/admin/users/member/suspension", `{"Days":7}`); rr.Code != http.StatusForbidden {
+		t.Errorf("member suspending = %d, want 403", rr.Code)
+	}
+	if rr, fake := serve(t, "boss", "PUT", "/admin/users/boss/suspension", `{"Days":7}`); rr.Code != http.StatusBadRequest || fake.updates != 0 {
+		t.Errorf("self suspension = %d (updates %d), want 400", rr.Code, fake.updates)
+	}
+	if rr, fake := serve(t, "boss", "PUT", "/admin/users/deputy/suspension", `{"Days":7}`); rr.Code != http.StatusBadRequest || fake.updates != 0 {
+		t.Errorf("suspending an admin = %d (updates %d), want 400", rr.Code, fake.updates)
+	}
+	if rr, _ := serve(t, "boss", "PUT", "/admin/users/nobody/suspension", `{"Days":7}`); rr.Code != http.StatusNotFound {
+		t.Errorf("unknown user = %d, want 404", rr.Code)
+	}
+	if rr, _ := serve(t, "boss", "PUT", "/admin/users/member/suspension", `{"Days":-1}`); rr.Code != http.StatusBadRequest {
+		t.Errorf("negative days = %d, want 400", rr.Code)
+	}
+	if rr, fake := serve(t, "boss", "PUT", "/admin/users/member/suspension", `{"Days":7}`); rr.Code != http.StatusOK || fake.updates != 1 {
+		t.Errorf("suspension = %d (updates %d), want 200 and one write: %s", rr.Code, fake.updates, rr.Body)
+	}
+	if rr, fake := serve(t, "boss", "DELETE", "/admin/users/member/suspension", ""); rr.Code != http.StatusOK || fake.updates != 1 {
+		t.Errorf("reinstate = %d (updates %d)", rr.Code, fake.updates)
+	}
+}

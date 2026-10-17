@@ -14,6 +14,7 @@ import (
 	"apiserver/graphqlhandler"
 	"apiserver/uploadhandler"
 
+	"local.com/account"
 	"local.com/cors"
 	"local.com/dynamo"
 	"local.com/jwt"
@@ -70,7 +71,7 @@ func main() {
 	r.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) }).Methods("GET")
 
 	r.Handle("/graphql", jwt.Optional(http.HandlerFunc(graphqlhandler.GraphqlHandler))).Methods("POST")
-	r.Handle("/upload", jwt.Middleware(http.HandlerFunc(uploadhandler.UploadHandler))).Methods("POST")
+	r.Handle("/upload", jwt.Middleware(account.RequireActive(svc, http.HandlerFunc(uploadhandler.UploadHandler)))).Methods("POST")
 
 	r.Handle("/favorites", jwt.Middleware(http.HandlerFunc(favoriteshandler.ListHandler))).Methods("GET")
 	r.Handle("/favorites/{productId}", jwt.Middleware(http.HandlerFunc(favoriteshandler.StatusHandler))).Methods("GET")
