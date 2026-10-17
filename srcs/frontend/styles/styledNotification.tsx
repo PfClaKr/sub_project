@@ -69,3 +69,29 @@ export const SuspendedBar = styled.div`
 	color: ${palette.danger};
 	background-color: ${palette.dangerSoft};
 `;
+
+export const SettingsTable = styled.table`
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 14px;
+
+	th {
+		text-align: left;
+		font-size: 12px;
+		color: ${palette.muted};
+		padding: 8px;
+		border-bottom: 1px solid ${palette.border};
+	}
+	td {
+		padding: 8px;
+		border-bottom: 1px solid ${palette.border};
+	}
+	select {
+		width: auto;
+		min-width: 130px;
+	}
+	input[type="checkbox"] {
+		width: 18px;
+		height: 18px;
+	}
+`;
