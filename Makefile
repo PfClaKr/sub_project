@@ -65,6 +65,10 @@ admin:
 	@test -n "$(email)" || { echo "usage: make admin email=you@example.com"; exit 1; }
 	@$(COMPOSE) exec apiserver /main promote-admin $(email)
 
+## Print a new web push key pair (VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY).
+vapid:
+	@$(COMPOSE) exec apiserver /main vapid-keys
+
 ## Run the same checks as CI (without e2e): gofmt, go vet/test for every module,
 ## then frontend lint, type-check and unit tests.
 test:
@@ -112,4 +116,4 @@ fclean:
 re: fclean up
 
 .PHONY: all up down stop restart ps logs wait health seed unseed admin test e2e fclean re \
-	prod-deploy prod-ps prod-logs prod-admin rehearsal rehearsal-down
+	prod-deploy prod-ps prod-logs prod-admin rehearsal rehearsal-down vapid

@@ -125,3 +125,13 @@ func TestExpireDuration(t *testing.T) {
 		t.Errorf("invalid env = %v, want 24h fallback", got)
 	}
 }
+
+func TestSign(t *testing.T) {
+	sig := Sign("unsubscribe:u1")
+	if !VerifySignature("unsubscribe:u1", sig) {
+		t.Error("own signature rejected")
+	}
+	if VerifySignature("unsubscribe:u2", sig) || VerifySignature("unsubscribe:u1", sig+"x") {
+		t.Error("forged signature accepted")
+	}
+}

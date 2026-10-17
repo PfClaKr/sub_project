@@ -10,8 +10,11 @@ require (
 )
 
 require (
+	github.com/SherClockHolmes/webpush-go v1.4.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
+	local.com/mailer v0.0.0 // indirect
 )
 
 require (
@@ -20,6 +23,7 @@ require (
 	local.com/dynamo v0.0.0
 	local.com/jsonresponse v0.0.0
 	local.com/jwt v0.0.0
+	local.com/notify v0.0.0
 )
 
 replace local.com/cors => ../package/cors
@@ -31,3 +35,7 @@ replace local.com/jsonresponse => ../package/jsonresponse
 replace local.com/dynamo => ../package/dynamo
 
 replace local.com/account => ../package/account
+
+replace local.com/notify => ../package/notify
+
+replace local.com/mailer => ../package/mailer

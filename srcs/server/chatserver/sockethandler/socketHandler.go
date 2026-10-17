@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
 	"local.com/cors"
 	"local.com/dynamo"
 	"local.com/jwt"
+	"local.com/notify"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -58,15 +60,68 @@ type ChatMessage struct {
 
 // IsParticipant checks the user belongs to the chat room.
 func IsParticipant(chatId, userId string) (bool, error) {
+	other, err := partner(chatId, userId)
+	return other != "", err
+}
+
+// partner returns the other member of the room, or "" when userId is
+// not a member.
+func partner(chatId, userId string) (string, error) {
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
 		TableName:            aws.String(dynamo.TableChatRooms),
 		Key:                  dynamo.Item{"ChatId": {S: aws.String(chatId)}},
 		ProjectionExpression: aws.String("UserSeller, UserBuyer"),
 	})
 	if err != nil || result.Item == nil {
-		return false, err
+		return "", err
 	}
-	return dynamo.S(result.Item, "UserSeller") == userId || dynamo.S(result.Item, "UserBuyer") == userId, nil
+	switch userId {
+	case dynamo.S(result.Item, "UserSeller"):
+		return dynamo.S(result.Item, "UserBuyer"), nil
+	case dynamo.S(result.Item, "UserBuyer"):
+		return dynamo.S(result.Item, "UserSeller"), nil
+	}
+	return "", nil
+}
+
+// chatNotifyGap: while someone is away, one "new message" notification
+// per room covers a whole conversation instead of one per message.
+const chatNotifyGap = 30 * time.Minute
+
+var (
+	notifyMu     sync.Mutex
+	lastNotified = map[string]time.Time{}
+	notifier     = notify.New(svc)
+)
+
+// shouldNotify reports whether to notify recipient about a message in
+// chatId now, and records it.
+func shouldNotify(chatId, recipient string, now time.Time) bool {
+	key := chatId + ":" + recipient
+	notifyMu.Lock()
+	defer notifyMu.Unlock()
+	if len(lastNotified) > 10000 {
+		lastNotified = map[string]time.Time{}
+	}
+	if last, ok := lastNotified[key]; ok && now.Sub(last) < chatNotifyGap {
+		return false
+	}
+	lastNotified[key] = now
+	return true
+}
+
+// notifyAway tells the other member about a message when they do not
+// have the room open.
+func notifyAway(msg ChatMessage, recipient string) {
+	if recipient == "" || hub.Online(msg.ChatId, recipient) || !shouldNotify(msg.ChatId, recipient, time.Now()) {
+		return
+	}
+	if err := notifier.Publish(notify.Event{
+		UserId: recipient, ActorId: msg.UserId, Type: notify.TypeChat,
+		TargetType: "chat", TargetId: msg.ChatId, Preview: msg.Content, Link: "/chat/" + msg.ChatId,
+	}); err != nil {
+		log.Printf("chat notification: %v", err)
+	}
 }
 
 func storeMessage(msg ChatMessage) error {
@@ -89,13 +144,13 @@ func Sockethandler(w http.ResponseWriter, r *http.Request) {
 	userId := jwt.UserID(r.Context())
 	chatId := mux.Vars(r)["ChatId"]
 
-	member, err := IsParticipant(chatId, userId)
+	other, err := partner(chatId, userId)
 	if err != nil {
 		log.Printf("participant check failed: %v", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	if !member {
+	if other == "" {
 		http.Error(w, "not a member of this chat room", http.StatusForbidden)
 		return
 	}
@@ -106,14 +161,14 @@ func Sockethandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := newClient(chatId)
+	c := newClient(chatId, userId)
 	hub.Join(c)
 	go writePump(conn, c)
-	readPump(conn, c, userId)
+	readPump(conn, c, userId, other)
 }
 
 // readPump owns reads; on exit it leaves the hub, which stops writePump.
-func readPump(conn *websocket.Conn, c *Client, userId string) {
+func readPump(conn *websocket.Conn, c *Client, userId, other string) {
 	defer func() {
 		hub.Leave(c)
 		conn.Close()
@@ -154,6 +209,7 @@ func readPump(conn *websocket.Conn, c *Client, userId string) {
 
 		payload, _ := json.Marshal(msg)
 		hub.Broadcast(c.chatId, payload)
+		go notifyAway(msg, other)
 	}
 }
 

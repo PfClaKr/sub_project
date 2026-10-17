@@ -104,4 +104,22 @@ func TestChat(t *testing.T) {
 	if len(history) != 1 || history[0]["Content"] != msg || history[0]["Timestamp"].(float64) < 1e12 {
 		t.Errorf("history = %v (want one message with a ms timestamp)", history)
 	}
+
+	// The seller had the room open: no notification. Once they leave,
+	// the next message notifies them, and only once for a burst.
+	if n := notificationTypes(t, seller); count(n, "chat") != 0 {
+		t.Errorf("notified while in the room: %v", n)
+	}
+	s.Close()
+	time.Sleep(300 * time.Millisecond)
+	for i := 0; i < 3; i++ {
+		b.WriteMessage(websocket.TextMessage, []byte(`{"Message":"자리 비운 사이 `+runID+`"}`))
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) && count(notificationTypes(t, seller), "chat") == 0 {
+		time.Sleep(200 * time.Millisecond)
+	}
+	if n := notificationTypes(t, seller); count(n, "chat") != 1 {
+		t.Errorf("away notifications = %v, want exactly one chat", n)
+	}
 }

@@ -3,11 +3,12 @@ package sockethandler
 import (
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestBroadcastReachesOnlyRoomMembers(t *testing.T) {
 	h := NewHub()
-	a, b, other := newClient("room"), newClient("room"), newClient("elsewhere")
+	a, b, other := newClient("room", "u1"), newClient("room", "u1"), newClient("elsewhere", "u2")
 	for _, c := range []*Client{a, b, other} {
 		h.Join(c)
 	}
@@ -26,7 +27,7 @@ func TestBroadcastReachesOnlyRoomMembers(t *testing.T) {
 
 func TestBroadcastDoesNotBlockOnSlowClient(t *testing.T) {
 	h := NewHub()
-	slow := newClient("room")
+	slow := newClient("room", "u1")
 	h.Join(slow)
 	for i := 0; i < cap(slow.send)+10; i++ {
 		h.Broadcast("room", []byte("x"))
@@ -38,7 +39,7 @@ func TestBroadcastDoesNotBlockOnSlowClient(t *testing.T) {
 
 func TestLeaveClosesSendOnce(t *testing.T) {
 	h := NewHub()
-	c := newClient("room")
+	c := newClient("room", "u1")
 	h.Join(c)
 	h.Leave(c)
 	h.Leave(c) // must not panic on double close
@@ -51,7 +52,7 @@ func TestLeaveClosesSendOnce(t *testing.T) {
 // Run with -race: concurrent senders must not race on connections.
 func TestConcurrentBroadcast(t *testing.T) {
 	h := NewHub()
-	c := newClient("room")
+	c := newClient("room", "u1")
 	h.Join(c)
 	var wg sync.WaitGroup
 	for i := 0; i < 8; i++ {
@@ -63,4 +64,28 @@ func TestConcurrentBroadcast(t *testing.T) {
 	}
 	wg.Wait()
 	h.Leave(c)
+}
+
+func TestOnlineAndNotifyGap(t *testing.T) {
+	h := NewHub()
+	c := newClient("room", "alice")
+	h.Join(c)
+	if !h.Online("room", "alice") || h.Online("room", "bob") || h.Online("other", "alice") {
+		t.Error("Online does not match who has the room open")
+	}
+	h.Leave(c)
+	if h.Online("room", "alice") {
+		t.Error("still online after leaving")
+	}
+
+	now := time.Unix(0, 0)
+	if !shouldNotify("r1", "bob", now) {
+		t.Error("first message must notify")
+	}
+	if shouldNotify("r1", "bob", now.Add(5*time.Minute)) {
+		t.Error("a second message within the gap must not notify again")
+	}
+	if !shouldNotify("r1", "bob", now.Add(chatNotifyGap+time.Second)) || !shouldNotify("r2", "bob", now) {
+		t.Error("after the gap, or in another room, it must notify")
+	}
 }

@@ -138,6 +138,7 @@ function AccountLinks() {
 		<Row style={{ flexWrap: "wrap", gap: 8, marginTop: 16 }}>
 			<LinkButton href="/wishlist" $ghost>찜 목록</LinkButton>
 			<LinkButton href="/notifications" $ghost>알림</LinkButton>
+			<LinkButton href="/myaccount/notifications" $ghost>알림 설정</LinkButton>
 			<LinkButton href="/chat" $ghost>채팅</LinkButton>
 			<GhostButton onClick={handleLogout}>로그아웃</GhostButton>
 		</Row>

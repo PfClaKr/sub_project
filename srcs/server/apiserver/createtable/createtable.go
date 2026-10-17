@@ -106,10 +106,21 @@ var tables = []tableDef{
 		attribs: []*dynamodb.AttributeDefinition{attr("ReportId", "S")},
 	},
 	{
+		// EmailQueueIndex holds only notifications waiting for a mail
+		// (EmailQueue + DueAt are removed once sent), so the mail worker
+		// queries what is due instead of scanning.
 		name:    dynamo.TableNotifications,
 		schema:  hashRangeKey("UserId", "SortKey"),
-		attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("SortKey", "S")},
+		attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("SortKey", "S"), attr("EmailQueue", "S"), attr("DueAt", "N")},
+		indexes: []*dynamodb.GlobalSecondaryIndex{index("EmailQueueIndex", hashRangeKey("EmailQueue", "DueAt"))},
 		ttl:     "ExpiresAt",
+	},
+	{
+		// Web push devices of a member (EndpointHash = hash of the push
+		// service URL).
+		name:    dynamo.TablePushSubs,
+		schema:  hashRangeKey("UserId", "EndpointHash"),
+		attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("EndpointHash", "S")},
 	},
 }
 

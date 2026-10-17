@@ -2,6 +2,9 @@ package jwt
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"net/http"
 	"os"
 	"strconv"
@@ -143,4 +146,18 @@ func ClearCookie(w http.ResponseWriter) {
 		Secure:   secureCookie(),
 		SameSite: http.SameSiteLaxMode,
 	})
+}
+
+// Sign returns an HMAC-SHA256 of msg with the shared secret, base64url
+// encoded: for links that must prove they came from us (unsubscribe)
+// without a login.
+func Sign(msg string) string {
+	mac := hmac.New(sha256.New, jwtKey)
+	mac.Write([]byte(msg))
+	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+}
+
+// VerifySignature checks a Sign result in constant time.
+func VerifySignature(msg, sig string) bool {
+	return hmac.Equal([]byte(Sign(msg)), []byte(sig))
 }

@@ -20,6 +20,10 @@ x-go-env: &go-env
   FRONTEND_ORIGINS: ${APP_URL:?set APP_URL}
   JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
   COOKIE_SECURE: "true"
+  # Web push (optional; push stays off without keys).
+  VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+  VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+  VAPID_SUBJECT: ${VAPID_SUBJECT:-}
 
 x-go-healthcheck: &go-healthcheck
   interval: 10s
@@ -83,6 +87,14 @@ services:
       # the account age needed to post. Empty = code defaults.
       SMIC_HOURLY: ${SMIC_HOURLY:-}
       LISTING_MIN_ACCOUNT_DAYS: ${LISTING_MIN_ACCOUNT_DAYS:-}
+      # Notification mails go through the same SMTP as verification mails.
+      SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:?set SMTP_FROM}
+      PUBLIC_APP_URL: ${APP_URL}
+      PUBLIC_API_URL: ${APP_URL}/svc/api
     healthcheck:
       <<: *go-healthcheck
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
