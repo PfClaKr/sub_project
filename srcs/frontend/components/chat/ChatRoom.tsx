@@ -8,7 +8,7 @@ import {
 import { ErrorText, GhostButton, Skeleton } from "@/styles/styledUi";
 import { ChatMenu } from "./ChatMenu";
 import { RequireLogin } from "@/components/ui/RequireLogin";
-import { CHAT_URL } from "@/libs/config";
+import { CHAT_URL, chatSocketUrl } from "@/libs/config";
 import { formatDate, formatTime, imageUrl, toMs } from "@/libs/format";
 import { subjectHref, subjectTitle } from "@/libs/subjects";
 import type { Message, Room, Session } from "@/libs/types";
@@ -37,7 +37,7 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 
 		// Reconnects with backoff and reloads history to fill any gap.
 		const connect = () => {
-			const ws = new WebSocket(`${CHAT_URL.replace(/^http/, "ws")}/ws/${chatId}`);
+			const ws = new WebSocket(chatSocketUrl(`/ws/${chatId}`));
 			wsRef.current = ws;
 			ws.onopen = () => {
 				if (attempt > 0) loadHistory().catch(() => {});
