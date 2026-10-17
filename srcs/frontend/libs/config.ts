@@ -19,3 +19,11 @@ export const CHAT_URL = isServer
 	: process.env.NEXT_PUBLIC_CHAT_URL ?? "http://localhost:9090";
 
 export const GRAPHQL_URL = `${API_URL}/graphql`;
+
+// Browser URLs may be paths ("/svc/chat") when the site and the services
+// share one origin behind Caddy (production): fetch resolves them, but a
+// websocket needs an absolute ws(s):// URL.
+export function chatSocketUrl(path: string): string {
+	const base = CHAT_URL.startsWith("/") ? `${window.location.origin}${CHAT_URL}` : CHAT_URL;
+	return `${base.replace(/^http/, "ws")}${path}`;
+}

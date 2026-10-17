@@ -2,6 +2,12 @@
 # DynamoDB Local, MinIO and MailHog stand in for DynamoDB, S3 and SES,
 # and Caddy serves https://localhost:8443 with its internal CA.
 services:
+  # Adds /media/* in front of MinIO, so uploaded photos are served from
+  # the same origin (S3_PUBLIC_URL=<APP_URL>/media), also through a tunnel.
+  caddy:
+    volumes:
+      - ./Caddyfile.rehearsal:/etc/caddy/Caddyfile:ro
+
   apiserver:
     depends_on:
       dynamodb:

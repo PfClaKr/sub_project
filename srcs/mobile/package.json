@@ -1,0 +1,19 @@
+{
+  "name": "itnyang-mobile",
+  "private": true,
+  "description": "Android and iOS shells around the itnyang web app (Capacitor).",
+  "scripts": {
+    "sync": "node scripts/prepare.mjs && cap sync",
+    "assets": "capacitor-assets generate --android --ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.5.3",
+    "typescript": "5.6.3"
+  }
+}

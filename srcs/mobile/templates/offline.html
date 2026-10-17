@@ -1,0 +1,102 @@
+<!doctype html>
+<!-- Template: scripts/prepare.mjs writes www/offline.html from it. -->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>잇냥</title>
+<style>
+	:root { color-scheme: light; }
+	* { box-sizing: border-box; }
+	body {
+		margin: 0;
+		min-height: 100vh;
+		display: grid;
+		place-items: center;
+		padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+		color: #1f2433;
+		background: #ffffff;
+		text-align: center;
+	}
+	.logo {
+		display: block;
+		margin: 0 auto 20px;
+		border-radius: 18px;
+	}
+	h1 { margin: 0 0 8px; font-size: 22px; color: #101750; }
+	p { margin: 0 0 24px; color: #5d6382; line-height: 1.6; }
+	form { display: none; margin-top: 32px; padding-top: 20px; border-top: 1px solid #dfe3f0; text-align: left; }
+	form.on { display: block; }
+	label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #101750; }
+	small { display: block; margin-top: 6px; color: #5d6382; font-size: 12px; }
+	input {
+		width: 100%;
+		padding: 11px 12px;
+		border: 1px solid #dfe3f0;
+		border-radius: 10px;
+		font: inherit;
+		font-size: 15px;
+	}
+	form button { margin-top: 10px; width: 100%; }
+	button {
+		padding: 12px 28px;
+		border: none;
+		border-radius: 10px;
+		background: #0048b4;
+		color: #fff;
+		font: inherit;
+		font-weight: 700;
+	}
+</style>
+</head>
+<body>
+	<main>
+		<img class="logo" src="{{ICON}}" alt="" width="72" height="72">
+		<h1>잇냥에 연결할 수 없어요</h1>
+		<p>인터넷 연결을 확인한 뒤<br>다시 시도해주세요.</p>
+		<button type="button" id="retry">다시 시도</button>
+		<!-- Debug builds only (app-config.js): connect to `make phone`. -->
+		<form id="server">
+			<label for="url">테스트 서버 주소</label>
+			<input id="url" type="url" inputmode="url" autocomplete="off" placeholder="https://….trycloudflare.com">
+			<small>make phone이 알려준 주소를 넣으면 다음 실행부터 이 주소로 열려요.</small>
+			<button type="submit">연결</button>
+		</form>
+	</main>
+	<script>{{CONFIG}}</script>
+	<script>
+		var KEY = "itnyang.serverUrl";
+		var saved = null;
+		try { saved = localStorage.getItem(KEY); } catch (e) {}
+		var target = (window.ITNYANG_DEBUG && saved) || window.ITNYANG_SERVER_URL;
+
+		document.getElementById("retry").addEventListener("click", function () {
+			if (target) location.href = target;
+			else location.reload();
+		});
+
+		if (window.ITNYANG_DEBUG) {
+			var form = document.getElementById("server");
+			var input = document.getElementById("url");
+			form.className = "on";
+			input.value = saved || "";
+			form.addEventListener("submit", function (e) {
+				e.preventDefault();
+				var url = input.value.trim().replace(/\/+$/, "");
+				if (!/^https?:\/\//.test(url)) return;
+				try { localStorage.setItem(KEY, url); } catch (err) {}
+				location.href = url;
+			});
+			// The built-in address failed: go to the saved test server once
+			// per launch (if it fails too, this page shows again, with the form).
+			try {
+				if (saved && !sessionStorage.getItem("itnyang.tried")) {
+					sessionStorage.setItem("itnyang.tried", "1");
+					location.href = saved;
+				}
+			} catch (err) {}
+		}
+	</script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+node_modules/
+# Written by scripts/prepare.mjs at sync time.
+www/offline.html
