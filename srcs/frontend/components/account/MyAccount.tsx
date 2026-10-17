@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState, FormEvent } from "react";
 import { Bell, Camera, FileText, Heart, MessageCircle, PlusSquare, Settings } from "lucide-react";
 import { useNotifications } from "@/libs/notifications";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
+import { TextButton } from "@/styles/styledCommunity";
+import { API_URL } from "@/libs/config";
 import { AvatarPicker } from "@/styles/styledUi";
 import { useSession } from "@/libs/session";
 import { gql, PRODUCT_CARD_FIELDS } from "@/libs/graphql";
@@ -159,7 +162,39 @@ function AccountLinks() {
 	);
 }
 
-// Account settings: password change (more to come, e.g. leaving).
+// LeaveButton deletes the account after a typed confirmation
+// (DELETE /account on the apiserver; what is kept is in the privacy policy).
+function LeaveButton() {
+	const confirm = useConfirm();
+	const [error, setError] = useState("");
+	const leave = async () => {
+		const ok = await confirm({
+			title: "정말 탈퇴할까요?",
+			message: "계정, 올린 상품과 사진, 찜과 알림이 바로 삭제되고 되돌릴 수 없어요. 커뮤니티 글과 댓글은 '탈퇴한 회원'으로 남으니, 지우고 싶은 글은 먼저 삭제해주세요. 채팅과 신고 기록은 분쟁 대응을 위해 1년 보관 후 삭제돼요.",
+			confirmLabel: "탈퇴하기",
+			danger: true,
+			requireText: "탈퇴",
+			requireLabel: "확인을 위해 '탈퇴'를 입력해주세요",
+		});
+		if (!ok) return;
+		const res = await fetch(`${API_URL}/account`, { method: "DELETE", credentials: "include" }).catch(() => null);
+		if (!res?.ok) {
+			const json = await res?.json().catch(() => null);
+			setError(json?.error ?? "탈퇴하지 못했어요. 잠시 후 다시 시도해주세요.");
+			return;
+		}
+		// Full reload: no page keeps the deleted member's data.
+		window.location.assign("/?left=1");
+	};
+	return (
+		<>
+			<TextButton type="button" onClick={leave}>회원 탈퇴</TextButton>
+			{error && <ErrorText role="alert">{error}</ErrorText>}
+		</>
+	);
+}
+
+// Account settings: password change, blocked users, leaving.
 function AccountSettings() {
 	const [open, setOpen] = useState(false);
 	const [done, setDone] = useState("");
@@ -180,6 +215,7 @@ function AccountSettings() {
 						<LinkButton href="/myaccount/blocked" $ghost>차단한 사용자</LinkButton>
 					</Row>
 				)}
+			<div style={{ marginTop: 28 }}><LeaveButton /></div>
 		</Section>
 	);
 }

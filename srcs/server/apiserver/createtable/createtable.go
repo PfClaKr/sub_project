@@ -59,6 +59,7 @@ var tables = []tableDef{
 			index("SellerIndex", hashRangeKey("UserSeller", "CreatedAt")),
 			index("BuyerIndex", hashRangeKey("UserBuyer", "CreatedAt")),
 		},
+		ttl: "PurgeAt", // records of deleted content / members who left (graphqlhandler.RecordRetention)
 	},
 	{
 		// Town / arrondissement boundaries cached from OpenStreetMap.
@@ -72,6 +73,7 @@ var tables = []tableDef{
 		schema:  hashKey("MessageId"),
 		attribs: []*dynamodb.AttributeDefinition{attr("MessageId", "S"), attr("ChatId", "S"), attr("Timestamp", "N")},
 		indexes: []*dynamodb.GlobalSecondaryIndex{index("ChatIndex", hashRangeKey("ChatId", "Timestamp"))},
+		ttl:     "PurgeAt", // records of deleted content / members who left (graphqlhandler.RecordRetention)
 	},
 	{
 		// Community posts of every board (free, qna, housing, job).
@@ -81,6 +83,7 @@ var tables = []tableDef{
 		schema:  hashKey("PostId"),
 		attribs: []*dynamodb.AttributeDefinition{attr("PostId", "S"), attr("AuthorId", "S"), attr("CreatedAt", "N")},
 		indexes: []*dynamodb.GlobalSecondaryIndex{authorIndex()},
+		ttl:     "PurgeAt", // records of deleted content / members who left (graphqlhandler.RecordRetention)
 	},
 	{
 		// CommentId sorts by time, so one Query returns a thread in order.
@@ -88,6 +91,7 @@ var tables = []tableDef{
 		schema:  hashRangeKey("PostId", "CommentId"),
 		attribs: []*dynamodb.AttributeDefinition{attr("PostId", "S"), attr("CommentId", "S"), attr("AuthorId", "S"), attr("CreatedAt", "N")},
 		indexes: []*dynamodb.GlobalSecondaryIndex{authorIndex()},
+		ttl:     "PurgeAt", // records of deleted content / members who left (graphqlhandler.RecordRetention)
 	},
 	{
 		name:    dynamo.TablePostLikes,
@@ -104,6 +108,7 @@ var tables = []tableDef{
 		name:    dynamo.TableReports,
 		schema:  hashKey("ReportId"),
 		attribs: []*dynamodb.AttributeDefinition{attr("ReportId", "S")},
+		ttl:     "PurgeAt", // records of deleted content / members who left (graphqlhandler.RecordRetention)
 	},
 	{
 		// EmailQueueIndex holds only notifications waiting for a mail

@@ -67,3 +67,20 @@ export const FooterLinks = styled.nav`
 		color: ${palette.primary};
 	}
 `;
+
+export const FooterLegal = styled.nav`
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 4px 14px;
+	margin-bottom: 8px;
+	font-size: 12px;
+
+	a {
+		color: ${palette.muted};
+		text-decoration: none;
+	}
+	a:hover {
+		text-decoration: underline;
+	}
+`;

@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import palette, { radius } from "@/theme/colorPalette";
+import Link from "next/link";
 import { LOGIN_URL } from "@/libs/config";
+import { MIN_AGE } from "@/libs/legal";
 
 const GoogleLink = styled.a`
 	display: flex;
@@ -40,6 +42,17 @@ const Divider = styled.div`
 	}
 `;
 
+const GoogleNote = styled.p`
+	margin: 8px 0 0;
+	font-size: 12px;
+	line-height: 1.5;
+	color: ${palette.muted};
+
+	a {
+		color: ${palette.muted};
+	}
+`;
+
 const GoogleMark = () => (
 	<svg width="17" height="17" viewBox="0 0 48 48" aria-hidden="true">
 		<path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2.5 24 .5 14.6.5 6.5 5.9 2.6 13.8l7.8 6.1C12.3 13.7 17.6 9.5 24 9.5z"/>
@@ -68,6 +81,9 @@ export const GoogleButton = ({ label }: { label: string }) => {
 				<GoogleMark />
 				{label}
 			</GoogleLink>
+			<GoogleNote>
+				Google로 처음 가입하면 만 {MIN_AGE}세 이상이며 <Link href="/terms">이용약관</Link>과 <Link href="/privacy">개인정보처리방침</Link>에 동의한 것으로 봐요.
+			</GoogleNote>
 			<Divider>또는</Divider>
 		</>
 	);

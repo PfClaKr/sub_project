@@ -448,11 +448,10 @@ func UserIdByEmail(email string) (string, error) {
 	return "", errNoUser
 }
 
-// deleteUserHandler removes a member with their products, housing/job
-// posts and favorites.
+// deleteUserHandler removes a member (DeleteMember).
 // Their own account and other admins are out of reach, as in
 // ineverywhere: losing the last admin would lock everyone out, so an
-// admin has to be demoted first. Chat rooms stay for dispute handling.
+// admin has to be demoted first.
 func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	target := mux.Vars(r)["id"]
 	if target == jwt.UserID(r.Context()) {
@@ -476,81 +475,13 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	products, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{
-		TableName:                 aws.String(dynamo.TableProduct),
-		ProjectionExpression:      aws.String("ProductId"),
-		FilterExpression:          aws.String("UserId = :u"),
-		ExpressionAttributeValues: dynamo.Item{":u": {S: aws.String(target)}},
-	})
+	removed, err := DeleteMember(target)
 	if err != nil {
 		jsonresponse.Internal(w, err)
 		return
 	}
-	for _, p := range products {
-		if err := graphqlhandler.RemoveProduct(dynamo.S(p, "ProductId"), target); err != nil {
-			jsonresponse.Internal(w, err)
-			return
-		}
-	}
-
-	// Housing and job posts go with the account (nobody can answer them
-	// any more); community posts stay, shown as "탈퇴한 회원", because the
-	// answers in them keep helping others.
-	posts, err := dynamo.QueryAll(svc, &dynamodb.QueryInput{
-		TableName:                 aws.String(dynamo.TablePosts),
-		IndexName:                 aws.String("AuthorIndex"),
-		KeyConditionExpression:    aws.String("AuthorId = :u"),
-		ExpressionAttributeNames:  map[string]*string{"#t": aws.String("Type")},
-		ProjectionExpression:      aws.String("PostId, #t"),
-		ExpressionAttributeValues: dynamo.Item{":u": {S: aws.String(target)}},
-	})
-	if err != nil {
-		jsonresponse.Internal(w, err)
-		return
-	}
-	for _, p := range posts {
-		if t := dynamo.S(p, "Type"); t == graphqlhandler.PostTypeHousing || t == graphqlhandler.PostTypeJob {
-			if err := graphqlhandler.ModeratePost(dynamo.S(p, "PostId"), graphqlhandler.PostDeleted); err != nil {
-				jsonresponse.Internal(w, err)
-				return
-			}
-		}
-	}
-
-	favs, err := dynamo.QueryAll(svc, &dynamodb.QueryInput{
-		TableName:                 aws.String(dynamo.TableFavorites),
-		KeyConditionExpression:    aws.String("UserId = :u"),
-		ExpressionAttributeValues: dynamo.Item{":u": {S: aws.String(target)}},
-	})
-	if err != nil {
-		jsonresponse.Internal(w, err)
-		return
-	}
-	for _, f := range favs {
-		svc.DeleteItem(&dynamodb.DeleteItemInput{
-			TableName: aws.String(dynamo.TableFavorites),
-			Key:       dynamo.Item{"UserId": f["UserId"], "ItemId": f["ItemId"]},
-		})
-	}
-
-	if email := dynamo.S(user.Item, "Email"); email != "" {
-		if _, err := svc.DeleteItem(&dynamodb.DeleteItemInput{
-			TableName: aws.String(dynamo.TableUsersCredential),
-			Key:       dynamo.Item{"Email": {S: aws.String(email)}},
-		}); err != nil {
-			jsonresponse.Internal(w, err)
-			return
-		}
-	}
-	if _, err := svc.DeleteItem(&dynamodb.DeleteItemInput{
-		TableName: aws.String(dynamo.TableUsers),
-		Key:       dynamo.Item{"UserId": {S: aws.String(target)}},
-	}); err != nil {
-		jsonresponse.Internal(w, err)
-		return
-	}
-	log.Printf("admin %s deleted user %s (%d products)", jwt.UserID(r.Context()), target, len(products))
-	jsonresponse.New(w, http.StatusOK, map[string]int{"DeletedProducts": len(products)})
+	log.Printf("admin %s deleted user %s (%d products)", jwt.UserID(r.Context()), target, removed)
+	jsonresponse.New(w, http.StatusOK, map[string]int{"DeletedProducts": removed})
 }
 
 // ---- products ----

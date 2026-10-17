@@ -121,6 +121,8 @@ func main() {
 	r.Handle("/favorites/{productId}", jwt.Middleware(http.HandlerFunc(favoriteshandler.AddHandler))).Methods("POST")
 	r.Handle("/favorites/{productId}", jwt.Middleware(http.HandlerFunc(favoriteshandler.RemoveHandler))).Methods("DELETE")
 
+	// Leaving: the member deletes their own account (privacy policy).
+	r.Handle("/account", jwt.Middleware(http.HandlerFunc(adminhandler.LeaveHandler))).Methods("DELETE")
 	adminhandler.Register(r)
 	geohandler.Register(r)
 	notifyhandler.Register(r)

@@ -218,3 +218,24 @@ export const TipsCard = styled.aside`
 		font-weight: 600;
 	}
 `;
+
+// Required consent checkbox with links (signup).
+export const ConsentRow = styled.label`
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	font-size: 14px;
+	line-height: 1.5;
+	color: ${palette.text};
+
+	input {
+		flex: none;
+		width: 18px;
+		height: 18px;
+		margin: 2px 0 0;
+	}
+	a {
+		color: ${palette.primary};
+		font-weight: 600;
+	}
+`;
