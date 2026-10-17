@@ -32,7 +32,14 @@ type SignupRequest struct {
 	UserNickname    string `json:"usernickname"`
 	Residence       string `json:"residence"`
 	ResidenceDetail string `json:"residencedetail,omitempty"`
+	// Agree: the member accepted the terms and the privacy policy and
+	// confirmed being at least 15 (required).
+	Agree bool `json:"agree"`
 }
+
+// TermsVersion is the date of the terms and privacy policy in force
+// (srcs/frontend/libs/legal.ts LEGAL_VERSION); stored with each signup.
+const TermsVersion = "2026-10-17"
 
 // DefaultResidence is used when the form leaves it empty.
 const DefaultResidence = "파리"
@@ -52,6 +59,9 @@ func (req *SignupRequest) Validate() string {
 
 	if addr, err := mail.ParseAddress(req.Email); err != nil || addr.Address != req.Email {
 		return "올바른 이메일 주소를 입력해주세요."
+	}
+	if !req.Agree {
+		return "이용약관과 개인정보처리방침에 동의해주세요."
 	}
 	if msg := ValidatePassword(req.Password); msg != "" {
 		return msg
@@ -112,6 +122,8 @@ func createAccount(req SignupRequest) (string, error) {
 					"ResidenceDetail":   {S: aws.String(req.ResidenceDetail)},
 					"PublishedQuantity": {N: aws.String("0")},
 					"CreatedAt":         {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
+					"TermsVersion":      {S: aws.String(TermsVersion)},
+					"TermsAcceptedAt":   {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
 				},
 				ConditionExpression: aws.String("attribute_not_exists(UserId)"),
 			}},

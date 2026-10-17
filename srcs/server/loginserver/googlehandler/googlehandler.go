@@ -198,6 +198,9 @@ func findOrCreateUser(user *googleUser) (string, error) {
 					"ProfileImage":      {S: aws.String(picture)},
 					"PublishedQuantity": {N: aws.String("0")},
 					"CreatedAt":         {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
+					// The Google button says that continuing accepts the terms.
+					"TermsVersion":    {S: aws.String(signuphandler.TermsVersion)},
+					"TermsAcceptedAt": {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
 				},
 			}},
 		},

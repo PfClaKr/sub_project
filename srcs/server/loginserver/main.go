@@ -23,7 +23,7 @@ import (
 func main() {
 	// make demo: docker compose exec loginserver /main demo-account <email> <password> <nickname>
 	if len(os.Args) == 5 && os.Args[1] == "demo-account" {
-		req := signuphandler.SignupRequest{Email: os.Args[2], Password: os.Args[3], UserNickname: os.Args[4]}
+		req := signuphandler.SignupRequest{Email: os.Args[2], Password: os.Args[3], UserNickname: os.Args[4], Agree: true}
 		userId, err := signuphandler.EnsureDemoAccount(req, 30)
 		if err != nil {
 			log.Fatalf("demo account %s: %v", os.Args[2], err)
