@@ -60,7 +60,7 @@ export function PostForm({ post, board: initialBoard }: { post?: Post; board?: B
 	const router = useRouter();
 	const { session } = useSession();
 	const { city } = useRegion();
-	const [board, setBoard] = useState<BoardType>(post?.Type ?? initialBoard ?? "qna");
+	const [board, setBoard] = useState<BoardType>((post?.Type as BoardType | undefined) ?? initialBoard ?? "qna");
 	const [topic, setTopic] = useState(post?.Topic ?? "");
 	const [title, setTitle] = useState(post?.Title ?? "");
 	const [body, setBody] = useState(post?.Body ?? "");

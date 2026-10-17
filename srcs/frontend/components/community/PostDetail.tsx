@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Bookmark, CheckCircle2, Eye, Heart, MessageSquare } from "lucide-react";
-import { BOARDS } from "@/libs/constants";
+import { boardLabel } from "@/libs/community";
 import { gql, POST_DETAIL_FIELDS } from "@/libs/graphql";
 import { formatDateTime, formatRelative, imageUrl } from "@/libs/format";
 import { useSession } from "@/libs/session";
@@ -95,13 +95,12 @@ export function PostDetail({ postId, initial }: { postId: string; initial: Post 
 	}
 	if (!post) return <Skeleton $h="360px" />;
 
-	const board = BOARDS[post.Type];
 	const edited = post.UpdatedAt && post.UpdatedAt - post.CreatedAt > 60_000;
 
 	return (
 		<Article>
 			<Meta>
-				<Link href={`/community?board=${post.Type}`}><Tag>{board?.label ?? post.Type}</Tag></Link>
+				<Link href={`/community?board=${post.Type}`}><Tag>{boardLabel(post.Type)}</Tag></Link>
 				<Link href={`/community?board=${post.Type}&topic=${encodeURIComponent(post.Topic)}`}>{post.Topic}</Link>
 				{post.Type === "qna" && (post.Solved
 					? <Tag $tone="done"><CheckCircle2 size={12} aria-hidden /> 해결</Tag>

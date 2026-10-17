@@ -157,10 +157,13 @@ function FilterPanel({ initial, onApply, onClose }: {
 	);
 }
 
-type Initial = { areaId: string | null; km: number; name: string; center: LatLng | null };
-type Filter = { area: Area | null; center: LatLng; km: number; name: string };
+export type PlaceFilterInitial = { areaId: string | null; km: number; name: string; center: LatLng | null };
+type Initial = PlaceFilterInitial;
+export type PlaceFilter = { area: Area | null; center: LatLng; km: number; name: string };
+type Filter = PlaceFilter;
 
-function LocationFilterPanel({ initial, onApply, onClose }: {
+// Shared with the housing/job boards.
+export function LocationFilterPanel({ initial, onApply, onClose }: {
 	initial: Initial | null;
 	onApply: (f: Filter | null) => void;
 	onClose: () => void;

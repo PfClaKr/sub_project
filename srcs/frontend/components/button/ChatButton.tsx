@@ -5,7 +5,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { CHAT_URL } from "@/libs/config";
 import { ErrorText } from "@/styles/styledUi";
 
-export const ChatButton = ({ productId, disabled }: { productId: string; disabled?: boolean }) => {
+// ChatButton opens (or creates) the viewer's chat room about a product or
+// a housing/job post.
+export const ChatButton = ({ productId, subject, disabled, disabledLabel = "판매완료", label = "채팅하기" }: {
+	productId?: string;
+	subject?: { type: "product" | "housing" | "job"; id: string };
+	disabled?: boolean;
+	disabledLabel?: string;
+	label?: string;
+}) => {
+	const target = subject ?? { type: "product" as const, id: productId ?? "" };
 	const router = useRouter();
 	const pathname = usePathname();
 	const [loading, setLoading] = useState(false);
@@ -15,7 +24,7 @@ export const ChatButton = ({ productId, disabled }: { productId: string; disable
 		setLoading(true);
 		setError("");
 		try {
-			const res = await fetch(`${CHAT_URL}/room/product/${productId}`, { credentials: "include" });
+			const res = await fetch(`${CHAT_URL}/room/${target.type}/${encodeURIComponent(target.id)}`, { credentials: "include" });
 			if (res.status === 401) {
 				router.push(`/login?next=${encodeURIComponent(pathname)}`);
 				return;
@@ -36,7 +45,7 @@ export const ChatButton = ({ productId, disabled }: { productId: string; disable
 	return (
 		<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
 			<button onClick={handleClick} disabled={loading || disabled}>
-				{disabled ? "판매완료" : loading ? "여는 중..." : "채팅하기"}
+				{disabled ? disabledLabel : loading ? "여는 중..." : label}
 			</button>
 			{error && <ErrorText role="alert">{error}</ErrorText>}
 		</div>
