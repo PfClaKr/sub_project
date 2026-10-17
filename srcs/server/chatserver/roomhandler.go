@@ -8,6 +8,7 @@ import (
 
 	"chatserver/sockethandler"
 
+	"local.com/account"
 	"local.com/dynamo"
 	"local.com/jsonresponse"
 	"local.com/jwt"
@@ -57,6 +58,10 @@ type RoomView struct {
 	ProductStatus  string `json:"ProductStatus,omitempty"`
 	SellerNickname string `json:"SellerNickname"`
 	BuyerNickname  string `json:"BuyerNickname"`
+	// Single-room view only: the viewer blocked the other member, or
+	// either side blocked the other (no messages either way).
+	BlockedByMe bool `json:"BlockedByMe,omitempty"`
+	Blocked     bool `json:"Blocked,omitempty"`
 }
 
 // roomNamespace derives one stable ChatId per (subject, buyer) so a
@@ -227,6 +232,15 @@ func getOrCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	switch st, err := account.Blocks(svc, buyerId, sellerId); {
+	case err != nil:
+		jsonresponse.Internal(w, err)
+		return
+	case st.Any():
+		jsonresponse.Error(w, http.StatusForbidden, account.BlockedMessage)
+		return
+	}
+
 	newRoom := ChatRoom{
 		ChatId:      chatId,
 		SubjectType: subjectType,
@@ -281,6 +295,16 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 		jsonresponse.Internal(w, err)
 		return
 	}
+	other := room.UserSeller
+	if other == userId {
+		other = room.UserBuyer
+	}
+	st, err := account.Blocks(svc, userId, other)
+	if err != nil {
+		jsonresponse.Internal(w, err)
+		return
+	}
+	views[0].BlockedByMe, views[0].Blocked = st.ByMe, st.Any()
 	jsonresponse.New(w, http.StatusOK, views[0])
 }
 

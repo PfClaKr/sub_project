@@ -10,6 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"local.com/account"
 	"local.com/cors"
 	"local.com/dynamo"
 	"local.com/jwt"
@@ -192,6 +193,19 @@ func readPump(conn *websocket.Conn, c *Client, userId, other string) {
 		}
 		content := strings.TrimSpace(in.Message)
 		if content == "" || utf8.RuneCountInString(content) > maxMessageRune {
+			continue
+		}
+
+		// Checked per message: a block may happen while both are connected.
+		if st, err := account.Blocks(svc, userId, other); err != nil || st.Any() {
+			if err != nil {
+				log.Println("block check failed:", err)
+			}
+			notice, _ := json.Marshal(map[string]string{"Error": "blocked", "Message": account.BlockedMessage})
+			select {
+			case c.send <- notice:
+			default:
+			}
 			continue
 		}
 

@@ -24,6 +24,10 @@ func main() {
 	r.Handle("/room/{subjectType}/{subjectId}", jwt.Middleware(account.RequireActive(svc, http.HandlerFunc(getOrCreateRoomHandler)))).Methods("GET")
 	r.Handle("/room/{chatId}", jwt.Middleware(http.HandlerFunc(roomHandler))).Methods("GET")
 	r.Handle("/history/{chatId}", jwt.Middleware(http.HandlerFunc(historyHandler))).Methods("GET")
+	// Blocking stays open to suspended members: it only protects them.
+	r.Handle("/blocks", jwt.Middleware(http.HandlerFunc(listBlocksHandler))).Methods("GET")
+	r.Handle("/blocks/{userId}", jwt.Middleware(http.HandlerFunc(blockHandler))).Methods("PUT")
+	r.Handle("/blocks/{userId}", jwt.Middleware(http.HandlerFunc(unblockHandler))).Methods("DELETE")
 	r.Handle("/ws/{ChatId}", jwt.Middleware(account.RequireActive(svc, http.HandlerFunc(sockethandler.Sockethandler)))).Methods("GET")
 
 	port := os.Getenv("PORT")
