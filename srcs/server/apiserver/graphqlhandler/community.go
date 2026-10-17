@@ -42,6 +42,8 @@ const (
 	PostActive  = "active"
 	PostHidden  = "hidden"
 	PostDeleted = "deleted"
+	// PostExpired: a housing/job post past ExpiresAt, until extended.
+	PostExpired = "expired"
 )
 
 var topicsByType = map[string][]string{PostTypeFree: FreeTopics, PostTypeQna: QnaTopics}
@@ -172,25 +174,34 @@ func getPost(postId string) (dynamo.Item, error) {
 	return out.Item, nil
 }
 
-// community posts only; housing/job posts get their own resolvers.
 func isCommunityType(t string) bool { return t == PostTypeFree || t == PostTypeQna }
 
 // visiblePost returns the post if the viewer may open it: active posts
-// for everyone, hidden ones for their author only.
+// for everyone; hidden (reported) and expired ones for their author only.
 func visiblePost(postId, viewer string) (dynamo.Item, error) {
 	item, err := getPost(postId)
-	if err != nil {
+	if err != nil || item == nil {
 		return nil, err
 	}
-	switch {
-	case item == nil, !isCommunityType(dynamo.S(item, "Type")):
-		return nil, nil
-	case dynamo.S(item, "Status") == PostActive:
+	switch dynamo.S(item, "Status") {
+	case PostActive:
 		return item, nil
-	case dynamo.S(item, "Status") == PostHidden && viewer != "" && dynamo.S(item, "AuthorId") == viewer:
-		return item, nil
+	case PostHidden, PostExpired:
+		if viewer != "" && dynamo.S(item, "AuthorId") == viewer {
+			return item, nil
+		}
 	}
 	return nil, nil
+}
+
+// visibleOfType is visiblePost limited to some post types, so a housing
+// id opened as a community post is "not found".
+func visibleOfType(postId, viewer string, types ...string) (dynamo.Item, error) {
+	item, err := visiblePost(postId, viewer)
+	if err != nil || item == nil || !contains(types, dynamo.S(item, "Type")) {
+		return nil, err
+	}
+	return item, nil
 }
 
 // authors batch-reads nicknames and pictures of the given user ids.
@@ -236,6 +247,7 @@ func postView(item dynamo.Item, viewer string, users map[string]dynamo.Item) map
 		"Liked":             false,
 		"Bookmarked":        false,
 	}
+	addListingFields(view, item)
 	switch {
 	case anonymous:
 		view["AuthorNickname"] = AnonymousName
@@ -333,6 +345,11 @@ func resolvePosts(p graphql.ResolveParams) (interface{}, error) {
 		q.Page = 1
 	}
 
+	return postPage(q, viewer)
+}
+
+// postPage runs a post search and renders one PostPage.
+func postPage(q eshandler.PostQuery, viewer string) (interface{}, error) {
 	ids, total, corrected, err := eshandler.SearchPosts(q)
 	if err != nil {
 		return nil, internal(err)
@@ -358,7 +375,11 @@ func resolvePosts(p graphql.ResolveParams) (interface{}, error) {
 func resolvePost(p graphql.ResolveParams) (interface{}, error) {
 	viewer := jwt.UserID(p.Context)
 	postId, _ := p.Args["PostId"].(string)
-	item, err := visiblePost(postId, viewer)
+	types := []string{PostTypeFree, PostTypeQna}
+	if t, ok := p.Args["types"].([]string); ok {
+		types = t
+	}
+	item, err := visibleOfType(postId, viewer, types...)
 	if err != nil {
 		return nil, internal(err)
 	}
@@ -432,7 +453,7 @@ func resolveMyPosts(p graphql.ResolveParams) (interface{}, error) {
 	kept := items[:0]
 	for _, it := range items {
 		t := dynamo.S(it, "Type")
-		if (typ == "" && isCommunityType(t)) || t == typ || (typ == "community" && isCommunityType(t)) {
+		if ((typ == "" || typ == "community") && isCommunityType(t)) || t == typ || (typ == "listing" && isListingType(t)) {
 			kept = append(kept, it)
 		}
 	}
@@ -560,7 +581,7 @@ func ownPost(postId, userId string) (dynamo.Item, error) {
 	if err != nil {
 		return nil, internal(err)
 	}
-	if item == nil || dynamo.S(item, "Status") == PostDeleted || !isCommunityType(dynamo.S(item, "Type")) {
+	if item == nil || dynamo.S(item, "Status") == PostDeleted {
 		return nil, errPostNotFound
 	}
 	if dynamo.S(item, "AuthorId") != userId {
@@ -581,6 +602,9 @@ func updatePostResolver(p graphql.ResolveParams) (interface{}, error) {
 	current, err := ownPost(postId, userId)
 	if err != nil {
 		return nil, err
+	}
+	if !isCommunityType(dynamo.S(current, "Type")) {
+		return nil, errPostNotFound
 	}
 	raw, _ := p.Args["Input"].(map[string]interface{})
 	if raw != nil {
@@ -688,7 +712,7 @@ func likePostResolver(p graphql.ResolveParams) (interface{}, error) {
 	}
 	postId, _ := p.Args["PostId"].(string)
 	on, _ := p.Args["On"].(bool)
-	item, err := visiblePost(postId, userId)
+	item, err := visibleOfType(postId, userId, PostTypeFree, PostTypeQna)
 	if err != nil {
 		return nil, internal(err)
 	}

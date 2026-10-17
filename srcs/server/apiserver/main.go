@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"apiserver/adminhandler"
 	"apiserver/createtable"
@@ -82,6 +84,8 @@ func main() {
 		log.Fatalf("posts index: %v", err)
 	}
 	uploadhandler.EnsureBucket()
+	// Expire housing/job posts and warn authors three days ahead.
+	go graphqlhandler.RunListingExpiry(context.Background(), 30*time.Minute)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) }).Methods("GET")

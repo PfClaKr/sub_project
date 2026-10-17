@@ -43,6 +43,8 @@ var resolvers = map[string]resolver{
 	"Query.similarQuestions":         resolveSimilarQuestions,
 	"Query.myPosts":                  resolveMyPosts,
 	"Query.myBookmarks":              resolveMyBookmarks,
+	"Query.listings":                 resolveListings,
+	"Query.listing":                  resolveListing,
 	"Mutation.createProduct":         createProductResolver,
 	"Mutation.updateProduct":         updateProductResolver,
 	"Mutation.updateProductStatus":   updateProductStatusResolver,
@@ -59,6 +61,12 @@ var resolvers = map[string]resolver{
 	"Mutation.deleteComment":         deleteCommentResolver,
 	"Mutation.acceptAnswer":          acceptAnswerResolver,
 	"Mutation.report":                reportResolver,
+	"Mutation.createListing":         createListingResolver,
+	"Mutation.updateListing":         updateListingResolver,
+	"Mutation.setListingDeal":        setListingDealResolver,
+	"Mutation.extendListing":         extendListingResolver,
+	"Mutation.bumpListing":           bumpListingResolver,
+	"Mutation.revealContact":         revealContactResolver,
 }
 
 func init() {

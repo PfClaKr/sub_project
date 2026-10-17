@@ -31,6 +31,11 @@ type Query {
   similarQuestions(Title: String!): [Post]
   myPosts(Type: String): [Post]
   myBookmarks: [Post]
+  # Housing or job posts. Type: "housing" or "job". Sort: newest (default),
+  # rent_asc, wage_desc, available, distance (with a place), or relevance
+  # when Q is set. AreaId/Latitude/Longitude/DistanceKm as productSearch.
+  listings(Type: String!, City: String, Q: String, Housing: HousingFilter, Job: JobFilter, AreaId: String, Latitude: Float, Longitude: Float, DistanceKm: Float, Sort: String, Page: Int, Size: Int): PostPage
+  listing(PostId: String!): Post
 }
 
 type Mutation {
@@ -53,6 +58,16 @@ type Mutation {
   acceptAnswer(PostId: String!, CommentId: String!): Post
   # TargetType: post, comment ("<postId>#<commentId>"), product, user.
   report(TargetType: String!, TargetId: String!, Reason: String!, Detail: String): Boolean
+  # With risky text and no Acknowledge, nothing is saved: Post is null and
+  # Warnings lists the codes to explain; send again with Acknowledge.
+  createListing(Input: ListingInput!, Acknowledge: Boolean): ListingResult
+  updateListing(PostId: String!, Input: ListingInput!, Acknowledge: Boolean): ListingResult
+  # Deal: open, reserved, closed.
+  setListingDeal(PostId: String!, Deal: String!): Post
+  extendListing(PostId: String!): Post
+  bumpListing(PostId: String!): Post
+  # Job posts: the employer's phone/email, for logged-in members.
+  revealContact(PostId: String!): Contact
 }
 
 type Product {
@@ -120,6 +135,36 @@ type NotificationPage {
   Next: String
 }
 
+# Structured part of a housing post. Mode: offer or seek.
+type HousingInfo {
+  Mode: String
+  Kind: String
+  Rent: Float
+  ChargesIncluded: Boolean
+  Deposit: Float
+  AvailableFrom: String
+  EndDate: String
+  MinMonths: Float
+  Size: Float
+  Rooms: Float
+  Furnished: Boolean
+  Caf: Boolean
+  Pets: Boolean
+}
+
+# Structured part of a job post. Mode: hiring or seeking. WageType:
+# hourly, monthly or negotiable.
+type JobInfo {
+  Mode: String
+  Sector: String
+  Employment: String
+  WageType: String
+  Wage: Float
+  Schedule: String
+  PermitRequired: Boolean
+  Languages: [String]
+}
+
 # Community post. AuthorId is empty for anonymous posts; IsMine tells the
 # viewer whether they wrote it. Liked/Bookmarked are only set on post().
 type Post {
@@ -146,6 +191,28 @@ type Post {
   Solved: Boolean
   Liked: Boolean
   Bookmarked: Boolean
+  # Housing and job posts only.
+  Housing: HousingInfo
+  Job: JobInfo
+  Deal: String
+  ExpiresAt: Float
+  BumpedAt: Float
+  AreaId: String
+  AreaName: String
+  Latitude: Float
+  Longitude: Float
+  ExactLocation: Boolean
+  HasContact: Boolean
+}
+
+type Contact {
+  Phone: String
+  Email: String
+}
+
+type ListingResult {
+  Post: Post
+  Warnings: [String]
 }
 
 type PostPage {
@@ -184,4 +251,71 @@ input PostInput {
   Body: String!
   Images: [String!]
   Anonymous: Boolean
+}
+
+input HousingInput {
+  Mode: String!
+  Kind: String!
+  Rent: Float!
+  ChargesIncluded: Boolean
+  Deposit: Float
+  AvailableFrom: String!
+  EndDate: String
+  MinMonths: Int
+  Size: Float
+  Rooms: Int
+  Furnished: Boolean
+  Caf: Boolean
+  Pets: Boolean
+}
+
+input JobInput {
+  Mode: String!
+  Sector: String!
+  Employment: String!
+  WageType: String!
+  Wage: Float
+  Schedule: String
+  PermitRequired: Boolean
+  Languages: [String!]
+}
+
+input ContactInput {
+  Phone: String
+  Email: String
+}
+
+# Latitude/Longitude are the picked point; housing always shows only the
+# neighbourhood, a job may show the exact place (ExactLocation).
+input ListingInput {
+  Type: String!
+  Title: String!
+  Body: String!
+  City: String
+  Images: [String!]
+  Latitude: Float!
+  Longitude: Float!
+  ExactLocation: Boolean
+  Housing: HousingInput
+  Job: JobInput
+  Contact: ContactInput
+}
+
+input HousingFilter {
+  Mode: String
+  Kinds: [String!]
+  MinRent: Float
+  MaxRent: Float
+  AvailableBy: String
+  Furnished: Boolean
+  Caf: Boolean
+  Pets: Boolean
+}
+
+input JobFilter {
+  Mode: String
+  Sectors: [String!]
+  Employment: [String!]
+  MinWage: Float
+  PermitFree: Boolean
 }

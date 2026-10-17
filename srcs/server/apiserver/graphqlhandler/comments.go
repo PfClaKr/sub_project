@@ -154,7 +154,7 @@ func commentView(c, post dynamo.Item, viewer string, users map[string]dynamo.Ite
 func resolveComments(p graphql.ResolveParams) (interface{}, error) {
 	viewer := jwt.UserID(p.Context)
 	postId, _ := p.Args["PostId"].(string)
-	post, err := visiblePost(postId, viewer)
+	post, err := visibleOfType(postId, viewer, PostTypeFree, PostTypeQna)
 	if err != nil {
 		return nil, internal(err)
 	}
