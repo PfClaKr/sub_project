@@ -20,6 +20,9 @@ const config: CapacitorConfig = {
 		url: serverUrl,
 		cleartext: serverUrl.startsWith("http://"),
 		errorPath: "offline.html",
+		// Debug builds may switch to a `make phone` tunnel from the offline
+		// page; other hosts open in the system browser.
+		allowNavigation: debug ? ["*.trycloudflare.com"] : [],
 	},
 	android: {
 		// Debug builds expose the WebView to Chrome DevTools / Playwright

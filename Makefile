@@ -113,6 +113,14 @@ rehearsal:
 rehearsal-down:
 	@$(REHEARSAL) down -v --remove-orphans
 
+## The rehearsal reachable from a phone through a temporary HTTPS tunnel
+## (scripts/phone.sh): prints the address to open. make phone-down stops it.
+phone:
+	@./scripts/phone.sh
+
+phone-down:
+	@./scripts/phone.sh down
+
 ## Full wipe: containers, network AND data volumes. Destroys local data!
 fclean:
 	@echo "Removing containers and volumes.."
@@ -121,4 +129,4 @@ fclean:
 re: fclean up
 
 .PHONY: all up down stop restart ps logs wait health seed unseed demo admin test e2e fclean re \
-	prod-deploy prod-ps prod-logs prod-admin rehearsal rehearsal-down vapid
+	prod-deploy prod-ps prod-logs prod-admin rehearsal rehearsal-down phone phone-down vapid

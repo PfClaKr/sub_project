@@ -3,8 +3,10 @@
 import { writeFileSync } from "node:fs";
 
 const serverUrl = process.env.CAP_SERVER_URL ?? "http://localhost:3000";
+// Debug builds let the tester type another server (make phone's tunnel).
+const debug = process.env.CAP_RELEASE !== "true";
 writeFileSync(
 	new URL("../www/app-config.js", import.meta.url),
-	`window.ITNYANG_SERVER_URL = ${JSON.stringify(serverUrl)};\n`,
+	`window.ITNYANG_SERVER_URL = ${JSON.stringify(serverUrl)};\nwindow.ITNYANG_DEBUG = ${debug};\n`,
 );
 console.log(`server URL: ${serverUrl}`);
