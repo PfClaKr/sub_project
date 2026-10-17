@@ -18,6 +18,9 @@ const config: CapacitorConfig = {
 	appendUserAgent: "itnyang-app",
 	server: {
 		url: serverUrl,
+		// Host of the bundled pages (offline.html). Not "localhost", which
+		// the CI emulator uses for the site itself (adb reverse).
+		hostname: "app.itnyang",
 		cleartext: serverUrl.startsWith("http://"),
 		errorPath: "offline.html",
 		// Debug builds may switch to a `make phone` tunnel from the offline
