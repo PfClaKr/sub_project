@@ -53,9 +53,8 @@ func (req *SignupRequest) Validate() string {
 	if addr, err := mail.ParseAddress(req.Email); err != nil || addr.Address != req.Email {
 		return "올바른 이메일 주소를 입력해주세요."
 	}
-	// bcrypt ignores bytes past 72.
-	if len(req.Password) < 8 || len(req.Password) > 72 {
-		return "비밀번호는 8자 이상 72바이트 이하여야 해요."
+	if msg := ValidatePassword(req.Password); msg != "" {
+		return msg
 	}
 	if n := utf8.RuneCountInString(req.UserNickname); n < 2 || n > 20 {
 		return "닉네임은 2~20자로 입력해주세요."
@@ -67,6 +66,15 @@ func (req *SignupRequest) Validate() string {
 	req.ResidenceDetail = strings.TrimSpace(req.ResidenceDetail)
 	if utf8.RuneCountInString(req.Residence) > 30 || utf8.RuneCountInString(req.ResidenceDetail) > 100 {
 		return "거주지를 확인해주세요."
+	}
+	return ""
+}
+
+// ValidatePassword returns a user-facing error, or "" when acceptable.
+// bcrypt ignores bytes past 72. Shared with the password reset.
+func ValidatePassword(password string) string {
+	if len(password) < 8 || len(password) > 72 {
+		return "비밀번호는 8자 이상 72바이트 이하여야 해요."
 	}
 	return ""
 }

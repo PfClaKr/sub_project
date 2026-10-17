@@ -9,6 +9,7 @@ import { gql, PRODUCT_CARD_FIELDS } from "@/libs/graphql";
 import { uploadImages } from "@/libs/upload";
 import { RequireLogin } from "@/components/ui/RequireLogin";
 import { MyActivity } from "@/components/community/MyActivity";
+import { ChangePasswordForm } from "@/components/auth/PasswordForms";
 import { Avatar } from "@/components/ui/Avatar";
 import ProductGrid, { ProductGridSkeleton } from "@/components/product/ProductGrid";
 import { Section, SectionTitle, Row } from "@/styles/styledLayout";
@@ -158,6 +159,26 @@ function AccountLinks() {
 	);
 }
 
+// Account settings: password change (more to come, e.g. leaving).
+function AccountSettings() {
+	const [open, setOpen] = useState(false);
+	const [done, setDone] = useState("");
+	// After a reset the page opens with ?reset=1 (read here rather than with
+	// useSearchParams, which would need a Suspense boundary on this page).
+	useEffect(() => {
+		if (new URLSearchParams(window.location.search).get("reset") === "1") setDone("비밀번호를 새로 정했어요.");
+	}, []);
+	return (
+		<Section id="account">
+			<SectionTitle>계정</SectionTitle>
+			{done && <Muted as="p" role="status">{done}</Muted>}
+			{open
+				? <ChangePasswordForm onDone={() => { setOpen(false); setDone("비밀번호를 바꿨어요."); }} />
+				: <GhostButton onClick={() => { setOpen(true); setDone(""); }}>비밀번호 변경</GhostButton>}
+		</Section>
+	);
+}
+
 export const MyAccount = () => (
 	<RequireLogin>
 		{session => (
@@ -175,6 +196,7 @@ export const MyAccount = () => (
 					<SectionTitle>커뮤니티 활동</SectionTitle>
 					<MyActivity />
 				</Section>
+				<AccountSettings />
 			</>
 		)}
 	</RequireLogin>

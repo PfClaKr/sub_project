@@ -9,6 +9,7 @@ import (
 	"loginserver/emailhandler"
 	"loginserver/googlehandler"
 	"loginserver/loginhandler"
+	"loginserver/passwordhandler"
 	"loginserver/sessionhandler"
 	"loginserver/signuphandler"
 	"loginserver/verifyhandler"
@@ -38,6 +39,11 @@ func main() {
 	r.HandleFunc("/emailcheck", emailhandler.EmailcheckHandler).Methods("GET")
 	r.Handle("/whoami", jwt.Middleware(http.HandlerFunc(sessionhandler.WhoamiHandler))).Methods("GET")
 	r.HandleFunc("/logout", sessionhandler.LogoutHandler).Methods("POST")
+
+	passwordhandler.ClientIP = loginhandler.ClientIP
+	r.HandleFunc("/password/forgot", passwordhandler.ForgotHandler).Methods("POST")
+	r.HandleFunc("/password/reset", passwordhandler.ResetHandler).Methods("POST")
+	r.Handle("/password/change", jwt.Middleware(http.HandlerFunc(passwordhandler.ChangeHandler))).Methods("POST")
 
 	r.HandleFunc("/verify", verifyhandler.VerifyHandler).Methods("GET")
 	r.HandleFunc("/verify/resend", verifyhandler.ResendHandler).Methods("POST")

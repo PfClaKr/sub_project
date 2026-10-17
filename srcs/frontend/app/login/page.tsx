@@ -24,7 +24,10 @@ export default function LoginPage({ searchParams }: { searchParams: { next?: str
 			{oauthError && <ErrorText role="alert" style={{ marginBottom: 12 }}>{oauthError}</ErrorText>}
 			<GoogleButton label="Google로 로그인" />
 			<SignInForm next={searchParams.next} />
-			<FormFooter>
+			<FormFooter style={{ marginTop: 12 }}>
+				<Link href="/account/forgot">비밀번호를 잊으셨나요?</Link>
+			</FormFooter>
+			<FormFooter style={{ marginTop: 8 }}>
 				아직 계정이 없나요? <Link href="/account/sign-up">회원가입</Link>
 			</FormFooter>
 		</AuthCard>
