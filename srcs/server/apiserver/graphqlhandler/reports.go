@@ -26,6 +26,9 @@ const (
 	ReportComment = "comment"
 	ReportProduct = "product"
 	ReportUser    = "user"
+	// A chat room (TargetId = ChatId), reported by one of its members
+	// about the other; admins read the transcript.
+	ReportChat = "chat"
 )
 
 const ReportOpen = "open"
@@ -85,6 +88,26 @@ func reportTargetOwner(targetType, targetId string) (string, error) {
 	return "", nil
 }
 
+// chatPartner returns the other member of a chat room, or "" when
+// userId is not in it (only members can report a conversation).
+func chatPartner(chatId, userId string) (string, error) {
+	out, err := svc.GetItem(&dynamodb.GetItemInput{
+		TableName:            aws.String(dynamo.TableChatRooms),
+		Key:                  dynamo.Item{"ChatId": {S: aws.String(chatId)}},
+		ProjectionExpression: aws.String("UserSeller, UserBuyer"),
+	})
+	if err != nil || out.Item == nil {
+		return "", err
+	}
+	switch userId {
+	case dynamo.S(out.Item, "UserSeller"):
+		return dynamo.S(out.Item, "UserBuyer"), nil
+	case dynamo.S(out.Item, "UserBuyer"):
+		return dynamo.S(out.Item, "UserSeller"), nil
+	}
+	return "", nil
+}
+
 // reportResolver files a report for the admins' queue (phase 3 adds the
 // automatic hiding). Own content cannot be reported.
 func reportResolver(p graphql.ResolveParams) (interface{}, error) {
@@ -103,7 +126,12 @@ func reportResolver(p graphql.ResolveParams) (interface{}, error) {
 	if utf8.RuneCountInString(detail) > 500 {
 		return nil, errors.New("설명은 500자 이하로 입력해주세요.")
 	}
-	owner, err := reportTargetOwner(targetType, targetId)
+	var owner string
+	if targetType == ReportChat {
+		owner, err = chatPartner(targetId, userId)
+	} else {
+		owner, err = reportTargetOwner(targetType, targetId)
+	}
 	if err != nil {
 		return nil, internal(err)
 	}

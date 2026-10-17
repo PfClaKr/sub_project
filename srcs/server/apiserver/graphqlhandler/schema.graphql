@@ -61,7 +61,7 @@ type Mutation {
   createComment(PostId: String!, Body: String!, ParentId: String, Anonymous: Boolean): Comment
   deleteComment(PostId: String!, CommentId: String!): Boolean
   acceptAnswer(PostId: String!, CommentId: String!): Post
-  # TargetType: post, comment ("<postId>#<commentId>"), product, user.
+  # TargetType: post, comment ("<postId>#<commentId>"), product, user, chat (ChatId, members only).
   report(TargetType: String!, TargetId: String!, Reason: String!, Detail: String): Boolean
   # With risky text and no Acknowledge, nothing is saved: Post is null and
   # Warnings lists the codes to explain; send again with Acknowledge.

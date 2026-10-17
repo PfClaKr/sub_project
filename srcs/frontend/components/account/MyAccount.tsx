@@ -174,7 +174,12 @@ function AccountSettings() {
 			{done && <Muted as="p" role="status">{done}</Muted>}
 			{open
 				? <ChangePasswordForm onDone={() => { setOpen(false); setDone("비밀번호를 바꿨어요."); }} />
-				: <GhostButton onClick={() => { setOpen(true); setDone(""); }}>비밀번호 변경</GhostButton>}
+				: (
+					<Row style={{ gap: 8, flexWrap: "wrap" }}>
+						<GhostButton onClick={() => { setOpen(true); setDone(""); }}>비밀번호 변경</GhostButton>
+						<LinkButton href="/myaccount/blocked" $ghost>차단한 사용자</LinkButton>
+					</Row>
+				)}
 		</Section>
 	);
 }

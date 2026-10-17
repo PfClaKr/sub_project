@@ -138,3 +138,78 @@ export const EmptyHint = styled.p`
 	margin: auto;
 	color: ${palette.muted};
 `;
+
+// The ⋯ menu in the chat header (report, block).
+export const MenuWrap = styled.div`
+	position: relative;
+	flex: none;
+`;
+
+export const MenuToggle = styled.button`
+	display: grid;
+	place-items: center;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: none;
+	color: ${palette.muted};
+
+	&:hover:not(:disabled) {
+		background-color: ${palette.surface};
+		color: ${palette.text};
+	}
+`;
+
+export const MenuPanel = styled.div`
+	position: absolute;
+	right: 0;
+	top: calc(100% + 4px);
+	z-index: 20;
+	min-width: 160px;
+	padding: 6px;
+	border: 1px solid ${palette.border};
+	border-radius: ${radius.md};
+	background-color: ${palette.bg};
+	box-shadow: 0 8px 24px rgba(16, 23, 80, 0.14);
+
+	button {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		gap: 8px;
+		width: 100%;
+		padding: 9px 10px;
+		border: none;
+		border-radius: ${radius.sm};
+		background: none;
+		color: ${palette.text};
+		font-size: 14px;
+		font-weight: 500;
+		text-align: left;
+	}
+	button:hover:not(:disabled) {
+		background-color: ${palette.surface};
+	}
+	button.danger {
+		color: ${palette.danger};
+	}
+`;
+
+// Shown instead of the input when either side blocked the other.
+export const BlockedBar = styled.div`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-wrap: wrap;
+	gap: 10px;
+	min-height: 70px;
+	padding: 10px 12px;
+	border: 1px solid ${palette.border};
+	border-top: none;
+	border-radius: 0 0 ${radius.md} ${radius.md};
+	background-color: ${palette.surface};
+	color: ${palette.muted};
+	font-size: 14px;
+`;

@@ -19,7 +19,7 @@ BUCKET=${BUCKET:?set BUCKET, a globally unique bucket name}
 USER_NAME=${USER_NAME:-itnyang-app}
 BUDGET_USD=${BUDGET_USD:-15}
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
-TABLES="Users UsersCredential Product Favorites ChatRooms ChatMessage GeoAreas Posts Comments PostLikes Bookmarks Reports Notifications PushSubscriptions"
+TABLES="Users UsersCredential Product Favorites ChatRooms ChatMessage GeoAreas Posts Comments PostLikes Bookmarks Reports Notifications PushSubscriptions Blocks"
 
 echo "== S3 bucket $BUCKET ($REGION)"
 if ! aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then

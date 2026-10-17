@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useRef, useState, FormEvent } from "react";
 import Link from "next/link";
 import {
-	ChatHeader, ConnectionDot, MessageList, BubbleRow, Bubble, BubbleTime, ChatInputRow, DayDivider, EmptyHint,
+	BlockedBar, ChatHeader, ConnectionDot, MessageList, BubbleRow, Bubble, BubbleTime, ChatInputRow, DayDivider, EmptyHint,
 } from "@/styles/styledChat";
-import { ErrorText, Skeleton } from "@/styles/styledUi";
+import { ErrorText, GhostButton, Skeleton } from "@/styles/styledUi";
+import { ChatMenu } from "./ChatMenu";
 import { RequireLogin } from "@/components/ui/RequireLogin";
 import { CHAT_URL } from "@/libs/config";
 import { formatDate, formatTime, imageUrl, toMs } from "@/libs/format";
@@ -51,7 +52,12 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 			};
 			ws.onmessage = event => {
 				try {
-					const msg: Message = JSON.parse(event.data);
+					const msg = JSON.parse(event.data);
+					// The server refuses messages once either side blocked.
+					if (msg.Error === "blocked") {
+						setRoom(r => (r ? { ...r, Blocked: true } : r));
+						return;
+					}
 					setMessages(prev => (prev.some(m => m.MessageId === msg.MessageId) ? prev : [...prev, msg]));
 				} catch {
 					// Ignore non-JSON frames.
@@ -95,6 +101,17 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 	if (!room) return <Skeleton $h="400px" />;
 
 	const selling = room.UserSeller === session.UserId;
+	const partnerId = selling ? room.UserBuyer : room.UserSeller;
+	const setBlock = async (block: boolean) => {
+		const res = await fetch(`${CHAT_URL}/blocks/${partnerId}`, { method: block ? "PUT" : "DELETE", credentials: "include" }).catch(() => null);
+		if (!res?.ok) {
+			setError("처리하지 못했어요. 잠시 후 다시 시도해주세요.");
+			return;
+		}
+		// Unblocking only clears our side; the other may still block us.
+		const fresh = await fetch(`${CHAT_URL}/room/${chatId}`, { credentials: "include" }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+		setRoom(fresh ?? { ...room, BlockedByMe: block, Blocked: block });
+	};
 	const partner = (selling ? room.BuyerNickname : room.SellerNickname) || "상대방";
 	const thumb = imageUrl(room.SubjectImage || room.ProductImage);
 	const status = room.SubjectType === "product" || !room.SubjectType ? room.ProductStatus : undefined;
@@ -112,6 +129,7 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 					</small>
 				</div>
 				<ConnectionDot $on={connected}>{connected ? "연결됨" : "연결 중..."}</ConnectionDot>
+				<ChatMenu chatId={chatId} partner={partner} blockedByMe={!!room.BlockedByMe} onBlock={setBlock} />
 			</ChatHeader>
 			<MessageList ref={listRef} aria-live="polite">
 				{messages.length === 0 && (
@@ -135,6 +153,12 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 					);
 				})}
 			</MessageList>
+			{room.Blocked ? (
+				<BlockedBar role="status">
+					{room.BlockedByMe ? "차단한 사용자예요." : "대화할 수 없는 상대예요."}
+					{room.BlockedByMe && <GhostButton type="button" onClick={() => setBlock(false)}>차단 해제</GhostButton>}
+				</BlockedBar>
+			) : (
 			<ChatInputRow onSubmit={handleSend}>
 				<input
 					type="text"
@@ -146,6 +170,7 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 				/>
 				<button type="submit" disabled={!connected || !input.trim()}>보내기</button>
 			</ChatInputRow>
+			)}
 		</div>
 	);
 }

@@ -17,7 +17,7 @@ type QueueItem = {
 	OwnerId: string; OwnerNickname: string; OwnerEmail: string; Anonymous: boolean; Flags: string[] | null; Missing: boolean;
 };
 
-const TYPE_LABEL: Record<string, string> = { post: "글", comment: "댓글", product: "상품", user: "회원" };
+const TYPE_LABEL: Record<string, string> = { post: "글", comment: "댓글", product: "상품", user: "회원", chat: "채팅" };
 const STATUS_LABEL: Record<string, string> = { active: "공개", hidden: "숨김", deleted: "삭제됨", expired: "만료" };
 
 function actionsFor(item: QueueItem): string[] {
@@ -29,7 +29,8 @@ function actionsFor(item: QueueItem): string[] {
 		case "product":
 			return ["dismiss", "delete"];
 		default:
-			return ["dismiss"];
+			// Chats and members: suspend from the member list, then close.
+			return ["resolve", "dismiss"];
 	}
 }
 
@@ -52,7 +53,7 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
 					},
 					{
 						name: "type", label: "대상", value: param(searchParams, "type"),
-						options: [{ value: "", label: "전체" }, { value: "post", label: "글" }, { value: "comment", label: "댓글" }, { value: "product", label: "상품" }, { value: "user", label: "회원" }],
+						options: [{ value: "", label: "전체" }, { value: "post", label: "글" }, { value: "comment", label: "댓글" }, { value: "product", label: "상품" }, { value: "user", label: "회원" }, { value: "chat", label: "채팅" }],
 					},
 				]}
 			/>

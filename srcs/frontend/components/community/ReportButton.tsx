@@ -10,7 +10,7 @@ import { GhostButton, ErrorText } from "@/styles/styledUi";
 import { Backdrop, Dialog, DialogActions, DialogField, DialogIcon } from "@/styles/styledModal";
 import { ReportOptions, TextButton } from "@/styles/styledCommunity";
 
-export type ReportTarget = { type: "post" | "comment" | "product" | "user"; id: string };
+export type ReportTarget = { type: "post" | "comment" | "product" | "user" | "chat"; id: string };
 
 // ReportButton opens a small form (reason + optional detail) and files a
 // report for the admins. Visitors are sent to log in first.
@@ -34,7 +34,7 @@ export function ReportButton({ target, label = "신고" }: { target: ReportTarge
 	);
 }
 
-function ReportDialog({ target, onClose }: { target: ReportTarget; onClose: (ok: boolean) => void }) {
+export function ReportDialog({ target, onClose }: { target: ReportTarget; onClose: (ok: boolean) => void }) {
 	const [reason, setReason] = useState("");
 	const [detail, setDetail] = useState("");
 	const [busy, setBusy] = useState(false);

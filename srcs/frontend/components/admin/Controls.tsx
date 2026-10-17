@@ -188,6 +188,7 @@ const REPORT_ACTIONS: Record<string, { label: string; title: string; message: st
 	dismiss: { label: "문제 없음", title: "신고를 기각할까요?", message: "숨겨진 경우 다시 공개되고, 작성자에게 복구 알림이 가요." },
 	hide: { label: "숨기기", title: "숨김 처리할까요?", message: "작성자에게만 보이고, 작성자에게 알림이 가요." },
 	delete: { label: "삭제", title: "삭제할까요?", message: "되돌릴 수 없어요.", danger: true },
+	resolve: { label: "조치 완료", title: "조치 완료로 닫을까요?", message: "회원 정지 등 필요한 조치를 했다면 신고를 닫아요. 대상은 바뀌지 않아요." },
 };
 
 // ReportActions closes every open report about a target with one action.

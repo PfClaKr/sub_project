@@ -28,6 +28,7 @@ const (
 	TableReports       = "Reports"
 	TableNotifications = "Notifications"
 	TablePushSubs      = "PushSubscriptions"
+	TableBlocks        = "Blocks"
 )
 
 type Item = map[string]*dynamodb.AttributeValue
