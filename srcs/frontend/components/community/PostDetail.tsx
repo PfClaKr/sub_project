@@ -6,15 +6,17 @@ import { useRouter, usePathname } from "next/navigation";
 import { Bookmark, CheckCircle2, Eye, Heart, MessageSquare } from "lucide-react";
 import { boardLabel } from "@/libs/community";
 import { gql, POST_DETAIL_FIELDS } from "@/libs/graphql";
-import { formatDateTime, formatRelative, imageUrl } from "@/libs/format";
+import { imageUrl } from "@/libs/format";
 import { useSession } from "@/libs/session";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { Avatar } from "@/components/ui/Avatar";
 import { ActionBar, Article, AuthorLine, Body, Meta, Photos, Tag, TextButton, ToggleButton } from "@/styles/styledCommunity";
 import { EmptyState, ErrorText, LinkButton, Muted, Skeleton } from "@/styles/styledUi";
+import { Breadcrumb } from "@/styles/styledDetail";
 import { Comments, LinkedText } from "./Comments";
 import { ReportButton } from "./ReportButton";
 import type { Post } from "@/libs/types";
+import { TimeAgo } from "@/components/ui/TimeAgo";
 
 const QUERY = `query Post($id: String!) { post(PostId: $id) { ${POST_DETAIL_FIELDS} } }`;
 
@@ -99,6 +101,9 @@ export function PostDetail({ postId, initial }: { postId: string; initial: Post 
 
 	return (
 		<Article>
+			<Breadcrumb aria-label="위치">
+				<Link href="/community">커뮤니티</Link> › <Link href={`/community?board=${post.Type}`}>{boardLabel(post.Type)}</Link>
+			</Breadcrumb>
 			<Meta>
 				<Link href={`/community?board=${post.Type}`}><Tag>{boardLabel(post.Type)}</Tag></Link>
 				<Link href={`/community?board=${post.Type}&topic=${encodeURIComponent(post.Topic)}`}>{post.Topic}</Link>
@@ -115,7 +120,7 @@ export function PostDetail({ postId, initial }: { postId: string; initial: Post 
 						? <Link href={`/user/${post.AuthorId}`}><strong>{post.AuthorNickname}</strong></Link>
 						: <strong>{post.AuthorNickname}</strong>}
 					<Meta>
-						<span title={formatDateTime(post.CreatedAt)}>{formatRelative(post.CreatedAt)}{edited ? " · 수정됨" : ""}</span>
+						<span><TimeAgo ts={post.CreatedAt} />{edited ? " · 수정됨" : ""}</span>
 						{post.City && <span>{post.City}</span>}
 						<span><Eye size={13} aria-hidden /> {post.ViewCount ?? 0}</span>
 					</Meta>
