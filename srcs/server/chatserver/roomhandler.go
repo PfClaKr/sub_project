@@ -23,30 +23,54 @@ import (
 
 var svc dynamodbiface.DynamoDBAPI = dynamo.New()
 
+// ChatRoom links a member (UserBuyer, who started the conversation) with
+// the owner of a subject (UserSeller). Rooms from before subjects have no
+// SubjectType and are product rooms; ProductId stays filled for product
+// rooms so older clients keep working.
 type ChatRoom struct {
-	ChatId     string `json:"ChatId"`
-	ProductId  string `json:"ProductId"`
-	UserSeller string `json:"UserSeller"`
-	UserBuyer  string `json:"UserBuyer"`
-	CreatedAt  int64  `json:"CreatedAt"`
+	ChatId      string `json:"ChatId"`
+	SubjectType string `json:"SubjectType"`
+	SubjectId   string `json:"SubjectId"`
+	ProductId   string `json:"ProductId,omitempty"`
+	UserSeller  string `json:"UserSeller"`
+	UserBuyer   string `json:"UserBuyer"`
+	CreatedAt   int64  `json:"CreatedAt"`
 }
 
-// RoomView adds what the UI shows instead of raw ids.
+// normalize fills the subject of legacy product rooms.
+func (r *ChatRoom) normalize() {
+	if r.SubjectType == "" {
+		r.SubjectType = SubjectProduct
+		r.SubjectId = r.ProductId
+	}
+}
+
+// RoomView adds what the UI shows instead of raw ids. Subject* is the
+// generic title/picture/status; Product* repeats it for product rooms.
 type RoomView struct {
 	ChatRoom
-	ProductName    string `json:"ProductName"`
-	ProductImage   string `json:"ProductImage"`
-	ProductStatus  string `json:"ProductStatus"`
+	SubjectTitle   string `json:"SubjectTitle"`
+	SubjectImage   string `json:"SubjectImage"`
+	SubjectStatus  string `json:"SubjectStatus"`
+	ProductName    string `json:"ProductName,omitempty"`
+	ProductImage   string `json:"ProductImage,omitempty"`
+	ProductStatus  string `json:"ProductStatus,omitempty"`
 	SellerNickname string `json:"SellerNickname"`
 	BuyerNickname  string `json:"BuyerNickname"`
 }
 
-// roomNamespace derives one stable ChatId per (product, buyer) so a
+// roomNamespace derives one stable ChatId per (subject, buyer) so a
 // conditional put prevents duplicate rooms.
 var roomNamespace = uuid.MustParse("6f1c1b8e-6a53-4c1e-9d0e-2f7a1f3e5c11")
 
-func roomId(productId, buyerId string) string {
-	return uuid.NewSHA1(roomNamespace, []byte(productId+":"+buyerId)).String()
+// roomId keeps the original product formula, so existing product rooms
+// are found again; other subjects are prefixed with their type.
+func roomId(subjectType, subjectId, buyerId string) string {
+	name := subjectId + ":" + buyerId
+	if subjectType != SubjectProduct {
+		name = subjectType + ":" + name
+	}
+	return uuid.NewSHA1(roomNamespace, []byte(name)).String()
 }
 
 func getRoom(chatId string) (*ChatRoom, error) {
@@ -61,10 +85,11 @@ func getRoom(chatId string) (*ChatRoom, error) {
 	if err := dynamodbattribute.UnmarshalMap(result.Item, &room); err != nil {
 		return nil, err
 	}
+	room.normalize()
 	return &room, nil
 }
 
-// findLegacyRoom finds rooms created before deterministic ids.
+// findLegacyRoom finds product rooms created before deterministic ids.
 func findLegacyRoom(productId, buyerId string) (*ChatRoom, error) {
 	items, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{
 		TableName:        aws.String(dynamo.TableChatRooms),
@@ -81,19 +106,36 @@ func findLegacyRoom(productId, buyerId string) (*ChatRoom, error) {
 	if err := dynamodbattribute.UnmarshalMap(items[0], &room); err != nil {
 		return nil, err
 	}
+	room.normalize()
 	return &room, nil
 }
 
-// enrich fills product and nickname fields with two batch reads.
+// enrich fills subject and nickname fields with one batch read per
+// subject table plus one for users.
 func enrich(rooms []ChatRoom) ([]RoomView, error) {
-	var productIds, userIds []string
+	idsByTable := map[string][]string{}
+	var userIds []string
 	for _, r := range rooms {
-		productIds = append(productIds, r.ProductId)
+		kind := subjects[r.SubjectType]
+		idsByTable[kind.table] = append(idsByTable[kind.table], r.SubjectId)
 		userIds = append(userIds, r.UserSeller, r.UserBuyer)
 	}
-	products, err := dynamo.BatchGet(svc, dynamo.TableProduct, "ProductId", productIds, "ProductId, ProductName, ProductImage, ProductStatus")
-	if err != nil {
-		return nil, err
+	found := map[string]map[string]dynamo.Item{}
+	for table, ids := range idsByTable {
+		if table == "" {
+			continue
+		}
+		// Post attributes include reserved words (Status, Type), which a
+		// batch projection cannot alias, so posts are read whole.
+		projection := ""
+		if table == dynamo.TableProduct {
+			projection = "ProductId, ProductName, ProductImage, ProductStatus"
+		}
+		items, err := dynamo.BatchGet(svc, table, keyOf(table), ids, projection)
+		if err != nil {
+			return nil, err
+		}
+		found[table] = items
 	}
 	users, err := dynamo.BatchGet(svc, dynamo.TableUsers, "UserId", userIds, "UserId, UserNickname")
 	if err != nil {
@@ -103,12 +145,14 @@ func enrich(rooms []ChatRoom) ([]RoomView, error) {
 	views := make([]RoomView, 0, len(rooms))
 	for _, r := range rooms {
 		v := RoomView{ChatRoom: r}
-		if p, ok := products[r.ProductId]; ok {
-			v.ProductName = dynamo.S(p, "ProductName")
-			v.ProductStatus = dynamo.S(p, "ProductStatus")
-			if img := p["ProductImage"]; img != nil && len(img.SS) > 0 {
-				v.ProductImage = aws.StringValue(img.SS[0])
-			}
+		kind := subjects[r.SubjectType]
+		if item, ok := found[kind.table][r.SubjectId]; ok {
+			v.SubjectTitle = dynamo.S(item, kind.title)
+			v.SubjectStatus = dynamo.S(item, kind.status)
+			v.SubjectImage = firstImage(item, kind.image)
+		}
+		if r.SubjectType == SubjectProduct {
+			v.ProductName, v.ProductImage, v.ProductStatus = v.SubjectTitle, v.SubjectImage, v.SubjectStatus
 		}
 		v.SellerNickname = dynamo.S(users[r.UserSeller], "UserNickname")
 		v.BuyerNickname = dynamo.S(users[r.UserBuyer], "UserNickname")
@@ -117,20 +161,36 @@ func enrich(rooms []ChatRoom) ([]RoomView, error) {
 	return views, nil
 }
 
+func keyOf(table string) string {
+	for _, k := range subjects {
+		if k.table == table {
+			return k.key
+		}
+	}
+	return ""
+}
+
 func isMember(room *ChatRoom, userId string) bool {
 	return room.UserSeller == userId || room.UserBuyer == userId
 }
 
-// getOrCreateRoomHandler returns the buyer's chat room for a product,
-// creating it on first contact. Must be wrapped with jwt.Middleware.
+// getOrCreateRoomHandler returns the member's chat room about a subject
+// (/room/{subjectType}/{subjectId}), creating it on first contact. Must
+// be wrapped with jwt.Middleware and account.RequireActive.
 func getOrCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
 	buyerId := jwt.UserID(r.Context())
-	productId := mux.Vars(r)["productId"]
-	chatId := roomId(productId, buyerId)
+	subjectType := mux.Vars(r)["subjectType"]
+	subjectId := mux.Vars(r)["subjectId"]
+	kind, ok := subjects[subjectType]
+	if !ok {
+		jsonresponse.Error(w, http.StatusNotFound, "알 수 없는 채팅 대상이에요.")
+		return
+	}
+	chatId := roomId(subjectType, subjectId, buyerId)
 
 	room, err := getRoom(chatId)
-	if err == nil && room == nil {
-		room, err = findLegacyRoom(productId, buyerId)
+	if err == nil && room == nil && subjectType == SubjectProduct {
+		room, err = findLegacyRoom(subjectId, buyerId)
 	}
 	if err != nil {
 		jsonresponse.Internal(w, err)
@@ -141,41 +201,51 @@ func getOrCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product, err := svc.GetItem(&dynamodb.GetItemInput{
-		TableName:            aws.String(dynamo.TableProduct),
-		Key:                  dynamo.Item{"ProductId": {S: aws.String(productId)}},
-		ProjectionExpression: aws.String("UserId"),
+	out, err := svc.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(kind.table),
+		Key:       dynamo.Item{kind.key: {S: aws.String(subjectId)}},
 	})
 	if err != nil {
 		jsonresponse.Internal(w, err)
 		return
 	}
-	sellerId := dynamo.S(product.Item, "UserId")
-	if sellerId == "" {
-		jsonresponse.Error(w, http.StatusNotFound, "상품을 찾을 수 없어요.")
+	sellerId := dynamo.S(out.Item, kind.owner)
+	if sellerId == "" || (kind.postType != "" && dynamo.S(out.Item, "Type") != kind.postType) {
+		jsonresponse.Error(w, http.StatusNotFound, kind.notFound)
 		return
 	}
 	if sellerId == buyerId {
-		jsonresponse.Error(w, http.StatusBadRequest, "내 상품에는 채팅할 수 없어요.")
+		jsonresponse.Error(w, http.StatusBadRequest, kind.ownSelf)
+		return
+	}
+	if kind.closedMsg != "" && dynamo.S(out.Item, kind.status) != "active" {
+		jsonresponse.Error(w, http.StatusConflict, kind.closedMsg)
 		return
 	}
 
 	newRoom := ChatRoom{
-		ChatId:     chatId,
-		ProductId:  productId,
-		UserSeller: sellerId,
-		UserBuyer:  buyerId,
-		CreatedAt:  time.Now().Unix(),
+		ChatId:      chatId,
+		SubjectType: subjectType,
+		SubjectId:   subjectId,
+		UserSeller:  sellerId,
+		UserBuyer:   buyerId,
+		CreatedAt:   time.Now().Unix(),
+	}
+	item := dynamo.Item{
+		"ChatId":      {S: aws.String(newRoom.ChatId)},
+		"SubjectType": {S: aws.String(subjectType)},
+		"SubjectId":   {S: aws.String(subjectId)},
+		"UserSeller":  {S: aws.String(newRoom.UserSeller)},
+		"UserBuyer":   {S: aws.String(newRoom.UserBuyer)},
+		"CreatedAt":   {N: aws.String(strconv.FormatInt(newRoom.CreatedAt, 10))},
+	}
+	if subjectType == SubjectProduct {
+		newRoom.ProductId = subjectId
+		item["ProductId"] = &dynamodb.AttributeValue{S: aws.String(subjectId)}
 	}
 	_, err = svc.PutItem(&dynamodb.PutItemInput{
-		TableName: aws.String(dynamo.TableChatRooms),
-		Item: dynamo.Item{
-			"ChatId":     {S: aws.String(newRoom.ChatId)},
-			"ProductId":  {S: aws.String(newRoom.ProductId)},
-			"UserSeller": {S: aws.String(newRoom.UserSeller)},
-			"UserBuyer":  {S: aws.String(newRoom.UserBuyer)},
-			"CreatedAt":  {N: aws.String(strconv.FormatInt(newRoom.CreatedAt, 10))},
-		},
+		TableName:           aws.String(dynamo.TableChatRooms),
+		Item:                item,
 		ConditionExpression: aws.String("attribute_not_exists(ChatId)"),
 	})
 	// A concurrent request created it first; that room is the same one.
@@ -229,6 +299,9 @@ func roomsHandler(w http.ResponseWriter, r *http.Request) {
 	if err := dynamodbattribute.UnmarshalListOfMaps(items, &rooms); err != nil {
 		jsonresponse.Internal(w, err)
 		return
+	}
+	for i := range rooms {
+		rooms[i].normalize()
 	}
 	sort.Slice(rooms, func(i, j int) bool { return rooms[i].CreatedAt > rooms[j].CreatedAt })
 

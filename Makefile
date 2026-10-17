@@ -58,7 +58,7 @@ unseed:
 	@curl -s -X DELETE http://localhost:8080/debug/dummy
 	@echo
 
-GO_MODULES = apiserver loginserver chatserver package/cors package/jwt package/jsonresponse package/dynamo
+GO_MODULES = apiserver loginserver chatserver package/cors package/jwt package/jsonresponse package/dynamo package/mailer package/account package/notify
 
 ## Grant the admin role to an existing account: make admin email=you@example.com
 admin:

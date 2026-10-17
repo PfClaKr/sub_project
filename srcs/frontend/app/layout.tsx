@@ -1,6 +1,9 @@
 import { Metadata, Viewport } from "next";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import BottomTabs from "@/components/BottomTabs";
+import { SuspendedBanner } from "@/components/ui/SuspendedBanner";
+import { NotificationProvider } from "@/libs/notifications";
 import StyledComponentsRegistry from "@/libs/registry";
 import { SessionProvider } from "@/libs/session";
 import { ConfirmProvider } from "@/components/ui/ConfirmDialog";
@@ -35,11 +38,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 					<GlobalStyle />
 					<ServiceWorkerRegistrar />
 					<SessionProvider>
-						<ConfirmProvider>
-							<Navigation />
-							<Main>{children}</Main>
-							<Footer />
-						</ConfirmProvider>
+						<NotificationProvider>
+							<ConfirmProvider>
+								<Navigation />
+								<SuspendedBanner />
+								<Main>{children}</Main>
+								<Footer />
+								<BottomTabs />
+							</ConfirmProvider>
+						</NotificationProvider>
 					</SessionProvider>
 				</StyledComponentsRegistry>
 			</body>

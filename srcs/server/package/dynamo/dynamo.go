@@ -20,6 +20,13 @@ const (
 	TableFavorites       = "Favorites"
 	TableChatRooms       = "ChatRooms"
 	TableChatMessage     = "ChatMessage"
+	// Community (docs/community-plan.md).
+	TablePosts         = "Posts"
+	TableComments      = "Comments"
+	TablePostLikes     = "PostLikes"
+	TableBookmarks     = "Bookmarks"
+	TableReports       = "Reports"
+	TableNotifications = "Notifications"
 )
 
 type Item = map[string]*dynamodb.AttributeValue

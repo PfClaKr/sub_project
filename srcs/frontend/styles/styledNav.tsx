@@ -68,3 +68,101 @@ export const NavUser = styled.div`
 		padding: 6px 12px;
 	}
 `;
+
+// Section tabs (중고 · 커뮤니티 · 집 · 알바). On phones they move to the
+// bottom tab bar, so the header keeps only brand and icons.
+export const SectionTabs = styled(NavLinks)`
+	@media (max-width: ${breakpoint.sm}) {
+		display: none;
+	}
+`;
+
+export const IconLink = styled.a`
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	color: ${palette.text};
+
+	&:hover,
+	&[aria-current="page"] {
+		color: ${palette.primary};
+		background-color: ${palette.primarySoft};
+	}
+`;
+
+export const Badge = styled.span`
+	position: absolute;
+	top: 2px;
+	right: 0;
+	min-width: 16px;
+	height: 16px;
+	padding: 0 4px;
+	border-radius: 8px;
+	background-color: ${palette.danger};
+	color: #fff;
+	font-size: 10px;
+	font-weight: 700;
+	line-height: 16px;
+	text-align: center;
+`;
+
+// Hidden on phones, where the bottom bar and the avatar cover it.
+export const DesktopOnly = styled.div`
+	display: contents;
+
+	@media (max-width: ${breakpoint.sm}) {
+		display: none;
+	}
+`;
+
+export const MobileOnly = styled.div`
+	display: none;
+
+	@media (max-width: ${breakpoint.sm}) {
+		display: contents;
+	}
+`;
+
+export const BottomBar = styled.nav`
+	display: none;
+
+	@media (max-width: ${breakpoint.sm}) {
+		display: flex;
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 10;
+		background-color: rgba(255, 255, 255, 0.97);
+		backdrop-filter: blur(6px);
+		border-top: 1px solid ${palette.border};
+		padding-bottom: env(safe-area-inset-bottom);
+	}
+`;
+
+export const BottomTab = styled.a<{ $active: boolean }>`
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	padding: 8px 0 6px;
+	font-size: 11px;
+	font-weight: ${p => (p.$active ? 700 : 500)};
+	color: ${p => (p.$active ? palette.primary : palette.muted)};
+	text-decoration: none;
+`;
+
+// Keeps the footer clear of the fixed bottom bar on phones.
+export const BottomSpacer = styled.div`
+	display: none;
+
+	@media (max-width: ${breakpoint.sm}) {
+		display: block;
+		height: calc(56px + env(safe-area-inset-bottom));
+	}
+`;

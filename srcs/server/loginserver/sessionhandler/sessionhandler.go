@@ -2,7 +2,9 @@ package sessionhandler
 
 import (
 	"net/http"
+	"time"
 
+	"local.com/account"
 	"local.com/dynamo"
 	"local.com/jsonresponse"
 	"local.com/jwt"
@@ -23,15 +25,15 @@ func WhoamiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := map[string]string{"UserId": userId}
+	resp := map[string]interface{}{"UserId": userId}
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(dynamo.TableUsers),
 		Key: dynamo.Item{
 			"UserId": {S: aws.String(userId)},
 		},
-		ProjectionExpression: aws.String("UserNickname, ProfileImage, Residence, #r"),
-		// ROLE is a DynamoDB reserved word.
-		ExpressionAttributeNames: map[string]*string{"#r": aws.String("Role")},
+		ProjectionExpression: aws.String("UserNickname, ProfileImage, Residence, #r, #s, SuspendedUntil"),
+		// ROLE and STATUS are DynamoDB reserved words.
+		ExpressionAttributeNames: map[string]*string{"#r": aws.String("Role"), "#s": aws.String("Status")},
 	})
 	if err == nil && result.Item != nil {
 		resp["UserNickname"] = dynamo.S(result.Item, "UserNickname")
@@ -41,6 +43,11 @@ func WhoamiHandler(w http.ResponseWriter, r *http.Request) {
 		// role on every admin request.
 		if dynamo.S(result.Item, "Role") == "admin" {
 			resp["Role"] = "admin"
+		}
+		// Lets the UI explain why writes fail; every service enforces it.
+		if st := account.StateOf(result.Item); st.Suspended(time.Now()) {
+			resp["Suspended"] = true
+			resp["SuspendedUntil"] = st.Until
 		}
 	}
 	jsonresponse.New(w, http.StatusOK, resp)

@@ -7,6 +7,7 @@ import { EmptyState, ErrorText, LinkButton, Skeleton, StatusBadge } from "@/styl
 import { RequireLogin } from "@/components/ui/RequireLogin";
 import { CHAT_URL } from "@/libs/config";
 import { formatRelative, imageUrl } from "@/libs/format";
+import { mineLabel, subjectOf, subjectTitle } from "@/libs/subjects";
 import type { Room, Session } from "@/libs/types";
 
 function Rooms({ session }: { session: Session }) {
@@ -39,7 +40,8 @@ function Rooms({ session }: { session: Session }) {
 			{rooms.map(room => {
 				const selling = room.UserSeller === session.UserId;
 				const partner = selling ? room.BuyerNickname : room.SellerNickname;
-				const thumb = imageUrl(room.ProductImage);
+				const thumb = imageUrl(room.SubjectImage || room.ProductImage);
+				const kind = subjectOf(room).type;
 				return (
 					<li key={room.ChatId}>
 						<StyledLink href={`/chat/${room.ChatId}`}>
@@ -47,10 +49,10 @@ function Rooms({ session }: { session: Session }) {
 							<div style={{ minWidth: 0 }}>
 								<strong>{partner || "알 수 없는 사용자"}</strong>
 								<small>
-									{selling ? "내 상품 · " : ""}{room.ProductName || "삭제된 상품"} · {formatRelative(room.CreatedAt)}
+									{selling ? `${mineLabel(kind)} · ` : ""}{subjectTitle(room)} · {formatRelative(room.CreatedAt)}
 								</small>
 							</div>
-							{room.ProductStatus && room.ProductStatus !== "판매중" && (
+							{kind === "product" && room.ProductStatus && room.ProductStatus !== "판매중" && (
 								<StatusBadge $status={room.ProductStatus} style={{ marginLeft: "auto" }}>{room.ProductStatus}</StatusBadge>
 							)}
 						</StyledLink>

@@ -17,6 +17,7 @@ import (
 
 	"apiserver/graphqlhandler"
 
+	"local.com/account"
 	"local.com/dynamo"
 	"local.com/jsonresponse"
 	"local.com/jwt"
@@ -77,6 +78,8 @@ func Register(r *mux.Router) {
 	a.HandleFunc("/users", usersHandler).Methods("GET")
 	a.HandleFunc("/users/{id}", updateUserHandler).Methods("PATCH")
 	a.HandleFunc("/users/{id}", deleteUserHandler).Methods("DELETE")
+	a.HandleFunc("/users/{id}/suspension", suspendUserHandler).Methods("PUT")
+	a.HandleFunc("/users/{id}/suspension", reinstateUserHandler).Methods("DELETE")
 	a.HandleFunc("/products", productsHandler).Methods("GET")
 	a.HandleFunc("/products/{id}", updateProductHandler).Methods("PATCH")
 	a.HandleFunc("/products/{id}", deleteProductHandler).Methods("DELETE")
@@ -238,14 +241,17 @@ type AdminUser struct {
 	ProfileImage      string
 	CreatedAt         float64
 	PublishedQuantity float64
+	Status            string  // "active" or "suspended" (expired suspensions read as active)
+	SuspendedUntil    float64 // ms; 0 with Status "suspended" means indefinitely
 }
 
 func usersHandler(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	role := r.URL.Query().Get("role")
+	status := r.URL.Query().Get("status")
 
-	items, err := scan(dynamo.TableUsers, "UserId, UserNickname, Email, #r, ProfileImage, CreatedAt, PublishedQuantity",
-		map[string]*string{"#r": aws.String("Role")})
+	items, err := scan(dynamo.TableUsers, "UserId, UserNickname, Email, #r, ProfileImage, CreatedAt, PublishedQuantity, #s, SuspendedUntil",
+		map[string]*string{"#r": aws.String("Role"), "#s": aws.String("Status")})
 	if err != nil {
 		jsonresponse.Internal(w, err)
 		return
@@ -265,7 +271,11 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 		if u.Role == "" {
 			u.Role = RoleUser
 		}
-		if (role == "" || role == u.Role) && matches(q, u.UserNickname, u.Email) {
+		u.Status = account.StatusActive
+		if st := account.StateOf(it); st.Suspended(time.Now()) {
+			u.Status, u.SuspendedUntil = account.StatusSuspended, float64(st.Until)
+		}
+		if (role == "" || role == u.Role) && (status == "" || status == u.Status) && matches(q, u.UserNickname, u.Email) {
 			users = append(users, u)
 		}
 	}
@@ -298,6 +308,74 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 var errNoUser = errors.New("user not found")
+
+// MaxSuspensionDays caps timed suspensions; Days 0 means indefinitely.
+const MaxSuspensionDays = 3650
+
+// suspendUserHandler blocks a member's writes for Days days (0: until
+// reinstated). Like deletion, it cannot target oneself or an admin.
+func suspendUserHandler(w http.ResponseWriter, r *http.Request) {
+	target := mux.Vars(r)["id"]
+	var body struct{ Days int }
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Days < 0 || body.Days > MaxSuspensionDays {
+		jsonresponse.Error(w, http.StatusBadRequest, "정지 기간이 올바르지 않아요.")
+		return
+	}
+	if !canModerate(w, r, target) {
+		return
+	}
+	var until time.Time
+	var untilMs int64
+	if body.Days > 0 {
+		until = time.Now().AddDate(0, 0, body.Days)
+		untilMs = until.UnixMilli()
+	}
+	if err := account.Suspend(svc, target, until); err != nil {
+		jsonresponse.Internal(w, err)
+		return
+	}
+	jsonresponse.New(w, http.StatusOK, map[string]interface{}{"Status": account.StatusSuspended, "SuspendedUntil": untilMs})
+}
+
+func reinstateUserHandler(w http.ResponseWriter, r *http.Request) {
+	target := mux.Vars(r)["id"]
+	if !canModerate(w, r, target) {
+		return
+	}
+	if err := account.Reinstate(svc, target); err != nil {
+		jsonresponse.Internal(w, err)
+		return
+	}
+	jsonresponse.New(w, http.StatusOK, map[string]string{"Status": account.StatusActive})
+}
+
+// canModerate answers the error itself when target is the caller, an
+// admin, or unknown.
+func canModerate(w http.ResponseWriter, r *http.Request, target string) bool {
+	if target == jwt.UserID(r.Context()) {
+		jsonresponse.Error(w, http.StatusBadRequest, "내 계정은 정지할 수 없어요.")
+		return false
+	}
+	out, err := svc.GetItem(&dynamodb.GetItemInput{
+		TableName:                aws.String(dynamo.TableUsers),
+		Key:                      dynamo.Item{"UserId": {S: aws.String(target)}},
+		ProjectionExpression:     aws.String("UserId, #r"),
+		ExpressionAttributeNames: map[string]*string{"#r": aws.String("Role")},
+	})
+	if err != nil {
+		jsonresponse.Internal(w, err)
+		return false
+	}
+	if out.Item == nil {
+		jsonresponse.Error(w, http.StatusNotFound, "회원을 찾을 수 없어요.")
+		return false
+	}
+	if dynamo.S(out.Item, "Role") == RoleAdmin {
+		jsonresponse.Error(w, http.StatusBadRequest, "관리자는 먼저 권한을 해제해야 정지할 수 있어요.")
+		return false
+	}
+	return true
+}
 
 // SetRole stores a role; also used by the promote-admin CLI.
 func SetRole(userId, role string) error {

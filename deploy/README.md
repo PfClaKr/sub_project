@@ -42,7 +42,7 @@ BUCKET=itnyang-images-<임의문자열> ALERT_EMAIL=you@example.com ./deploy/aws
 ```
 
 - S3 버킷을 만들고 이미지 객체만 공개 읽기로 엽니다. ACL은 계속 차단합니다.
-- IAM 사용자 `itnyang-app`을 만듭니다. 권한은 앱의 테이블 7개와 이 버킷으로만 제한합니다. 출력되는 액세스 키를 `deploy/.env`에 넣습니다(한 번만 표시).
+- IAM 사용자 `itnyang-app`을 만듭니다. 권한은 앱의 테이블과 이 버킷으로만 제한합니다. 테이블이 늘면 다시 실행하세요(정책만 바뀌고 키는 그대로). 출력되는 액세스 키를 `deploy/.env`에 넣습니다(한 번만 표시).
 - 월 $15 예산 알림을 만듭니다(실제 80%, 예상 100%에서 메일). 금액은 `BUDGET_USD`로 바꿀 수 있습니다.
 - DynamoDB 테이블은 apiserver가 처음 뜰 때 만듭니다.
 

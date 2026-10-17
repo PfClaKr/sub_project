@@ -37,11 +37,24 @@ export type Session = {
 	Residence?: string;
 	// Only used to show the admin menu; the API checks the role itself.
 	Role?: "admin";
+	// Set while an admin suspension is in force; every service refuses
+	// writes then. SuspendedUntil is in ms, 0 = until reinstated.
+	Suspended?: boolean;
+	SuspendedUntil?: number;
 };
+
+// What a chat room is about.
+export type SubjectType = "product" | "housing" | "job";
 
 export type Room = {
 	ChatId: string;
-	ProductId: string;
+	SubjectType: SubjectType;
+	SubjectId: string;
+	// Only on product rooms (older clients and links rely on it).
+	ProductId?: string;
+	SubjectTitle?: string;
+	SubjectImage?: string;
+	SubjectStatus?: string;
 	UserSeller: string;
 	UserBuyer: string;
 	CreatedAt: number;
@@ -58,4 +71,27 @@ export type Message = {
 	UserId: string;
 	Timestamp: number;
 	Content: string;
+};
+
+export type NotificationType =
+	| "comment"
+	| "reply"
+	| "accepted"
+	| "expiring"
+	| "hidden"
+	| "restored"
+	| "chat"
+	| "notice";
+
+export type AppNotification = {
+	SortKey: string;
+	Type: NotificationType;
+	ActorId?: string;
+	TargetType?: string;
+	TargetId?: string;
+	Preview?: string;
+	// Site path to open.
+	Link?: string;
+	Read: boolean;
+	CreatedAt: number;
 };

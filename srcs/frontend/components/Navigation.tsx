@@ -1,21 +1,20 @@
 'use client';
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Bell, Heart, MessageCircle, SquarePen } from "lucide-react";
 import { StyledLink, StyledNavbar } from "@/styles/styledLink";
-import { Nav, NavInner, Brand, NavLinks, NavSpacer, NavUser } from "@/styles/styledNav";
+import { Nav, NavInner, Brand, SectionTabs, NavSpacer, NavUser, IconLink, Badge, DesktopOnly, MobileOnly } from "@/styles/styledNav";
 import { GhostButton, LinkButton } from "@/styles/styledUi";
 import { Avatar } from "@/components/ui/Avatar";
+import { SECTIONS, isActive } from "@/libs/sections";
 import { useSession } from "@/libs/session";
-
-const LINKS = [
-	{ href: "/search", label: "상품찾기", auth: false },
-	{ href: "/sell", label: "판매하기", auth: true },
-	{ href: "/chat", label: "채팅", auth: true },
-	{ href: "/wishlist", label: "찜목록", auth: true },
-];
+import { useNotifications } from "@/libs/notifications";
+import { badgeText } from "@/libs/notificationText";
 
 export default function Navigation() {
 	const { session, loading, logout } = useSession();
+	const { unread } = useNotifications();
 	const pathname = usePathname();
 
 	// A full reload drops the client router cache, so no page rendered
@@ -25,38 +24,65 @@ export default function Navigation() {
 		window.location.assign("/");
 	};
 
+	const current = (href: string) => (pathname.startsWith(href) ? "page" : undefined);
+	const badge = badgeText(unread);
+
 	return (
 		<Nav aria-label="주 메뉴">
 			<NavInner>
 				<Brand>
 					<StyledLink href="/">잇냥</StyledLink>
 				</Brand>
-				<NavLinks>
-					{LINKS.filter(l => !l.auth || session).map(l => (
-						<li key={l.href}>
+				<SectionTabs>
+					{SECTIONS.map(s => (
+						<li key={s.href}>
 							<StyledNavbar
-								href={l.href}
-								$active={pathname.startsWith(l.href)}
-								aria-current={pathname.startsWith(l.href) ? "page" : undefined}
+								href={s.href}
+								$active={isActive(s, pathname)}
+								aria-current={isActive(s, pathname) ? "page" : undefined}
 							>
-								{l.label}
+								{s.label}
 							</StyledNavbar>
 						</li>
 					))}
-				</NavLinks>
+				</SectionTabs>
 				{session?.Role === "admin" && (
-					<StyledNavbar href="/admin" $active={pathname.startsWith("/admin")}>관리자</StyledNavbar>
+					<DesktopOnly>
+						<StyledNavbar href="/admin" $active={pathname.startsWith("/admin")}>관리자</StyledNavbar>
+					</DesktopOnly>
 				)}
 				<NavSpacer />
 				{!loading && (session ? (
 					<NavUser>
-						<StyledNavbar href="/myaccount" $active={pathname === "/myaccount"}>
-							<span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-								<Avatar src={session.ProfileImage} name={session.UserNickname} size={28} />
-								{session.UserNickname || "내 계정"}
-							</span>
+						<DesktopOnly>
+							<LinkButton href="/sell">판매하기</LinkButton>
+							<IconLink as={Link} href="/wishlist" aria-label="찜 목록" aria-current={current("/wishlist")}>
+								<Heart size={20} />
+							</IconLink>
+						</DesktopOnly>
+						<MobileOnly>
+							<IconLink as={Link} href="/sell" aria-label="판매하기" aria-current={current("/sell")}>
+								<SquarePen size={20} />
+							</IconLink>
+						</MobileOnly>
+						<IconLink as={Link} href="/chat" aria-label="채팅" aria-current={current("/chat")}>
+							<MessageCircle size={20} />
+						</IconLink>
+						<IconLink
+							as={Link}
+							href="/notifications"
+							aria-label={badge ? `알림 ${badge}개` : "알림"}
+							aria-current={current("/notifications")}
+						>
+							<Bell size={20} />
+							{badge && <Badge aria-hidden>{badge}</Badge>}
+						</IconLink>
+						<StyledNavbar href="/myaccount" $active={pathname === "/myaccount"} aria-label="내 계정">
+							<Avatar src={session.ProfileImage} name={session.UserNickname} size={30} />
 						</StyledNavbar>
-						<GhostButton onClick={handleLogout}>로그아웃</GhostButton>
+						<DesktopOnly>
+							<GhostButton onClick={handleLogout}>로그아웃</GhostButton>
+						</DesktopOnly>
 					</NavUser>
 				) : (
 					<LinkButton href="/login">로그인</LinkButton>

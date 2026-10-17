@@ -19,6 +19,10 @@ type Query {
   user(UserId: String!): User
   # Public numbers for the landing page.
   marketStats: MarketStats
+  # Newest first, 30 per page; pass the previous page's Next as Before.
+  notifications(Before: String): NotificationPage
+  # 0 for anonymous visitors.
+  unreadCount: Int
 }
 
 type Mutation {
@@ -27,6 +31,8 @@ type Mutation {
   updateProductStatus(ProductId: String!, ProductStatus: String!): Product
   deleteProduct(ProductId: String!): Boolean
   updateProfile(UserNickname: String!, ProfileImage: String): User
+  # Without SortKeys every notification is marked read. Returns how many changed.
+  markNotificationsRead(SortKeys: [String!]): Int
 }
 
 type Product {
@@ -73,4 +79,23 @@ type User {
   Residence: String
   PublishedQuantity: Float
   CreatedAt: Float
+}
+
+# In-app notification (see package/notify). Link is the site path to open.
+type Notification {
+  SortKey: String
+  Type: String
+  ActorId: String
+  TargetType: String
+  TargetId: String
+  Preview: String
+  Link: String
+  Read: Boolean
+  CreatedAt: Float
+}
+
+# Next is empty on the last page.
+type NotificationPage {
+  Items: [Notification]
+  Next: String
 }

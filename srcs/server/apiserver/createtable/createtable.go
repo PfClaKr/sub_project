@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	"local.com/dynamo"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -29,6 +31,7 @@ func CreateTables(svc dynamodbiface.DynamoDBAPI) {
 		schema  []*dynamodb.KeySchemaElement
 		attribs []*dynamodb.AttributeDefinition
 		indexes []*dynamodb.GlobalSecondaryIndex
+		ttl     string // attribute DynamoDB expires rows by (epoch seconds)
 	}{
 		{
 			name: "Users",
@@ -135,6 +138,44 @@ func CreateTables(svc dynamodbiface.DynamoDBAPI) {
 				},
 			},
 		},
+		{
+			// Community posts of every board (free, qna, housing, job).
+			// Lists and filters go through Elasticsearch; the index serves
+			// "my posts".
+			name:    dynamo.TablePosts,
+			schema:  hashKey("PostId"),
+			attribs: []*dynamodb.AttributeDefinition{attr("PostId", "S"), attr("AuthorId", "S"), attr("CreatedAt", "N")},
+			indexes: []*dynamodb.GlobalSecondaryIndex{authorIndex()},
+		},
+		{
+			// CommentId sorts by time, so one Query returns a thread in order.
+			name:    dynamo.TableComments,
+			schema:  hashRangeKey("PostId", "CommentId"),
+			attribs: []*dynamodb.AttributeDefinition{attr("PostId", "S"), attr("CommentId", "S"), attr("AuthorId", "S"), attr("CreatedAt", "N")},
+			indexes: []*dynamodb.GlobalSecondaryIndex{authorIndex()},
+		},
+		{
+			name:    dynamo.TablePostLikes,
+			schema:  hashRangeKey("UserId", "PostId"),
+			attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("PostId", "S")},
+		},
+		{
+			name:    dynamo.TableBookmarks,
+			schema:  hashRangeKey("UserId", "PostId"),
+			attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("PostId", "S")},
+		},
+		{
+			// ReportId is derived from (target, reporter): one report each.
+			name:    dynamo.TableReports,
+			schema:  hashKey("ReportId"),
+			attribs: []*dynamodb.AttributeDefinition{attr("ReportId", "S")},
+		},
+		{
+			name:    dynamo.TableNotifications,
+			schema:  hashRangeKey("UserId", "SortKey"),
+			attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("SortKey", "S")},
+			ttl:     "ExpiresAt",
+		},
 	}
 
 	for _, table := range tables {
@@ -170,5 +211,54 @@ func CreateTables(svc dynamodbiface.DynamoDBAPI) {
 		if err := svc.WaitUntilTableExists(&dynamodb.DescribeTableInput{TableName: aws.String(table.name)}); err != nil {
 			log.Fatalf("table %s did not become active: %v", table.name, err)
 		}
+		if table.ttl != "" {
+			enableTTL(svc, table.name, table.ttl)
+		}
+	}
+}
+
+// enableTTL turns on expiry once; DynamoDB rejects enabling it twice.
+// Failure is logged, not fatal: rows then simply stay.
+func enableTTL(svc dynamodbiface.DynamoDBAPI, table, attribute string) {
+	out, err := svc.DescribeTimeToLive(&dynamodb.DescribeTimeToLiveInput{TableName: aws.String(table)})
+	if err == nil && out.TimeToLiveDescription != nil {
+		switch aws.StringValue(out.TimeToLiveDescription.TimeToLiveStatus) {
+		case dynamodb.TimeToLiveStatusEnabled, dynamodb.TimeToLiveStatusEnabling:
+			return
+		}
+	}
+	_, err = svc.UpdateTimeToLive(&dynamodb.UpdateTimeToLiveInput{
+		TableName: aws.String(table),
+		TimeToLiveSpecification: &dynamodb.TimeToLiveSpecification{
+			AttributeName: aws.String(attribute),
+			Enabled:       aws.Bool(true),
+		},
+	})
+	if err != nil {
+		log.Printf("enable TTL on %s: %v", table, err)
+	}
+}
+
+func attr(name, typ string) *dynamodb.AttributeDefinition {
+	return &dynamodb.AttributeDefinition{AttributeName: aws.String(name), AttributeType: aws.String(typ)}
+}
+
+func hashKey(name string) []*dynamodb.KeySchemaElement {
+	return []*dynamodb.KeySchemaElement{{AttributeName: aws.String(name), KeyType: aws.String("HASH")}}
+}
+
+func hashRangeKey(hash, rng string) []*dynamodb.KeySchemaElement {
+	return []*dynamodb.KeySchemaElement{
+		{AttributeName: aws.String(hash), KeyType: aws.String("HASH")},
+		{AttributeName: aws.String(rng), KeyType: aws.String("RANGE")},
+	}
+}
+
+// authorIndex lists a member's rows newest first ("my posts").
+func authorIndex() *dynamodb.GlobalSecondaryIndex {
+	return &dynamodb.GlobalSecondaryIndex{
+		IndexName:  aws.String("AuthorIndex"),
+		KeySchema:  hashRangeKey("AuthorId", "CreatedAt"),
+		Projection: &dynamodb.Projection{ProjectionType: aws.String("ALL")},
 	}
 }

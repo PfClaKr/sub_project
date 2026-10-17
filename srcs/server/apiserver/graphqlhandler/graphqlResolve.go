@@ -16,6 +16,7 @@ import (
 	"apiserver/geohandler"
 	"apiserver/uploadhandler"
 
+	"local.com/account"
 	"local.com/dynamo"
 	"local.com/jwt"
 
@@ -52,11 +53,22 @@ func internal(err error) error {
 	return errInternal
 }
 
+var errSuspended = errors.New(account.SuspendedMessage)
+
+// requireUser is for mutations: it needs a login and refuses suspended
+// members. Reads only need jwt.UserID.
 func requireUser(p graphql.ResolveParams) (string, error) {
-	if id := jwt.UserID(p.Context); id != "" {
-		return id, nil
+	id := jwt.UserID(p.Context)
+	if id == "" {
+		return "", errLogin
 	}
-	return "", errLogin
+	switch err := account.CheckActive(svc, id); {
+	case errors.Is(err, account.ErrSuspended):
+		return "", errSuspended
+	case err != nil:
+		return "", internal(err)
+	}
+	return id, nil
 }
 
 // Attributes a query may project, per table. Guards ProjectionExpression
