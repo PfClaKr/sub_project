@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"local.com/dynamo"
+	"local.com/jwt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -132,22 +133,20 @@ func randomSuffix() string {
 	return hex.EncodeToString(b)
 }
 
-// Publish stores the event for its recipient. Events about one's own
-// actions and events without a recipient are dropped.
+// Publish stores the event for its recipient, queues the email the
+// member's settings ask for and sends web push. Events about one's own
+// actions, and events for members who no longer exist, are dropped.
 func (n *Notifier) Publish(ev Event) error {
 	if ev.UserId == "" || ev.UserId == ev.ActorId {
 		return nil
 	}
+	user, err := n.bumpUnread(ev.UserId)
+	if err != nil || user == nil {
+		return err
+	}
+	prefs := PrefsOf(user)
 	now := n.now()
-	mode := DefaultEmail[ev.Type]
-	if mode == "" {
-		mode = EmailOff
-	}
-	state := EmailPending
-	if mode == EmailOff {
-		state = EmailNone
-	}
-	item, err := dynamodbattribute.MarshalMap(Notification{
+	notif := Notification{
 		UserId:     ev.UserId,
 		SortKey:    fmt.Sprintf("%013d#%s", now.UnixMilli(), randomSuffix()),
 		Type:       ev.Type,
@@ -157,17 +156,55 @@ func (n *Notifier) Publish(ev Event) error {
 		Preview:    truncate(ev.Preview, previewMax),
 		Link:       ev.Link,
 		CreatedAt:  now.UnixMilli(),
-		EmailMode:  mode,
-		EmailState: state,
+		EmailMode:  prefs.EmailMode(ev.Type),
+		EmailState: EmailNone,
 		ExpiresAt:  now.Add(Retention).Unix(),
-	})
+	}
+	if notif.EmailMode != EmailOff && dynamo.S(user, "Email") != "" {
+		notif.EmailState = EmailPending
+	}
+	item, err := dynamodbattribute.MarshalMap(notif)
 	if err != nil {
 		return err
+	}
+	if notif.EmailState == EmailPending {
+		due := now
+		if notif.EmailMode == EmailDigest {
+			due = now.Add(DigestDelay())
+		}
+		item["EmailQueue"] = &dynamodb.AttributeValue{S: aws.String(emailQueued)}
+		item["DueAt"] = &dynamodb.AttributeValue{N: aws.String(strconv.FormatInt(due.UnixMilli(), 10))}
 	}
 	if _, err := n.svc.PutItem(&dynamodb.PutItemInput{TableName: aws.String(Table), Item: item}); err != nil {
 		return err
 	}
-	return n.addUnread(ev.UserId, 1)
+	if prefs.PushOn(ev.Type) && PushConfigured() {
+		go n.deliverPush(ev.UserId, notif)
+	}
+	return nil
+}
+
+// bumpUnread raises the badge counter and returns the member's row (for
+// their settings and address), or nil when the member does not exist.
+func (n *Notifier) bumpUnread(userId string) (dynamo.Item, error) {
+	out, err := n.svc.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName:                 aws.String(dynamo.TableUsers),
+		Key:                       dynamo.Item{"UserId": {S: aws.String(userId)}},
+		UpdateExpression:          aws.String("ADD UnreadCount :d"),
+		ConditionExpression:       aws.String("attribute_exists(UserId)"),
+		ExpressionAttributeValues: dynamo.Item{":d": {N: aws.String("1")}},
+		ReturnValues:              aws.String(dynamodb.ReturnValueAllNew),
+	})
+	if aerr, ok := err.(awserr.Error); ok && aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if out.Attributes == nil {
+		return dynamo.Item{}, nil
+	}
+	return out.Attributes, nil
 }
 
 // addUnread moves the badge counter; the condition keeps a deleted
@@ -318,3 +355,9 @@ func (n *Notifier) markAllRead(userId string) (int, error) {
 	}
 	return changed, err
 }
+
+// Unsubscribe links are signed with the services' shared secret.
+var (
+	signer   = jwt.Sign
+	verifier = jwt.VerifySignature
+)
