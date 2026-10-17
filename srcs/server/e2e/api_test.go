@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -42,10 +43,17 @@ func TestAuth(t *testing.T) {
 
 	// The same email (other case) must not replace the account.
 	var dup map[string]string
-	if code := do(t, newClient(), "POST", loginURL+"/signup", map[string]string{
-		"email": "  " + upper(u.Email), "password": "hijacker123", "usernickname": "hijacker",
+	if code := do(t, newClient(), "POST", loginURL+"/signup", map[string]interface{}{
+		"email": "  " + upper(u.Email), "password": "hijacker123", "usernickname": "hijacker", "agree": true,
 	}, &dup); code != http.StatusConflict {
 		t.Errorf("duplicate signup = %d, want 409", code)
+	}
+	// Accepting the terms (and the age limit) is required.
+	var refused map[string]string
+	if code := do(t, newClient(), "POST", loginURL+"/signup", map[string]interface{}{
+		"email": "noconsent-" + u.Email, "password": "password123", "usernickname": "noconsent",
+	}, &refused); code != http.StatusBadRequest || !strings.Contains(refused["error"], "동의") {
+		t.Errorf("signup without consent = %d %v", code, refused)
 	}
 	if code := do(t, newClient(), "POST", loginURL+"/login", map[string]string{"email": u.Email, "password": "password123"}, nil); code != http.StatusOK {
 		t.Errorf("original password no longer works: %d", code)

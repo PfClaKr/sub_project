@@ -87,8 +87,8 @@ func newUser(tag string) *user {
 func register(t *testing.T, u *user) map[string]string {
 	t.Helper()
 	var res map[string]string
-	if code := do(t, u.c, "POST", loginURL+"/signup", map[string]string{
-		"email": u.Email, "password": "password123", "usernickname": u.Nickname, "residence": "파리",
+	if code := do(t, u.c, "POST", loginURL+"/signup", map[string]interface{}{
+		"email": u.Email, "password": "password123", "usernickname": u.Nickname, "residence": "파리", "agree": true,
 	}, &res); code != http.StatusCreated {
 		t.Fatalf("signup %s = %d %v", u.Email, code, res)
 	}
