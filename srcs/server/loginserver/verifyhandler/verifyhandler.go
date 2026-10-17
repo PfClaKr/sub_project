@@ -93,10 +93,12 @@ func IsVerified(email string) bool {
 }
 
 func findEmailByToken(token string) (string, int64, bool) {
-	// MVP: scan by token; replace with a GSI after cloud migration.
-	result, err := svc.Scan(&dynamodb.ScanInput{
-		TableName:        aws.String("UsersCredential"),
-		FilterExpression: aws.String("VerifyToken = :t"),
+	// VerifyTokenIndex (created by the apiserver) holds only rows with a
+	// pending token.
+	result, err := svc.Query(&dynamodb.QueryInput{
+		TableName:              aws.String("UsersCredential"),
+		IndexName:              aws.String("VerifyTokenIndex"),
+		KeyConditionExpression: aws.String("VerifyToken = :t"),
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":t": {S: aws.String(token)},
 		},
