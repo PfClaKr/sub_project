@@ -11,6 +11,7 @@ import (
 
 	"apiserver/eshandler"
 	"apiserver/throttle"
+	"apiserver/uploadhandler"
 
 	"local.com/dynamo"
 	"local.com/jwt"
@@ -662,22 +663,81 @@ func deletePostResolver(p graphql.ResolveParams) (interface{}, error) {
 	return true, nil
 }
 
-// setPostStatus is shared with moderation (hide, restore, delete).
+// RecordRetention is how long deleted posts, and the chats and reports
+// of a member who left, are kept for disputes and moderation before
+// DynamoDB removes them (PurgeAt, epoch seconds). Stated in the privacy
+// policy (srcs/frontend/components/legal).
+const RecordRetention = 365 * 24 * time.Hour
+
+// PurgeAt is the TTL value for a record kept RecordRetention from now.
+func PurgeAt() *dynamodb.AttributeValue {
+	return &dynamodb.AttributeValue{N: aws.String(strconv.FormatInt(time.Now().Add(RecordRetention).Unix(), 10))}
+}
+
+// setPostStatus is shared with moderation (hide, restore, delete). A
+// deleted post loses its photo files at once and its row and comments
+// are purged after RecordRetention.
 func setPostStatus(postId, status string) error {
+	update := "SET #s = :s"
+	values := dynamo.Item{":s": {S: aws.String(status)}}
+	if status == PostDeleted {
+		update = "SET #s = :s, PurgeAt = :p REMOVE Images"
+		values[":p"] = PurgeAt()
+	}
 	out, err := svc.UpdateItem(&dynamodb.UpdateItemInput{
 		TableName:                 aws.String(dynamo.TablePosts),
 		Key:                       dynamo.Item{"PostId": {S: aws.String(postId)}},
-		UpdateExpression:          aws.String("SET #s = :s"),
+		UpdateExpression:          aws.String(update),
 		ConditionExpression:       aws.String("attribute_exists(PostId)"),
 		ExpressionAttributeNames:  map[string]*string{"#s": aws.String("Status")},
-		ExpressionAttributeValues: dynamo.Item{":s": {S: aws.String(status)}},
-		ReturnValues:              aws.String(dynamodb.ReturnValueAllNew),
+		ExpressionAttributeValues: values,
+		ReturnValues:              aws.String(dynamodb.ReturnValueAllOld),
 	})
 	if err != nil {
 		return err
 	}
-	reindexPost(out.Attributes)
+	item := out.Attributes
+	if item == nil {
+		return nil // only fakes answer without the old row
+	}
+	item["Status"] = values[":s"]
+	if status == PostDeleted {
+		if imgs := item["Images"]; imgs != nil {
+			var urls []string
+			for _, v := range imgs.L {
+				urls = append(urls, aws.StringValue(v.S))
+			}
+			uploadhandler.DeleteImages(urls...)
+		}
+		delete(item, "Images")
+		purgeComments(postId)
+	}
+	reindexPost(item)
 	return nil
+}
+
+// purgeComments schedules the removal of a deleted post's comments.
+func purgeComments(postId string) {
+	comments, err := dynamo.QueryAll(svc, &dynamodb.QueryInput{
+		TableName:                 aws.String(dynamo.TableComments),
+		KeyConditionExpression:    aws.String("PostId = :p"),
+		ExpressionAttributeValues: dynamo.Item{":p": {S: aws.String(postId)}},
+		ProjectionExpression:      aws.String("PostId, CommentId"),
+	})
+	if err != nil {
+		log.Printf("purge comments of %s: %v", postId, err)
+		return
+	}
+	for _, c := range comments {
+		if _, err := svc.UpdateItem(&dynamodb.UpdateItemInput{
+			TableName:                 aws.String(dynamo.TableComments),
+			Key:                       dynamo.Item{"PostId": c["PostId"], "CommentId": c["CommentId"]},
+			UpdateExpression:          aws.String("SET PurgeAt = :p"),
+			ExpressionAttributeValues: dynamo.Item{":p": PurgeAt()},
+		}); err != nil {
+			log.Printf("purge comment %s: %v", postId, err)
+		}
+	}
 }
 
 // addToPost moves a counter (CommentCount, LikeCount) and refreshes the

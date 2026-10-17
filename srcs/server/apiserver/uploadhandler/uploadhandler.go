@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -172,4 +173,21 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string][]string{"urls": urls})
+}
+
+// DeleteImages removes uploaded files by their public URLs, for content
+// that is deleted (products, a leaving member's photos). URLs not served
+// from this bucket (placeholders, Google avatars) are skipped. Best effort:
+// failures are logged, the caller's deletion goes on.
+func DeleteImages(urls ...string) {
+	prefix := publicBase + "/"
+	for _, u := range urls {
+		key, ok := strings.CutPrefix(u, prefix)
+		if !ok || key == "" {
+			continue
+		}
+		if _, err := s3Client.DeleteObject(&s3.DeleteObjectInput{Bucket: aws.String(bucket), Key: aws.String(key)}); err != nil {
+			log.Printf("delete image %s: %v", key, err)
+		}
+	}
 }

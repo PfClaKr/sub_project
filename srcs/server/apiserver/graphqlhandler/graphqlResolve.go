@@ -844,11 +844,17 @@ func SetProductStatus(productId, status string) (dynamo.Item, error) {
 // RemoveProduct deletes a product owned by ownerId from DynamoDB and
 // the search index. Shared with the admin API.
 func RemoveProduct(productId, ownerId string) error {
-	if _, err := svc.DeleteItem(&dynamodb.DeleteItemInput{
-		TableName: aws.String(dynamo.TableProduct),
-		Key:       dynamo.Item{"ProductId": {S: aws.String(productId)}},
-	}); err != nil {
+	out, err := svc.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName:    aws.String(dynamo.TableProduct),
+		Key:          dynamo.Item{"ProductId": {S: aws.String(productId)}},
+		ReturnValues: aws.String(dynamodb.ReturnValueAllOld),
+	})
+	if err != nil {
 		return internal(err)
+	}
+	// The photo files go too (privacy policy: deleted with the product).
+	if photos := out.Attributes["ProductImage"]; photos != nil {
+		uploadhandler.DeleteImages(aws.StringValueSlice(photos.SS)...)
 	}
 	if err := eshandler.DeleteProduct(productId); err != nil {
 		log.Printf("es delete of %s failed; search skips it anyway: %v", productId, err)
