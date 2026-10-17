@@ -90,48 +90,61 @@ var mockListings = []mockListing{
 			"PermitRequired": flag(false), "Languages": {L: []*dynamodb.AttributeValue{str("한국어"), str("프랑스어"), str("영어")}}}, 0},
 }
 
-// seedDummyListings adds housing and job posts. Neighbourhoods come from
-// OpenStreetMap when reachable; otherwise the plain point is kept.
+// seedDummyListings adds housing and job posts.
 func seedDummyListings(users int) error {
 	now := time.Now()
 	for i, l := range mockListings {
 		postId := fmt.Sprintf("%slisting-%d", dummyPostPrefix, i+1)
-		created := now.Add(-time.Duration(i) * 3 * time.Hour).UnixMilli()
-		item := dynamo.Item{
-			"PostId": str(postId), "Type": str(l.typ), "Topic": str(l.topic), "Country": str(graphqlhandler.DefaultCountry),
-			"City": str(l.city), "AuthorId": str(fmt.Sprintf("%s%d", dummyUserPrefix, (i+3)%users+1)), "Anonymous": flag(false),
-			"Title": str(l.title), "Body": str(l.body), "Status": str(graphqlhandler.PostActive), "Deal": str(graphqlhandler.DealOpen),
-			"CreatedAt": num(float64(created)), "UpdatedAt": num(float64(created)),
-			"ExpiresAt":      num(float64(now.Add(graphqlhandler.ListingLifetime).UnixMilli())),
-			"ExpiryNotified": flag(false), "CommentCount": num(0), "LikeCount": num(0), "ViewCount": num(float64(10 + i*7)),
-			"Latitude": num(l.lat), "Longitude": num(l.lng), "ExactLocation": flag(l.exact),
-		}
-		if l.typ == "housing" {
-			item["Housing"] = &dynamodb.AttributeValue{M: l.fields}
-		} else {
-			item["Job"] = &dynamodb.AttributeValue{M: l.fields}
-		}
-		if area, err := geohandler.Resolve(l.lat, l.lng); err == nil {
-			item["AreaId"], item["AreaName"] = str(area.AreaId), str(area.Label())
-			if !l.exact {
-				item["Latitude"], item["Longitude"] = num(area.CenterLat), num(area.CenterLng)
-			}
-		}
-		if l.images > 0 {
-			var imgs []*dynamodb.AttributeValue
-			for k := 0; k < l.images; k++ {
-				imgs = append(imgs, str(fmt.Sprintf("https://picsum.photos/seed/room%d%c/800/600", i+1, 'a'+k)))
-			}
-			item["Images"] = &dynamodb.AttributeValue{L: imgs}
-		}
-		if _, err := svc.PutItem(&dynamodb.PutItemInput{TableName: aws.String(dynamo.TablePosts), Item: item}); err != nil {
-			return err
-		}
-		if err := eshandler.IndexPost(eshandler.PostDocFromItem(item)); err != nil {
+		author := fmt.Sprintf("%s%d", dummyUserPrefix, (i+3)%users+1)
+		item := listingItem(l, postId, author, now.Add(-time.Duration(i)*3*time.Hour))
+		item["ViewCount"] = num(float64(10 + i*7))
+		if err := putPost(item); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// listingItem builds an open housing/job post. Neighbourhoods come from
+// OpenStreetMap when reachable; otherwise the plain point is kept.
+func listingItem(l mockListing, postId, authorId string, created time.Time) dynamo.Item {
+	ms := float64(created.UnixMilli())
+	item := dynamo.Item{
+		"PostId": str(postId), "Type": str(l.typ), "Topic": str(l.topic), "Country": str(graphqlhandler.DefaultCountry),
+		"City": str(l.city), "AuthorId": str(authorId), "Anonymous": flag(false),
+		"Title": str(l.title), "Body": str(l.body), "Status": str(graphqlhandler.PostActive), "Deal": str(graphqlhandler.DealOpen),
+		"CreatedAt": num(ms), "UpdatedAt": num(ms),
+		"ExpiresAt":      num(float64(time.Now().Add(graphqlhandler.ListingLifetime).UnixMilli())),
+		"ExpiryNotified": flag(false), "CommentCount": num(0), "LikeCount": num(0), "ViewCount": num(0),
+		"Latitude": num(l.lat), "Longitude": num(l.lng), "ExactLocation": flag(l.exact),
+	}
+	if l.typ == "housing" {
+		item["Housing"] = &dynamodb.AttributeValue{M: l.fields}
+	} else {
+		item["Job"] = &dynamodb.AttributeValue{M: l.fields}
+	}
+	if area, err := geohandler.Resolve(l.lat, l.lng); err == nil {
+		item["AreaId"], item["AreaName"] = str(area.AreaId), str(area.Label())
+		if !l.exact {
+			item["Latitude"], item["Longitude"] = num(area.CenterLat), num(area.CenterLng)
+		}
+	}
+	if l.images > 0 {
+		var imgs []*dynamodb.AttributeValue
+		for k := 0; k < l.images; k++ {
+			imgs = append(imgs, str(fmt.Sprintf("https://picsum.photos/seed/%s%c/800/600", postId, 'a'+k)))
+		}
+		item["Images"] = &dynamodb.AttributeValue{L: imgs}
+	}
+	return item
+}
+
+// putPost stores a post row and indexes it for the boards.
+func putPost(item dynamo.Item) error {
+	if _, err := svc.PutItem(&dynamodb.PutItemInput{TableName: aws.String(dynamo.TablePosts), Item: item}); err != nil {
+		return err
+	}
+	return eshandler.IndexPost(eshandler.PostDocFromItem(item))
 }
 
 func seedDummyPosts(users int) error {
@@ -205,6 +218,7 @@ func deleteDummyPosts() (int, error) {
 	for i := range mockListings {
 		ids = append(ids, fmt.Sprintf("%slisting-%d", dummyPostPrefix, i+1))
 	}
+	ids = append(ids, demoSpamPost)
 	for _, postId := range ids {
 		comments, err := dynamo.QueryAll(svc, &dynamodb.QueryInput{
 			TableName:                 aws.String(dynamo.TableComments),
