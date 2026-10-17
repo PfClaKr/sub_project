@@ -32,6 +32,26 @@ export const Toolbar = styled.div`
 		width: auto;
 		min-width: 120px;
 	}
+
+	/* Phones: the search box on its own line, then the filters packed
+	   together, so the list starts higher on the screen. */
+	@media (max-width: ${breakpoint.sm}) {
+		gap: 6px;
+
+		form {
+			order: -1;
+			flex-basis: 100%;
+		}
+		select {
+			min-width: 0;
+			padding-top: 7px;
+			padding-bottom: 7px;
+			font-size: 14px;
+		}
+		button {
+			font-size: 14px;
+		}
+	}
 `;
 
 // Region filter shaped like a chip, with a pin icon in front.
@@ -313,11 +333,22 @@ export const SimilarBox = styled.aside`
 	}
 `;
 
+// Two by two on wide screens (four cards never leave one alone on a row),
+// one column on phones with three entries per card to keep the page short.
 export const HubGrid = styled.div`
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 16px;
 	margin: 8px 0 40px;
+
+	@media (max-width: ${breakpoint.md}) {
+		grid-template-columns: 1fr;
+	}
+	@media (max-width: ${breakpoint.sm}) {
+		ul > li:nth-child(n + 4) {
+			display: none;
+		}
+	}
 `;
 
 export const HubCard = styled.section`

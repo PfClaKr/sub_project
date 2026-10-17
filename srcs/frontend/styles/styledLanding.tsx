@@ -157,6 +157,11 @@ export const Stage = styled.div`
 		width: 100%;
 		margin: 0 auto;
 	}
+	/* Phones: a smaller cat so the listings start sooner. */
+	@media (max-width: ${breakpoint.sm}) {
+		height: 190px;
+		max-width: 290px;
+	}
 `;
 
 export const Layer = styled.div<{ $depth: number }>`
