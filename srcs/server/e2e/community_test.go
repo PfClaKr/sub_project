@@ -13,7 +13,7 @@ type post struct {
 }
 
 type comment struct {
-	CommentId, ParentId, Body, DisplayName, AuthorId string
+	CommentId, ParentId, Body, DisplayName, AuthorId   string
 	Anonymous, IsMine, IsPostAuthor, Deleted, Accepted bool
 }
 
