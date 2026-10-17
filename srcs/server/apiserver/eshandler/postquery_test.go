@@ -14,7 +14,7 @@ func TestBuildPostQuery(t *testing.T) {
 	for _, want := range []string{
 		`{"term":{"Status":"active"}}`, `{"terms":{"Type":["qna"]}}`, `{"term":{"Topic":"체류증·비자"}}`,
 		`{"term":{"City":"파리"}}`, `{"term":{"Solved":false}}`, `"from":40`, `"track_total_hits":true`,
-		`"sort":[{"CreatedAt":{"order":"desc"}}]`,
+		`"sort":[{"SortAt":{"order":"desc"}}]`, `{"bool":{"must_not":{"term":{"Deal":"closed"}}}}`,
 	} {
 		if !strings.Contains(q, want) {
 			t.Errorf("query lacks %s:\n%s", want, q)
@@ -58,5 +58,35 @@ func TestPostSourceDerivesFields(t *testing.T) {
 	d := PostDoc{Title: "체류증 갱신", Body: strings.Repeat("가", 3000), LikeCount: 2, CommentCount: 3}.source().(PostDoc)
 	if d.Engagement != 7 || d.TitleChosung == "" || len([]rune(d.Body)) != postBodyIndexed {
 		t.Errorf("derived = engagement %d, chosung %q, body %d", d.Engagement, d.TitleChosung, len([]rune(d.Body)))
+	}
+}
+
+func TestListingFilters(t *testing.T) {
+	maxRent, minWage := 800.0, 12.0
+	q := js(buildPostQuery(PostQuery{
+		Types: []string{"housing"}, Mode: "offer", Topics: []string{"쉐어"}, MaxRent: &maxRent,
+		AvailableBy: "2026-09-01", Caf: true, Near: &GeoFilter{Lat: 48.84, Lng: 2.29, Km: 3}, Sort: "rent_asc",
+	}, false))
+	for _, want := range []string{
+		`{"term":{"Mode":"offer"}}`, `{"terms":{"Topic":["쉐어"]}}`, `{"range":{"Rent":{"lte":800}}}`,
+		`{"range":{"AvailableFrom":{"lte":"2026-09-01"}}}`, `{"term":{"Caf":true}}`, `"distance":"3km"`,
+		`"sort":[{"Rent":{"missing":"_last","order":"asc"}}`,
+	} {
+		if !strings.Contains(q, want) {
+			t.Errorf("housing query lacks %s:\n%s", want, q)
+		}
+	}
+	if strings.Contains(q, `"Furnished"`) {
+		t.Error("unset boolean filters must not appear")
+	}
+
+	j := js(buildPostQuery(PostQuery{Types: []string{"job"}, MinWage: &minWage, PermitFree: true, IncludeClosed: true}, false))
+	for _, want := range []string{`{"term":{"WageType":"hourly"}}`, `{"range":{"Wage":{"gte":12}}}`, `"must_not":{"term":{"PermitRequired":true}}`} {
+		if !strings.Contains(j, want) {
+			t.Errorf("job query lacks %s:\n%s", want, j)
+		}
+	}
+	if strings.Contains(j, `"Deal":"closed"`) {
+		t.Error("IncludeClosed must keep closed deals")
 	}
 }
