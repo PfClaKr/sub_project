@@ -98,20 +98,11 @@ func smicHourly() float64 {
 
 // canPostListing checks account age; admins are exempt.
 func canPostListing(userId string) error {
-	out, err := svc.GetItem(&dynamodb.GetItemInput{
-		TableName:                aws.String(dynamo.TableUsers),
-		Key:                      dynamo.Item{"UserId": {S: aws.String(userId)}},
-		ProjectionExpression:     aws.String("CreatedAt, #r"),
-		ExpressionAttributeNames: map[string]*string{"#r": aws.String("Role")},
-	})
+	age, admin, err := accountAge(userId)
 	if err != nil {
 		return internal(err)
 	}
-	if dynamo.S(out.Item, "Role") == "admin" {
-		return nil
-	}
-	created := time.Unix(int64(num(out.Item, "CreatedAt")), 0) // seconds
-	if time.Since(created) < minAccountAge() {
+	if !admin && age < minAccountAge() {
 		return errNotEligible
 	}
 	return nil

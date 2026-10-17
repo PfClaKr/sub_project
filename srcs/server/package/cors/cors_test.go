@@ -3,6 +3,7 @@ package cors
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -72,5 +73,21 @@ func TestMiddlewarePassthrough(t *testing.T) {
 	}
 	if rr.Header().Get("Access-Control-Allow-Origin") != "" {
 		t.Error("unknown origin must not receive CORS headers")
+	}
+}
+
+// Every method an admin or member route uses must pass the preflight,
+// or browsers refuse the request before it is sent.
+func TestPreflightAllowsEveryMethodInUse(t *testing.T) {
+	h := Middleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	req := httptest.NewRequest(http.MethodOptions, "/admin/users/x/suspension", nil)
+	req.Header.Set("Origin", "http://localhost:3000")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+	allowed := rr.Header().Get("Access-Control-Allow-Methods")
+	for _, m := range []string{"GET", "POST", "PUT", "PATCH", "DELETE"} {
+		if !strings.Contains(allowed, m) {
+			t.Errorf("preflight does not allow %s: %q", m, allowed)
+		}
 	}
 }

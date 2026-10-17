@@ -6,18 +6,20 @@ type Select = { name: string; label: string; value: string; options: { value: st
 
 // A plain GET form: the server page does the filtering, so there is no
 // client state to keep in sync. Submitting resets to page 1 because the
-// form carries no page field.
+// form carries no page field. Without `search` there is no text field.
 export function AdminListFilters({ search, placeholder, selects = [] }: {
-	search: string;
-	placeholder: string;
+	search?: string;
+	placeholder?: string;
 	selects?: Select[];
 }) {
 	return (
 		<FilterForm method="get" role="search">
-			<label>
-				검색
-				<input type="search" name="q" defaultValue={search} placeholder={placeholder} />
-			</label>
+			{search !== undefined && (
+				<label>
+					검색
+					<input type="search" name="q" defaultValue={search} placeholder={placeholder} />
+				</label>
+			)}
 			{selects.map(s => (
 				<label key={s.name}>
 					{s.label}

@@ -136,6 +136,7 @@ func commentView(c, post dynamo.Item, viewer string, users map[string]dynamo.Ite
 		"IsMine":       viewer != "" && viewer == authorId,
 		"IsPostAuthor": isPostAuthor,
 		"Deleted":      deleted,
+		"Hidden":       dynamo.S(c, "Status") == CommentHidden,
 		"Accepted":     dynamo.S(post, "AcceptedCommentId") == dynamo.S(c, "CommentId"),
 		"CreatedAt":    num(c, "CreatedAt"),
 	}

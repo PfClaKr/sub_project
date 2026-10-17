@@ -6,6 +6,8 @@ import { SideNav } from "@/styles/styledAdmin";
 
 const LINKS = [
 	{ href: "/admin", label: "개요" },
+	{ href: "/admin/reports", label: "신고" },
+	{ href: "/admin/posts", label: "게시글" },
 	{ href: "/admin/users", label: "회원" },
 	{ href: "/admin/products", label: "상품" },
 	{ href: "/admin/conversations", label: "채팅" },

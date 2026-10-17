@@ -85,6 +85,10 @@ func Register(r *mux.Router) {
 	a.HandleFunc("/products/{id}", deleteProductHandler).Methods("DELETE")
 	a.HandleFunc("/conversations", conversationsHandler).Methods("GET")
 	a.HandleFunc("/conversations/{id}", conversationHandler).Methods("GET")
+	a.HandleFunc("/reports", reportsHandler).Methods("GET")
+	a.HandleFunc("/reports/resolve", resolveReportsHandler).Methods("POST")
+	a.HandleFunc("/posts", postsHandler).Methods("GET")
+	a.HandleFunc("/posts/{id}", updatePostHandler).Methods("PATCH")
 }
 
 // ---- list helpers ----
@@ -161,6 +165,8 @@ type Stats struct {
 	Users, Admins, NewUsers7d                        int
 	Products, Selling, Reserved, Sold, NewProducts7d int
 	ChatRooms, Messages, Messages7d                  int
+	Posts, Questions, Listings, HiddenPosts          int
+	OpenReports, FlaggedPosts                        int
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
@@ -218,6 +224,40 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 		st.Messages++
 		if msTimestamp(num(m, "Timestamp")) >= weekAgo*1000 {
 			st.Messages7d++
+		}
+	}
+
+	posts, err := scan(dynamo.TablePosts, "#t, #s, Flags", map[string]*string{"#t": aws.String("Type"), "#s": aws.String("Status")})
+	if err != nil {
+		jsonresponse.Internal(w, err)
+		return
+	}
+	for _, p := range posts {
+		switch dynamo.S(p, "Status") {
+		case graphqlhandler.PostDeleted:
+			continue
+		case graphqlhandler.PostHidden:
+			st.HiddenPosts++
+		}
+		st.Posts++
+		switch dynamo.S(p, "Type") {
+		case graphqlhandler.PostTypeQna:
+			st.Questions++
+		case graphqlhandler.PostTypeHousing, graphqlhandler.PostTypeJob:
+			st.Listings++
+		}
+		if v := p["Flags"]; v != nil && len(v.L) > 0 {
+			st.FlaggedPosts++
+		}
+	}
+	reports, err := scan(dynamo.TableReports, "#s", map[string]*string{"#s": aws.String("Status")})
+	if err != nil {
+		jsonresponse.Internal(w, err)
+		return
+	}
+	for _, rep := range reports {
+		if dynamo.S(rep, "Status") == ReportOpen {
+			st.OpenReports++
 		}
 	}
 	jsonresponse.New(w, http.StatusOK, st)
@@ -408,7 +448,8 @@ func UserIdByEmail(email string) (string, error) {
 	return "", errNoUser
 }
 
-// deleteUserHandler removes a member with their listings and favorites.
+// deleteUserHandler removes a member with their products, housing/job
+// posts and favorites.
 // Their own account and other admins are out of reach, as in
 // ineverywhere: losing the last admin would lock everyone out, so an
 // admin has to be demoted first. Chat rooms stay for dispute handling.
@@ -449,6 +490,30 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		if err := graphqlhandler.RemoveProduct(dynamo.S(p, "ProductId"), target); err != nil {
 			jsonresponse.Internal(w, err)
 			return
+		}
+	}
+
+	// Housing and job posts go with the account (nobody can answer them
+	// any more); community posts stay, shown as "탈퇴한 회원", because the
+	// answers in them keep helping others.
+	posts, err := dynamo.QueryAll(svc, &dynamodb.QueryInput{
+		TableName:                 aws.String(dynamo.TablePosts),
+		IndexName:                 aws.String("AuthorIndex"),
+		KeyConditionExpression:    aws.String("AuthorId = :u"),
+		ExpressionAttributeNames:  map[string]*string{"#t": aws.String("Type")},
+		ProjectionExpression:      aws.String("PostId, #t"),
+		ExpressionAttributeValues: dynamo.Item{":u": {S: aws.String(target)}},
+	})
+	if err != nil {
+		jsonresponse.Internal(w, err)
+		return
+	}
+	for _, p := range posts {
+		if t := dynamo.S(p, "Type"); t == graphqlhandler.PostTypeHousing || t == graphqlhandler.PostTypeJob {
+			if err := graphqlhandler.ModeratePost(dynamo.S(p, "PostId"), graphqlhandler.PostDeleted); err != nil {
+				jsonresponse.Internal(w, err)
+				return
+			}
 		}
 	}
 

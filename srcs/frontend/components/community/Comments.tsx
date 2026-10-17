@@ -14,7 +14,7 @@ import { ErrorText, LinkButton, Muted, Skeleton } from "@/styles/styledUi";
 import { ReportButton } from "./ReportButton";
 import type { Post, PostComment } from "@/libs/types";
 
-const FIELDS = `CommentId ParentId Body DisplayName AuthorId AuthorImage Anonymous IsMine IsPostAuthor Deleted Accepted CreatedAt`;
+const FIELDS = `CommentId ParentId Body DisplayName AuthorId AuthorImage Anonymous IsMine IsPostAuthor Deleted Hidden Accepted CreatedAt`;
 
 export function LinkedText({ text }: { text: string }) {
 	return (
@@ -93,7 +93,7 @@ export function Comments({ post, onPostChange }: Props) {
 	const renderComment = (c: PostComment, reply: boolean, pinned = false) => (
 		<CommentItem key={(pinned ? "pin-" : "") + c.CommentId} id={pinned ? undefined : `c-${c.CommentId}`} $reply={reply} $accepted={pinned}>
 			{c.Deleted ? (
-				<Muted as="p">삭제된 댓글이에요.</Muted>
+				<Muted as="p">{c.Hidden ? "신고로 가려진 댓글이에요." : "삭제된 댓글이에요."}</Muted>
 			) : (
 				<>
 					<header>

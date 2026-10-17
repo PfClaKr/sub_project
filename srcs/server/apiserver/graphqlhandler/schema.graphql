@@ -239,6 +239,8 @@ type Comment {
   IsMine: Boolean
   IsPostAuthor: Boolean
   Deleted: Boolean
+  # Hidden after reports (also Deleted, with an empty body).
+  Hidden: Boolean
   Accepted: Boolean
   CreatedAt: Float
 }

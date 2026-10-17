@@ -5,6 +5,8 @@ type Stats = {
 	Users: number; Admins: number; NewUsers7d: number;
 	Products: number; Selling: number; Reserved: number; Sold: number; NewProducts7d: number;
 	ChatRooms: number; Messages: number; Messages7d: number;
+	Posts: number; Questions: number; Listings: number; HiddenPosts: number;
+	OpenReports: number; FlaggedPosts: number;
 };
 
 // Every tile links to the list it counts, as in the ineverywhere admin:
@@ -13,6 +15,10 @@ export default async function AdminOverviewPage() {
 	if (!(await isAdmin())) return null;
 	const s = await adminGet<Stats>("/stats");
 	const tiles = [
+		{ label: "처리할 신고", value: s.OpenReports, href: "/admin/reports" },
+		{ label: "경고 표시된 글", value: s.FlaggedPosts, href: "/admin/posts?flagged=1" },
+		{ label: "숨겨진 글", value: s.HiddenPosts, href: "/admin/posts?status=hidden" },
+		{ label: "커뮤니티 글", value: s.Posts, sub: `Q&A ${s.Questions} · 집·알바 ${s.Listings}`, href: "/admin/posts" },
 		{ label: "전체 회원", value: s.Users, sub: `최근 7일 +${s.NewUsers7d}`, href: "/admin/users" },
 		{ label: "관리자", value: s.Admins, href: "/admin/users?role=admin" },
 		{ label: "전체 상품", value: s.Products, sub: `최근 7일 +${s.NewProducts7d}`, href: "/admin/products" },
