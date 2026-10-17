@@ -13,7 +13,116 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
-// CreateTables creates missing tables, waiting for DynamoDB to come up.
+type tableDef struct {
+	name    string
+	schema  []*dynamodb.KeySchemaElement
+	attribs []*dynamodb.AttributeDefinition
+	indexes []*dynamodb.GlobalSecondaryIndex
+	ttl     string // attribute DynamoDB expires rows by (epoch seconds)
+}
+
+// Every GSI is billed on each write, so only indexes that a query uses
+// are declared; lists and searches go through Elasticsearch instead.
+var tables = []tableDef{
+	{
+		name:    dynamo.TableUsers,
+		schema:  hashKey("UserId"),
+		attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S")},
+	},
+	{
+		// VerifyTokenIndex finds the account of an email verification
+		// link; sparse, since only unverified rows carry a token.
+		name:    dynamo.TableUsersCredential,
+		schema:  hashKey("Email"),
+		attribs: []*dynamodb.AttributeDefinition{attr("Email", "S"), attr("VerifyToken", "S")},
+		indexes: []*dynamodb.GlobalSecondaryIndex{index("VerifyTokenIndex", hashKey("VerifyToken"))},
+	},
+	{
+		// UserIndex: a member's products, newest first.
+		name:    dynamo.TableProduct,
+		schema:  hashKey("ProductId"),
+		attribs: []*dynamodb.AttributeDefinition{attr("ProductId", "S"), attr("UserId", "S"), attr("ProductCreatedAt", "N")},
+		indexes: []*dynamodb.GlobalSecondaryIndex{index("UserIndex", hashRangeKey("UserId", "ProductCreatedAt"))},
+	},
+	{
+		name:    dynamo.TableFavorites,
+		schema:  hashRangeKey("UserId", "ItemId"),
+		attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("ItemId", "S")},
+	},
+	{
+		// A member's rooms are the union of the rooms where they sell and
+		// those where they started the conversation.
+		name:    dynamo.TableChatRooms,
+		schema:  hashKey("ChatId"),
+		attribs: []*dynamodb.AttributeDefinition{attr("ChatId", "S"), attr("UserSeller", "S"), attr("UserBuyer", "S"), attr("CreatedAt", "N")},
+		indexes: []*dynamodb.GlobalSecondaryIndex{
+			index("SellerIndex", hashRangeKey("UserSeller", "CreatedAt")),
+			index("BuyerIndex", hashRangeKey("UserBuyer", "CreatedAt")),
+		},
+	},
+	{
+		// Town / arrondissement boundaries cached from OpenStreetMap.
+		name:    "GeoAreas",
+		schema:  hashKey("AreaId"),
+		attribs: []*dynamodb.AttributeDefinition{attr("AreaId", "S")},
+	},
+	{
+		// ChatIndex: one room's history in time order.
+		name:    dynamo.TableChatMessage,
+		schema:  hashKey("MessageId"),
+		attribs: []*dynamodb.AttributeDefinition{attr("MessageId", "S"), attr("ChatId", "S"), attr("Timestamp", "N")},
+		indexes: []*dynamodb.GlobalSecondaryIndex{index("ChatIndex", hashRangeKey("ChatId", "Timestamp"))},
+	},
+	{
+		// Community posts of every board (free, qna, housing, job).
+		// Lists and filters go through Elasticsearch; the index serves
+		// "my posts".
+		name:    dynamo.TablePosts,
+		schema:  hashKey("PostId"),
+		attribs: []*dynamodb.AttributeDefinition{attr("PostId", "S"), attr("AuthorId", "S"), attr("CreatedAt", "N")},
+		indexes: []*dynamodb.GlobalSecondaryIndex{authorIndex()},
+	},
+	{
+		// CommentId sorts by time, so one Query returns a thread in order.
+		name:    dynamo.TableComments,
+		schema:  hashRangeKey("PostId", "CommentId"),
+		attribs: []*dynamodb.AttributeDefinition{attr("PostId", "S"), attr("CommentId", "S"), attr("AuthorId", "S"), attr("CreatedAt", "N")},
+		indexes: []*dynamodb.GlobalSecondaryIndex{authorIndex()},
+	},
+	{
+		name:    dynamo.TablePostLikes,
+		schema:  hashRangeKey("UserId", "PostId"),
+		attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("PostId", "S")},
+	},
+	{
+		name:    dynamo.TableBookmarks,
+		schema:  hashRangeKey("UserId", "PostId"),
+		attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("PostId", "S")},
+	},
+	{
+		// ReportId is derived from (target, reporter): one report each.
+		name:    dynamo.TableReports,
+		schema:  hashKey("ReportId"),
+		attribs: []*dynamodb.AttributeDefinition{attr("ReportId", "S")},
+	},
+	{
+		name:    dynamo.TableNotifications,
+		schema:  hashRangeKey("UserId", "SortKey"),
+		attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("SortKey", "S")},
+		ttl:     "ExpiresAt",
+	},
+}
+
+// obsoleteIndexes were created by earlier versions and are not queried;
+// they only add write costs, so they are dropped from existing tables.
+var obsoleteIndexes = map[string][]string{
+	dynamo.TableUsers:       {"UserEmailIndex"},
+	dynamo.TableProduct:     {"ProductNameIndex"},
+	dynamo.TableChatMessage: {"TimestampIndex"},
+}
+
+// CreateTables creates missing tables and brings existing ones to the
+// declared indexes, waiting for DynamoDB to come up.
 func CreateTables(svc dynamodbiface.DynamoDBAPI) {
 	for i := 0; ; i++ {
 		if _, err := svc.ListTables(&dynamodb.ListTablesInput{}); err == nil {
@@ -26,168 +135,15 @@ func CreateTables(svc dynamodbiface.DynamoDBAPI) {
 		}
 	}
 
-	tables := []struct {
-		name    string
-		schema  []*dynamodb.KeySchemaElement
-		attribs []*dynamodb.AttributeDefinition
-		indexes []*dynamodb.GlobalSecondaryIndex
-		ttl     string // attribute DynamoDB expires rows by (epoch seconds)
-	}{
-		{
-			name: "Users",
-			schema: []*dynamodb.KeySchemaElement{
-				{AttributeName: aws.String("UserId"), KeyType: aws.String("HASH")},
-			},
-			attribs: []*dynamodb.AttributeDefinition{
-				{AttributeName: aws.String("UserId"), AttributeType: aws.String("S")},
-				{AttributeName: aws.String("Email"), AttributeType: aws.String("S")},
-			},
-			indexes: []*dynamodb.GlobalSecondaryIndex{
-				{
-					IndexName: aws.String("UserEmailIndex"),
-					KeySchema: []*dynamodb.KeySchemaElement{
-						{AttributeName: aws.String("Email"), KeyType: aws.String("HASH")},
-						{AttributeName: aws.String("UserId"), KeyType: aws.String("RANGE")},
-					},
-					Projection: &dynamodb.Projection{
-						ProjectionType: aws.String("ALL"),
-					},
-				},
-			},
-		},
-		{
-			name: "UsersCredential",
-			schema: []*dynamodb.KeySchemaElement{
-				{AttributeName: aws.String("Email"), KeyType: aws.String("HASH")},
-			},
-			attribs: []*dynamodb.AttributeDefinition{
-				{AttributeName: aws.String("Email"), AttributeType: aws.String("S")},
-			},
-		},
-		{
-			name: "Product",
-			schema: []*dynamodb.KeySchemaElement{
-				{AttributeName: aws.String("ProductId"), KeyType: aws.String("HASH")},
-			},
-			attribs: []*dynamodb.AttributeDefinition{
-				{AttributeName: aws.String("ProductId"), AttributeType: aws.String("S")},
-				{AttributeName: aws.String("ProductName"), AttributeType: aws.String("S")},
-			},
-			indexes: []*dynamodb.GlobalSecondaryIndex{
-				{
-					IndexName: aws.String("ProductNameIndex"),
-					KeySchema: []*dynamodb.KeySchemaElement{
-						{AttributeName: aws.String("ProductName"), KeyType: aws.String("HASH")},
-						{AttributeName: aws.String("ProductId"), KeyType: aws.String("RANGE")},
-					},
-					Projection: &dynamodb.Projection{
-						ProjectionType: aws.String("ALL"),
-					},
-				},
-			},
-		},
-		{
-			name: "Favorites",
-			schema: []*dynamodb.KeySchemaElement{
-				{AttributeName: aws.String("UserId"), KeyType: aws.String("HASH")},
-				{AttributeName: aws.String("ItemId"), KeyType: aws.String("RANGE")},
-			},
-			attribs: []*dynamodb.AttributeDefinition{
-				{AttributeName: aws.String("UserId"), AttributeType: aws.String("S")},
-				{AttributeName: aws.String("ItemId"), AttributeType: aws.String("S")},
-			},
-		},
-		{
-			name: "ChatRooms",
-			schema: []*dynamodb.KeySchemaElement{
-				{AttributeName: aws.String("ChatId"), KeyType: aws.String("HASH")},
-			},
-			attribs: []*dynamodb.AttributeDefinition{
-				{AttributeName: aws.String("ChatId"), AttributeType: aws.String("S")},
-			},
-		},
-		{
-			// Town / arrondissement boundaries cached from OpenStreetMap.
-			name: "GeoAreas",
-			schema: []*dynamodb.KeySchemaElement{
-				{AttributeName: aws.String("AreaId"), KeyType: aws.String("HASH")},
-			},
-			attribs: []*dynamodb.AttributeDefinition{
-				{AttributeName: aws.String("AreaId"), AttributeType: aws.String("S")},
-			},
-		},
-		{
-			name: "ChatMessage",
-			schema: []*dynamodb.KeySchemaElement{
-				{AttributeName: aws.String("MessageId"), KeyType: aws.String("HASH")},
-			},
-			attribs: []*dynamodb.AttributeDefinition{
-				{AttributeName: aws.String("MessageId"), AttributeType: aws.String("S")},
-				{AttributeName: aws.String("Timestamp"), AttributeType: aws.String("N")}, // Timestamp 추가
-			},
-			indexes: []*dynamodb.GlobalSecondaryIndex{
-				{
-					IndexName: aws.String("TimestampIndex"),
-					KeySchema: []*dynamodb.KeySchemaElement{
-						{AttributeName: aws.String("Timestamp"), KeyType: aws.String("HASH")},
-						{AttributeName: aws.String("MessageId"), KeyType: aws.String("RANGE")}, // Range key 추가
-					},
-					Projection: &dynamodb.Projection{
-						ProjectionType: aws.String("ALL"),
-					},
-				},
-			},
-		},
-		{
-			// Community posts of every board (free, qna, housing, job).
-			// Lists and filters go through Elasticsearch; the index serves
-			// "my posts".
-			name:    dynamo.TablePosts,
-			schema:  hashKey("PostId"),
-			attribs: []*dynamodb.AttributeDefinition{attr("PostId", "S"), attr("AuthorId", "S"), attr("CreatedAt", "N")},
-			indexes: []*dynamodb.GlobalSecondaryIndex{authorIndex()},
-		},
-		{
-			// CommentId sorts by time, so one Query returns a thread in order.
-			name:    dynamo.TableComments,
-			schema:  hashRangeKey("PostId", "CommentId"),
-			attribs: []*dynamodb.AttributeDefinition{attr("PostId", "S"), attr("CommentId", "S"), attr("AuthorId", "S"), attr("CreatedAt", "N")},
-			indexes: []*dynamodb.GlobalSecondaryIndex{authorIndex()},
-		},
-		{
-			name:    dynamo.TablePostLikes,
-			schema:  hashRangeKey("UserId", "PostId"),
-			attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("PostId", "S")},
-		},
-		{
-			name:    dynamo.TableBookmarks,
-			schema:  hashRangeKey("UserId", "PostId"),
-			attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("PostId", "S")},
-		},
-		{
-			// ReportId is derived from (target, reporter): one report each.
-			name:    dynamo.TableReports,
-			schema:  hashKey("ReportId"),
-			attribs: []*dynamodb.AttributeDefinition{attr("ReportId", "S")},
-		},
-		{
-			name:    dynamo.TableNotifications,
-			schema:  hashRangeKey("UserId", "SortKey"),
-			attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("SortKey", "S")},
-			ttl:     "ExpiresAt",
-		},
-	}
-
 	for _, table := range tables {
 		input := &dynamodb.CreateTableInput{
 			TableName:            aws.String(table.name),
 			KeySchema:            table.schema,
 			AttributeDefinitions: table.attribs,
 			// On-demand: nothing is billed while idle, and full scans
-			// (listings, reindex) are never throttled by a small quota.
+			// (reindex, admin lists) are never throttled by a small quota.
 			BillingMode: aws.String(dynamodb.BillingModePayPerRequest),
 		}
-
 		if len(table.indexes) > 0 {
 			input.GlobalSecondaryIndexes = table.indexes
 		}
@@ -201,7 +157,6 @@ func CreateTables(svc dynamodbiface.DynamoDBAPI) {
 			}
 			log.Fatalf("Got error calling CreateTable: %s", err)
 		}
-
 		fmt.Printf("Created the table %s\n", table.name)
 	}
 
@@ -211,10 +166,79 @@ func CreateTables(svc dynamodbiface.DynamoDBAPI) {
 		if err := svc.WaitUntilTableExists(&dynamodb.DescribeTableInput{TableName: aws.String(table.name)}); err != nil {
 			log.Fatalf("table %s did not become active: %v", table.name, err)
 		}
+		syncIndexes(svc, table)
 		if table.ttl != "" {
 			enableTTL(svc, table.name, table.ttl)
 		}
 	}
+}
+
+// syncIndexes adds declared GSIs a table lacks (tables created by an
+// earlier version) and drops obsolete ones. DynamoDB takes one index
+// change per UpdateTable and backfills new indexes, so each change waits
+// until the table is idle again.
+func syncIndexes(svc dynamodbiface.DynamoDBAPI, table tableDef) {
+	out, err := svc.DescribeTable(&dynamodb.DescribeTableInput{TableName: aws.String(table.name)})
+	if err != nil {
+		log.Fatalf("describe %s: %v", table.name, err)
+	}
+	existing := map[string]bool{}
+	for _, gsi := range out.Table.GlobalSecondaryIndexes {
+		existing[aws.StringValue(gsi.IndexName)] = true
+	}
+
+	for _, name := range obsoleteIndexes[table.name] {
+		if !existing[name] {
+			continue
+		}
+		log.Printf("dropping unused index %s.%s", table.name, name)
+		if _, err := svc.UpdateTable(&dynamodb.UpdateTableInput{
+			TableName:                   aws.String(table.name),
+			GlobalSecondaryIndexUpdates: []*dynamodb.GlobalSecondaryIndexUpdate{{Delete: &dynamodb.DeleteGlobalSecondaryIndexAction{IndexName: aws.String(name)}}},
+		}); err != nil {
+			log.Printf("drop %s.%s: %v", table.name, name, err)
+			continue
+		}
+		waitIdle(svc, table.name)
+	}
+
+	for _, gsi := range table.indexes {
+		if existing[aws.StringValue(gsi.IndexName)] {
+			continue
+		}
+		log.Printf("adding index %s.%s", table.name, aws.StringValue(gsi.IndexName))
+		if _, err := svc.UpdateTable(&dynamodb.UpdateTableInput{
+			TableName:            aws.String(table.name),
+			AttributeDefinitions: table.attribs,
+			GlobalSecondaryIndexUpdates: []*dynamodb.GlobalSecondaryIndexUpdate{{Create: &dynamodb.CreateGlobalSecondaryIndexAction{
+				IndexName: gsi.IndexName, KeySchema: gsi.KeySchema, Projection: gsi.Projection,
+			}}},
+		}); err != nil {
+			log.Fatalf("add index %s.%s: %v", table.name, aws.StringValue(gsi.IndexName), err)
+		}
+		waitIdle(svc, table.name)
+	}
+}
+
+// waitIdle blocks until the table and all its indexes are ACTIVE (index
+// backfills can take minutes on large real tables).
+func waitIdle(svc dynamodbiface.DynamoDBAPI, table string) {
+	for i := 0; i < 600; i++ {
+		out, err := svc.DescribeTable(&dynamodb.DescribeTableInput{TableName: aws.String(table)})
+		if err == nil && aws.StringValue(out.Table.TableStatus) == dynamodb.TableStatusActive {
+			busy := false
+			for _, gsi := range out.Table.GlobalSecondaryIndexes {
+				if aws.StringValue(gsi.IndexStatus) != dynamodb.IndexStatusActive {
+					busy = true
+				}
+			}
+			if !busy {
+				return
+			}
+		}
+		time.Sleep(2 * time.Second)
+	}
+	log.Fatalf("table %s did not finish its index changes", table)
 }
 
 // enableTTL turns on expiry once; DynamoDB rejects enabling it twice.
@@ -254,11 +278,15 @@ func hashRangeKey(hash, rng string) []*dynamodb.KeySchemaElement {
 	}
 }
 
-// authorIndex lists a member's rows newest first ("my posts").
-func authorIndex() *dynamodb.GlobalSecondaryIndex {
+func index(name string, keys []*dynamodb.KeySchemaElement) *dynamodb.GlobalSecondaryIndex {
 	return &dynamodb.GlobalSecondaryIndex{
-		IndexName:  aws.String("AuthorIndex"),
-		KeySchema:  hashRangeKey("AuthorId", "CreatedAt"),
+		IndexName:  aws.String(name),
+		KeySchema:  keys,
 		Projection: &dynamodb.Projection{ProjectionType: aws.String("ALL")},
 	}
+}
+
+// authorIndex lists a member's rows newest first ("my posts").
+func authorIndex() *dynamodb.GlobalSecondaryIndex {
+	return index("AuthorIndex", hashRangeKey("AuthorId", "CreatedAt"))
 }
