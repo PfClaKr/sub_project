@@ -34,20 +34,30 @@ func env(key, fallback string) string {
 
 func init() {
 	bucket = env("S3_BUCKET", "product-images")
-	publicBase = env("S3_PUBLIC_URL", "http://localhost:9000") + "/" + bucket
+	region := env("AWS_REGION", "eu-west-3")
+	endpoint := os.Getenv("S3_ENDPOINT")
 
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region:   aws.String(env("AWS_REGION", "eu-west-3")),
-		Endpoint: aws.String(env("S3_ENDPOINT", "http://minio:9000")),
-		Credentials: credentials.NewStaticCredentials(
-			env("S3_ACCESS_KEY", "minioadmin"),
-			env("S3_SECRET_KEY", "minioadmin"),
-			"",
-		),
-		// Path-style is required by MinIO; harmless on real S3.
-		S3ForcePathStyle: aws.Bool(true),
-	}))
-	s3Client = s3.New(sess)
+	cfg := &aws.Config{Region: aws.String(region)}
+	if endpoint != "" {
+		// S3-compatible storage (MinIO locally) needs path-style URLs.
+		cfg.Endpoint = aws.String(endpoint)
+		cfg.S3ForcePathStyle = aws.Bool(true)
+	}
+	// Explicit keys (MinIO); otherwise the default AWS chain: env
+	// AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY or an instance role.
+	if key := os.Getenv("S3_ACCESS_KEY"); key != "" {
+		cfg.Credentials = credentials.NewStaticCredentials(key, os.Getenv("S3_SECRET_KEY"), "")
+	}
+	s3Client = s3.New(session.Must(session.NewSession(cfg)))
+
+	switch {
+	case os.Getenv("S3_PUBLIC_URL") != "":
+		publicBase = os.Getenv("S3_PUBLIC_URL") + "/" + bucket
+	case endpoint == "":
+		publicBase = fmt.Sprintf("https://%s.s3.%s.amazonaws.com", bucket, region)
+	default:
+		publicBase = "http://localhost:9000/" + bucket
+	}
 }
 
 // PublicBase is the URL prefix of uploaded images; product and profile
@@ -56,41 +66,48 @@ func PublicBase() string {
 	return publicBase
 }
 
-// EnsureBucket creates the bucket with public-read policy, retrying
-// until the storage backend is reachable.
+// EnsureBucket makes sure the bucket exists, retrying until the storage
+// backend is reachable. A missing bucket is created with a public-read
+// policy (MinIO); on AWS the bucket is prepared beforehand
+// (deploy/aws-setup.sh), since new buckets block public policies.
 func EnsureBucket() {
 	for i := 0; i < 30; i++ {
-		_, err := s3Client.CreateBucket(&s3.CreateBucketInput{
-			Bucket: aws.String(bucket),
-		})
-		if err != nil {
-			if aerr, ok := err.(awserr.Error); ok &&
-				(aerr.Code() == s3.ErrCodeBucketAlreadyOwnedByYou || aerr.Code() == s3.ErrCodeBucketAlreadyExists) {
-				err = nil
-			}
-		}
+		_, err := s3Client.HeadBucket(&s3.HeadBucketInput{Bucket: aws.String(bucket)})
 		if err == nil {
-			policy := fmt.Sprintf(`{
-				"Version": "2012-10-17",
-				"Statement": [{
-					"Effect": "Allow",
-					"Principal": {"AWS": ["*"]},
-					"Action": ["s3:GetObject"],
-					"Resource": ["arn:aws:s3:::%s/*"]
-				}]
-			}`, bucket)
-			if _, err := s3Client.PutBucketPolicy(&s3.PutBucketPolicyInput{
-				Bucket: aws.String(bucket),
-				Policy: aws.String(policy),
-			}); err != nil {
-				log.Printf("failed to set bucket policy: %v", err)
-			}
+			return
+		}
+		if aerr, ok := err.(awserr.RequestFailure); ok && aerr.StatusCode() == http.StatusNotFound {
+			createPublicBucket()
 			return
 		}
 		log.Printf("object storage not ready: %v. Retrying...", err)
 		time.Sleep(2 * time.Second)
 	}
 	log.Fatal("object storage unreachable, giving up")
+}
+
+func createPublicBucket() {
+	if _, err := s3Client.CreateBucket(&s3.CreateBucketInput{Bucket: aws.String(bucket)}); err != nil {
+		if aerr, ok := err.(awserr.Error); !ok ||
+			(aerr.Code() != s3.ErrCodeBucketAlreadyOwnedByYou && aerr.Code() != s3.ErrCodeBucketAlreadyExists) {
+			log.Fatalf("create bucket %s: %v", bucket, err)
+		}
+	}
+	policy := fmt.Sprintf(`{
+		"Version": "2012-10-17",
+		"Statement": [{
+			"Effect": "Allow",
+			"Principal": {"AWS": ["*"]},
+			"Action": ["s3:GetObject"],
+			"Resource": ["arn:aws:s3:::%s/*"]
+		}]
+	}`, bucket)
+	if _, err := s3Client.PutBucketPolicy(&s3.PutBucketPolicyInput{
+		Bucket: aws.String(bucket),
+		Policy: aws.String(policy),
+	}); err != nil {
+		log.Printf("failed to set bucket policy: %v", err)
+	}
 }
 
 var allowedTypes = map[string]string{
@@ -142,6 +159,9 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			Key:         aws.String(key),
 			Body:        bytes.NewReader(data),
 			ContentType: aws.String(contentType),
+			// Keys are random and never overwritten, so browsers can
+			// keep images forever (fewer S3 GETs and transfer).
+			CacheControl: aws.String("public, max-age=31536000, immutable"),
 		}); err != nil {
 			log.Printf("failed to store image: %v", err)
 			http.Error(w, "failed to store image", http.StatusInternalServerError)

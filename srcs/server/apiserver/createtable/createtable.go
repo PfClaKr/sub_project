@@ -49,10 +49,6 @@ func CreateTables(svc dynamodbiface.DynamoDBAPI) {
 					Projection: &dynamodb.Projection{
 						ProjectionType: aws.String("ALL"),
 					},
-					ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
-						ReadCapacityUnits:  aws.Int64(5),
-						WriteCapacityUnits: aws.Int64(5),
-					},
 				},
 			},
 		},
@@ -83,10 +79,6 @@ func CreateTables(svc dynamodbiface.DynamoDBAPI) {
 					},
 					Projection: &dynamodb.Projection{
 						ProjectionType: aws.String("ALL"),
-					},
-					ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
-						ReadCapacityUnits:  aws.Int64(5),
-						WriteCapacityUnits: aws.Int64(5),
 					},
 				},
 			},
@@ -140,10 +132,6 @@ func CreateTables(svc dynamodbiface.DynamoDBAPI) {
 					Projection: &dynamodb.Projection{
 						ProjectionType: aws.String("ALL"),
 					},
-					ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
-						ReadCapacityUnits:  aws.Int64(5),
-						WriteCapacityUnits: aws.Int64(5),
-					},
 				},
 			},
 		},
@@ -154,10 +142,9 @@ func CreateTables(svc dynamodbiface.DynamoDBAPI) {
 			TableName:            aws.String(table.name),
 			KeySchema:            table.schema,
 			AttributeDefinitions: table.attribs,
-			ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
-				ReadCapacityUnits:  aws.Int64(5),
-				WriteCapacityUnits: aws.Int64(5),
-			},
+			// On-demand: nothing is billed while idle, and full scans
+			// (listings, reindex) are never throttled by a small quota.
+			BillingMode: aws.String(dynamodb.BillingModePayPerRequest),
 		}
 
 		if len(table.indexes) > 0 {
@@ -175,5 +162,13 @@ func CreateTables(svc dynamodbiface.DynamoDBAPI) {
 		}
 
 		fmt.Printf("Created the table %s\n", table.name)
+	}
+
+	// Real DynamoDB creates tables asynchronously; wait until they are
+	// ACTIVE before anything reads them (instant on DynamoDB Local).
+	for _, table := range tables {
+		if err := svc.WaitUntilTableExists(&dynamodb.DescribeTableInput{TableName: aws.String(table.name)}); err != nil {
+			log.Fatalf("table %s did not become active: %v", table.name, err)
+		}
 	}
 }
