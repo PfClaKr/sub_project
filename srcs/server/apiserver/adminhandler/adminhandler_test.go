@@ -65,7 +65,7 @@ func serve(t *testing.T, user, method, path, body string) (*httptest.ResponseRec
 }
 
 func TestAdminRoutesRequireAdminRole(t *testing.T) {
-	for _, path := range []string{"/admin/stats", "/admin/users", "/admin/products", "/admin/conversations"} {
+	for _, path := range []string{"/admin/stats", "/admin/users", "/admin/products", "/admin/conversations", "/admin/reports", "/admin/posts"} {
 		if rr, _ := serve(t, "", "GET", path, ""); rr.Code != http.StatusUnauthorized {
 			t.Errorf("anonymous %s = %d, want 401", path, rr.Code)
 		}
@@ -145,5 +145,17 @@ func TestSuspension(t *testing.T) {
 	}
 	if rr, fake := serve(t, "boss", "DELETE", "/admin/users/member/suspension", ""); rr.Code != http.StatusOK || fake.updates != 1 {
 		t.Errorf("reinstate = %d (updates %d)", rr.Code, fake.updates)
+	}
+}
+
+func TestResolveRejectsUnknownActions(t *testing.T) {
+	if rr, _ := serve(t, "boss", "POST", "/admin/reports/resolve", `{"TargetType":"post","TargetId":"p1","Action":"nuke"}`); rr.Code != http.StatusBadRequest {
+		t.Errorf("unknown action = %d, want 400", rr.Code)
+	}
+	if rr, _ := serve(t, "member", "POST", "/admin/reports/resolve", `{"TargetType":"post","TargetId":"p1","Action":"hide"}`); rr.Code != http.StatusForbidden {
+		t.Errorf("member resolving = %d, want 403", rr.Code)
+	}
+	if rr, _ := serve(t, "boss", "PATCH", "/admin/posts/p1", `{"Status":"weird"}`); rr.Code != http.StatusBadRequest {
+		t.Errorf("unknown post status = %d, want 400", rr.Code)
 	}
 }
