@@ -9,6 +9,7 @@ import { ErrorText, Skeleton } from "@/styles/styledUi";
 import { RequireLogin } from "@/components/ui/RequireLogin";
 import { CHAT_URL } from "@/libs/config";
 import { formatDate, formatTime, imageUrl, toMs } from "@/libs/format";
+import { subjectHref, subjectTitle } from "@/libs/subjects";
 import type { Message, Room, Session } from "@/libs/types";
 
 const MAX_LENGTH = 1000;
@@ -95,7 +96,8 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 
 	const selling = room.UserSeller === session.UserId;
 	const partner = (selling ? room.BuyerNickname : room.SellerNickname) || "상대방";
-	const thumb = imageUrl(room.ProductImage);
+	const thumb = imageUrl(room.SubjectImage || room.ProductImage);
+	const status = room.SubjectType === "product" || !room.SubjectType ? room.ProductStatus : undefined;
 
 	let lastDay = "";
 	return (
@@ -105,8 +107,8 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 				<div style={{ minWidth: 0 }}>
 					<strong>{partner}</strong>
 					<small>
-						<Link href={`/product/${room.ProductId}`}>{room.ProductName || "삭제된 상품"}</Link>
-						{room.ProductStatus ? ` · ${room.ProductStatus}` : ""}
+						<Link href={subjectHref(room)}>{subjectTitle(room)}</Link>
+						{status ? ` · ${status}` : ""}
 					</small>
 				</div>
 				<ConnectionDot $on={connected}>{connected ? "연결됨" : "연결 중..."}</ConnectionDot>

@@ -125,11 +125,30 @@ function MyProducts({ userId }: { userId: string }) {
 	return <ProductGrid products={products} />;
 }
 
+// Shortcuts the phone header has no room for (logout, wishlist, alerts).
+function AccountLinks() {
+	const { logout } = useSession();
+	// Full reload: drops pages cached for the logged-in user.
+	const handleLogout = async () => {
+		await logout();
+		window.location.assign("/");
+	};
+	return (
+		<Row style={{ flexWrap: "wrap", gap: 8, marginTop: 16 }}>
+			<LinkButton href="/wishlist" $ghost>찜 목록</LinkButton>
+			<LinkButton href="/notifications" $ghost>알림</LinkButton>
+			<LinkButton href="/chat" $ghost>채팅</LinkButton>
+			<GhostButton onClick={handleLogout}>로그아웃</GhostButton>
+		</Row>
+	);
+}
+
 export const MyAccount = () => (
 	<RequireLogin>
 		{session => (
 			<>
 				<ProfileEditor session={session} />
+				<AccountLinks />
 				<Section>
 					<Row style={{ justifyContent: "space-between", marginBottom: 14 }}>
 						<SectionTitle style={{ margin: 0 }}>내가 올린 상품</SectionTitle>
