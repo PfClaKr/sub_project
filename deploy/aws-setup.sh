@@ -6,7 +6,8 @@
 #
 # It creates:
 #   - the S3 bucket for product images, publicly readable (objects only)
-#   - an IAM user "itnyang-app" limited to the app's tables and bucket,
+#   - an IAM user "itnyang-app" limited to the app's tables and bucket
+#     (re-run after adding a table: the policy is replaced, keys are kept),
 #     and prints its access key for deploy/.env
 #   - a monthly cost budget that mails ALERT_EMAIL at 80% and 100%
 # DynamoDB tables are created by the apiserver on first start.
@@ -18,7 +19,7 @@ BUCKET=${BUCKET:?set BUCKET, a globally unique bucket name}
 USER_NAME=${USER_NAME:-itnyang-app}
 BUDGET_USD=${BUDGET_USD:-15}
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
-TABLES="Users UsersCredential Product Favorites ChatRooms ChatMessage GeoAreas"
+TABLES="Users UsersCredential Product Favorites ChatRooms ChatMessage GeoAreas Posts Comments PostLikes Bookmarks Reports Notifications"
 
 echo "== S3 bucket $BUCKET ($REGION)"
 if ! aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
@@ -57,6 +58,7 @@ aws iam put-user-policy --user-name "$USER_NAME" --policy-name itnyang-app --pol
 			\"Effect\": \"Allow\",
 			\"Action\": [
 				\"dynamodb:CreateTable\", \"dynamodb:DescribeTable\",
+				\"dynamodb:DescribeTimeToLive\", \"dynamodb:UpdateTimeToLive\",
 				\"dynamodb:GetItem\", \"dynamodb:BatchGetItem\", \"dynamodb:Query\", \"dynamodb:Scan\",
 				\"dynamodb:PutItem\", \"dynamodb:UpdateItem\", \"dynamodb:DeleteItem\",
 				\"dynamodb:BatchWriteItem\", \"dynamodb:ConditionCheckItem\"
