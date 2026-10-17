@@ -130,6 +130,8 @@ func reportResolver(p graphql.ResolveParams) (interface{}, error) {
 	if detail != "" {
 		item["Detail"] = &dynamodb.AttributeValue{S: aws.String(detail)}
 	}
+	counted := reportCounts(userId)
+	item["Counted"] = &dynamodb.AttributeValue{BOOL: aws.Bool(counted)}
 	_, err = svc.PutItem(&dynamodb.PutItemInput{
 		TableName:           aws.String(dynamo.TableReports),
 		Item:                item,
@@ -140,6 +142,9 @@ func reportResolver(p graphql.ResolveParams) (interface{}, error) {
 	}
 	if err != nil {
 		return nil, internal(err)
+	}
+	if counted {
+		countReport(targetType, targetId)
 	}
 	return true, nil
 }
