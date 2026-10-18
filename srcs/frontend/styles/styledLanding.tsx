@@ -116,33 +116,6 @@ export const Lead = styled.p`
 	}
 `;
 
-export const QuickLinks = styled.div`
-	display: flex;
-	flex-wrap: wrap;
-	gap: 6px;
-	margin-top: 14px;
-	font-size: 13px;
-	color: ${palette.muted};
-
-	@media (max-width: ${breakpoint.md}) {
-		justify-content: center;
-	}
-
-	a {
-		padding: 4px 10px;
-		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.75);
-		border: 1px solid ${palette.border};
-		text-decoration: none;
-		color: ${palette.text};
-		transition: transform 0.15s, border-color 0.15s;
-	}
-	a:hover {
-		transform: translateY(-2px);
-		border-color: ${palette.pink};
-	}
-`;
-
 // Pointer parallax: the hero sets --mx/--my in [-1, 1]; each layer moves
 // by its own depth.
 export const Stage = styled.div`
@@ -241,43 +214,17 @@ export const PawPrint = styled.span<{ $i: number; $count: number }>`
 
 // ---- sections ----
 
-export const StatsStrip = styled.section`
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 12px;
-	margin: 0 0 40px;
-
-	@media (max-width: ${breakpoint.sm}) {
-		gap: 8px;
-	}
-`;
-
-export const Stat = styled.div`
-	padding: 18px 12px;
-	text-align: center;
-	border-radius: ${radius.lg};
-	background: ${palette.surface};
-
-	strong {
-		display: block;
-		font-size: clamp(24px, 4vw, 34px);
-		font-weight: 800;
-		color: ${palette.heading};
-		font-variant-numeric: tabular-nums;
-	}
-	/* Only the label; the number inside <strong> is a span too. */
-	> span {
-		font-size: 13px;
-		color: ${palette.muted};
-	}
-`;
-
 export const SectionHead = styled.div`
 	display: flex;
 	align-items: flex-end;
 	justify-content: space-between;
 	gap: 12px;
 	margin: 48px 0 16px;
+
+	> a {
+		flex: none;
+		white-space: nowrap;
+	}
 
 	h2 {
 		margin: 0;
@@ -289,116 +236,10 @@ export const SectionHead = styled.div`
 	}
 `;
 
-export const TileGrid = styled.div`
-	display: grid;
-	grid-template-columns: repeat(6, 1fr);
-	gap: 12px;
-
-	@media (max-width: ${breakpoint.md}) {
-		grid-template-columns: repeat(3, 1fr);
-		gap: 8px;
-	}
-`;
-
 const wiggle = keyframes`
 	0%, 100% { transform: rotate(0); }
 	25% { transform: rotate(-12deg) scale(1.1); }
 	75% { transform: rotate(10deg) scale(1.1); }
-`;
-
-export const Tile = styled(Link)<{ $active?: boolean }>`
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 6px;
-	padding: 16px 8px;
-	border-radius: ${radius.lg};
-	text-decoration: none;
-	font-weight: 700;
-	font-size: 14px;
-	background: ${p => (p.$active ? palette.primarySoft : palette.bg)};
-	border: 1px solid ${p => (p.$active ? palette.primary : palette.border)};
-	transition: transform 0.2s, box-shadow 0.2s;
-
-	span {
-		display: grid;
-		place-items: center;
-		width: 52px;
-		height: 52px;
-		border-radius: 16px;
-		background: ${palette.skySoft};
-		color: ${palette.primary};
-	}
-	span svg {
-		width: 26px;
-		height: 26px;
-	}
-	&:hover {
-		transform: translateY(-4px);
-		box-shadow: ${shadow.hover};
-	}
-	&:hover span {
-		animation: ${wiggle} 0.5s ease-in-out;
-	}
-`;
-
-export const Steps = styled.ol`
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 16px;
-	margin: 0;
-	padding: 0;
-	list-style: none;
-
-	@media (max-width: ${breakpoint.md}) {
-		grid-template-columns: 1fr;
-	}
-`;
-
-export const StepCard = styled.li`
-	position: relative;
-	height: 100%;
-	padding: 24px 22px;
-	border-radius: ${radius.lg};
-	background: ${palette.bg};
-	border: 1px solid ${palette.border};
-
-	em {
-		position: absolute;
-		top: 16px;
-		right: 18px;
-		font-style: normal;
-		font-size: 44px;
-		font-weight: 900;
-		color: ${palette.skySoft};
-	}
-	i {
-		display: grid;
-		place-items: center;
-		width: 52px;
-		height: 52px;
-		border-radius: 16px;
-		font-style: normal;
-		color: ${palette.pink};
-		background: ${palette.pinkSoft};
-		transition: transform 0.3s;
-	}
-	i svg {
-		width: 26px;
-		height: 26px;
-	}
-	&:hover i {
-		transform: rotate(-8deg) scale(1.08);
-	}
-	h3 {
-		margin: 14px 0 6px;
-		font-size: 18px;
-	}
-	p {
-		margin: 0;
-		color: ${palette.muted};
-		font-size: 14px;
-	}
 `;
 
 export const CtaBand = styled.section`
@@ -458,4 +299,338 @@ export const RevealBox = styled.div<{ $visible: boolean; $delay: number }>`
 		opacity: 1;
 		transform: none;
 	`}
+`;
+
+// ---- Home: "what do you need?" ----
+
+// Four purpose cards under the hero: two by two on phones.
+export const PurposeGrid = styled.div`
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 14px;
+	margin: 20px 0 8px;
+
+	@media (max-width: ${breakpoint.md}) {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 10px;
+	}
+`;
+
+export const PurposeCard = styled.article<{ $tint: string; $ink: string }>`
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 20px 18px 16px;
+	border-radius: ${radius.lg};
+	background: ${p => p.$tint};
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+	&:hover {
+		transform: translateY(-3px);
+		box-shadow: ${shadow.hover};
+	}
+	.icon {
+		display: grid;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		border-radius: 14px;
+		background: ${palette.bg};
+		color: ${p => p.$ink};
+		box-shadow: ${shadow.card};
+	}
+	h3 {
+		margin: 8px 0 0;
+		font-size: 18px;
+		color: ${palette.heading};
+	}
+	/* The whole card is the link to the section. */
+	h3 a {
+		color: inherit;
+		text-decoration: none;
+	}
+	h3 a::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+	}
+	p {
+		margin: 0;
+		font-size: 14px;
+		line-height: 1.5;
+		color: ${palette.muted};
+	}
+	.count {
+		font-size: 13px;
+		font-weight: 700;
+		color: ${p => p.$ink};
+	}
+	.action {
+		position: relative;
+		z-index: 1;
+		align-self: flex-start;
+		margin-top: 6px;
+		padding: 6px 12px;
+		border-radius: 999px;
+		background: ${palette.bg};
+		color: ${p => p.$ink};
+		font-size: 13px;
+		font-weight: 700;
+		text-decoration: none;
+	}
+	.action:hover {
+		box-shadow: ${shadow.card};
+	}
+
+	@media (max-width: ${breakpoint.sm}) {
+		padding: 16px 14px 14px;
+
+		h3 {
+			font-size: 16px;
+		}
+		p {
+			display: none;
+		}
+	}
+`;
+
+// "Just arrived in France" checklist.
+export const Checklist = styled.section`
+	margin: 40px 0 0;
+	padding: 24px;
+	border: 1px solid ${palette.border};
+	border-radius: ${radius.lg};
+
+	header {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 12px;
+		margin-bottom: 16px;
+	}
+	h2 {
+		margin: 0;
+		font-size: clamp(19px, 3vw, 24px);
+	}
+	header p {
+		margin: 4px 0 0;
+		color: ${palette.muted};
+	}
+	.progress {
+		min-width: 160px;
+		font-size: 13px;
+		font-weight: 700;
+		color: ${palette.primary};
+	}
+	.bar {
+		height: 6px;
+		margin-top: 6px;
+		border-radius: 3px;
+		background: ${palette.surface};
+		overflow: hidden;
+	}
+	.bar span {
+		display: block;
+		height: 100%;
+		border-radius: 3px;
+		background: ${palette.primary};
+		transition: width 0.3s ease;
+	}
+	ul {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 10px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	@media (max-width: ${breakpoint.md}) {
+		ul {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	@media (max-width: ${breakpoint.sm}) {
+		padding: 18px 14px;
+
+		ul {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+			gap: 8px;
+		}
+	}
+`;
+
+export const ChecklistItem = styled.li<{ $done: boolean }>`
+	display: flex;
+	gap: 12px;
+	padding: 14px;
+	border-radius: ${radius.md};
+	background: ${p => (p.$done ? palette.surface : palette.bg)};
+	border: 1px solid ${p => (p.$done ? "transparent" : palette.border)};
+
+	button {
+		flex: none;
+		display: grid;
+		place-items: center;
+		width: 26px;
+		height: 26px;
+		padding: 0;
+		border-radius: 50%;
+		border: 2px solid ${p => (p.$done ? palette.primary : palette.border)};
+		background: ${p => (p.$done ? palette.primary : palette.bg)};
+		color: #fff;
+	}
+	button:hover:not(:disabled) {
+		background: ${p => (p.$done ? palette.primaryHover : palette.primarySoft)};
+	}
+	strong {
+		display: block;
+		font-size: 15px;
+		color: ${palette.heading};
+		text-decoration: ${p => (p.$done ? "line-through" : "none")};
+		text-decoration-color: ${palette.muted};
+	}
+	p {
+		margin: 2px 0 6px;
+		font-size: 13px;
+		line-height: 1.5;
+		color: ${palette.muted};
+	}
+	a {
+		font-size: 13px;
+		font-weight: 600;
+		color: ${palette.primary};
+		text-decoration: none;
+	}
+	a:hover {
+		text-decoration: underline;
+	}
+
+	/* Phones: two compact columns, the tip only on wider screens. */
+	@media (max-width: ${breakpoint.sm}) {
+		gap: 8px;
+		padding: 12px 10px;
+
+		p {
+			display: none;
+		}
+		strong {
+			margin-bottom: 4px;
+			font-size: 14px;
+		}
+		a {
+			font-size: 12px;
+		}
+	}
+`;
+
+// Mixed list of the newest questions, posts, rooms and jobs.
+export const FeedList = styled.ul`
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0 28px;
+
+	li {
+		min-width: 0;
+		border-bottom: 1px solid ${palette.border};
+	}
+	/* minmax(0, …): long titles ellipsize instead of widening the column. */
+	@media (max-width: ${breakpoint.md}) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+`;
+
+export const FeedRow = styled(Link)`
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 14px 2px;
+	color: ${palette.text};
+	text-decoration: none;
+
+	.thumb {
+		flex: none;
+		display: grid;
+		place-items: center;
+		width: 52px;
+		height: 52px;
+		border-radius: ${radius.md};
+		background: ${palette.surface};
+		color: ${palette.muted};
+		object-fit: cover;
+	}
+	.body {
+		min-width: 0;
+		flex: 1;
+	}
+	.title {
+		display: block;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-weight: 700;
+		color: ${palette.heading};
+	}
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 10px;
+		margin-top: 3px;
+		font-size: 13px;
+		color: ${palette.muted};
+	}
+	.price {
+		font-weight: 700;
+		color: ${palette.text};
+	}
+	&:hover .title {
+		color: ${palette.primary};
+	}
+`;
+
+export const FeedBadge = styled.span<{ $tint: string; $ink: string }>`
+	padding: 1px 8px;
+	border-radius: 999px;
+	background: ${p => p.$tint};
+	color: ${p => p.$ink};
+	font-size: 12px;
+	font-weight: 700;
+`;
+
+// Trust points for visitors.
+export const TrustGrid = styled.ul`
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 14px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+
+	li {
+		padding: 20px;
+		border-radius: ${radius.lg};
+		background: ${palette.surface};
+	}
+	li svg {
+		color: ${palette.primary};
+	}
+	h3 {
+		margin: 10px 0 4px;
+		font-size: 16px;
+	}
+	p {
+		margin: 0;
+		font-size: 14px;
+		line-height: 1.6;
+		color: ${palette.muted};
+	}
+	@media (max-width: ${breakpoint.md}) {
+		grid-template-columns: 1fr;
+	}
 `;

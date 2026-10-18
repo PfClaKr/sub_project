@@ -46,7 +46,7 @@ export const VerifyResult = ({ token }: { token?: string }) => {
 			<h1>{state === "ok" ? "이메일 인증 완료" : "인증하지 못했어요"}</h1>
 			<p>{state === "ok" ? "이제 로그인하고 잇냥을 이용할 수 있어요." : message}</p>
 			<LinkButton href="/login" style={{ display: "block" }}>로그인하러 가기</LinkButton>
-			<FormFooter>잇냥 · 파리 한인 중고마켓</FormFooter>
+			<FormFooter>잇냥 · 프랑스 한인 생활 커뮤니티</FormFooter>
 		</AuthCard>
 	);
 };
