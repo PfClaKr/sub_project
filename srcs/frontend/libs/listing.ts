@@ -1,60 +1,9 @@
-import { DEALS, LISTING_MODES, type ListingType } from "@/libs/constants";
-import { formatPrice } from "@/libs/format";
-import type { HousingInfo, JobInfo, Post } from "@/libs/types";
+import { LISTING_MODES, type ListingType } from "@/libs/constants";
+import type { Post } from "@/libs/types";
 
 export const LISTING_PATH: Record<ListingType, string> = { housing: "/housing", job: "/jobs" };
-export const LISTING_LABEL: Record<ListingType, string> = { housing: "집", job: "알바" };
 
-// Explanations for the warning codes returned by createListing.
-export const WARNING_TEXT: Record<string, { title: string; text: string }> = {
-	contact: {
-		title: "연락처나 메신저 아이디가 들어 있어요",
-		text: "카톡·텔레그램 같은 외부 연락은 사기의 가장 흔한 시작이에요. 잇냥 채팅으로 대화하면 기록이 남아 문제가 생겼을 때 신고할 수 있어요.",
-	},
-	prepay: {
-		title: "선입금을 요구하는 표현이 있어요",
-		text: "집을 보거나 직접 만나기 전에 보증금·예약금을 보내라는 글은 사기일 가능성이 높아요. 이런 글은 운영진이 먼저 확인해요.",
-	},
-	low_wage: {
-		title: "시급이 최저임금(SMIC)보다 낮아요",
-		text: "프랑스 최저임금보다 낮은 시급은 불법이에요. 금액을 다시 확인해주세요.",
-	},
-};
-
-export function warningText(code: string) {
-	return WARNING_TEXT[code] ?? { title: "확인이 필요한 내용이 있어요", text: "글 내용을 다시 확인해주세요." };
-}
-
-export function modeLabel(type: ListingType, mode?: string): string {
-	return (LISTING_MODES[type] as readonly { value: string; label: string }[]).find(m => m.value === mode)?.label ?? "";
-}
-
-export function dealLabel(deal?: string): string {
-	return DEALS.find(d => d.value === deal)?.label ?? "";
-}
-
-// "€750/월 · 관리비 포함" (or "최대 €750/월" for someone looking).
-export function rentLabel(h: HousingInfo): string {
-	const price = `${formatPrice(h.Rent)}/월`;
-	const base = h.Mode === "seek" ? `최대 ${price}` : price;
-	return h.ChargesIncluded ? `${base} · 관리비 포함` : base;
-}
-
-export function wageLabel(j: JobInfo): string {
-	if (j.WageType === "negotiable" || !j.Wage) return "급여 협의";
-	return j.WageType === "hourly" ? `시급 ${formatPrice(j.Wage)}` : `월 ${formatPrice(j.Wage)}`;
-}
-
-// "9월 1일부터" from YYYY-MM-DD, "지금 바로" when it is today or past.
-export function moveInLabel(date: string | undefined, today = new Date()): string {
-	if (!date) return "";
-	const [y, m, d] = date.split("-").map(Number);
-	if (!y || !m || !d) return "";
-	const day = Date.UTC(y, m - 1, d);
-	const now = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-	if (day <= now) return "바로 입주";
-	return y === today.getFullYear() ? `${m}월 ${d}일부터` : `${y}년 ${m}월 ${d}일부터`;
-}
+// Display texts (modes, rent, wage, move-in, warnings) are in libs/labels.ts.
 
 const DAY = 86_400_000;
 

@@ -1,12 +1,7 @@
 import { BOARDS, type BoardType } from "@/libs/constants";
 import type { Post, PostComment } from "@/libs/types";
 
-const TYPE_LABEL: Record<Post["Type"], string> = { free: BOARDS.free.label, qna: BOARDS.qna.label, housing: "집", job: "알바" };
 const TYPE_PATH: Record<Post["Type"], string> = { free: "/community", qna: "/community", housing: "/housing", job: "/jobs" };
-
-export function boardLabel(type: Post["Type"]): string {
-	return TYPE_LABEL[type] ?? type;
-}
 
 // postHref is the page of any post, community or housing/job.
 export function postHref(post: Pick<Post, "PostId" | "Type">): string {

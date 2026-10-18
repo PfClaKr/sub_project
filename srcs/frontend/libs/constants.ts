@@ -19,9 +19,10 @@ export const FREE_TOPICS = ["일상", "정보", "맛집·장보기", "행사·�
 export const QNA_TOPICS = ["체류증·비자", "행정·CAF·세금", "은행·통신", "학교·어학", "의료", "집·이사", "일·취업", "기타"] as const;
 
 export type BoardType = "free" | "qna";
-export const BOARDS: Record<BoardType, { label: string; topics: readonly string[] }> = {
-	free: { label: "자유", topics: FREE_TOPICS },
-	qna: { label: "생활 Q&A", topics: QNA_TOPICS },
+// Labels: enums.board.<type> in messages.
+export const BOARDS: Record<BoardType, { topics: readonly string[] }> = {
+	free: { topics: FREE_TOPICS },
+	qna: { topics: QNA_TOPICS },
 };
 
 // Must match graphqlhandler.ReportReasons.
@@ -37,15 +38,12 @@ export const EMPLOYMENT_TYPES = ["알바", "정규직", "인턴", "프리랜서"
 export const JOB_LANGUAGES = ["한국어", "프랑스어", "영어"] as const;
 
 export type ListingType = "housing" | "job";
+// Labels: enums.mode.<type>.<value> and enums.deal.<value> in messages.
 export const LISTING_MODES = {
-	housing: [{ value: "offer", label: "방 있어요" }, { value: "seek", label: "방 구해요" }],
-	job: [{ value: "hiring", label: "구인" }, { value: "seeking", label: "구직" }],
+	housing: [{ value: "offer" }, { value: "seek" }],
+	job: [{ value: "hiring" }, { value: "seeking" }],
 } as const;
 
-export const DEALS = [
-	{ value: "open", label: "모집중" },
-	{ value: "reserved", label: "예약중" },
-	{ value: "closed", label: "완료" },
-] as const;
+export const DEALS = [{ value: "open" }, { value: "reserved" }, { value: "closed" }] as const;
 
 export const MAX_LISTING_IMAGES = 8;
