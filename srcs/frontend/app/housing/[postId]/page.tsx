@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { ListingDetail } from "@/components/listing/ListingDetail";
@@ -8,13 +9,13 @@ type Props = { params: { postId: string } };
 
 // Public read for metadata and the first paint; the client re-reads it
 // with the session cookie.
-async function getListing(postId: string) {
+const getListing = cache(async (postId: string) => {
 	const { data } = await gql<{ listing: Post | null }>(
 		`query Listing($id: String!) { listing(PostId: $id) { ${LISTING_DETAIL_FIELDS} } }`,
 		{ id: postId },
 	);
 	return data?.listing?.Type === "housing" ? data.listing : null;
-}
+});
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const post = await getListing(params.postId);

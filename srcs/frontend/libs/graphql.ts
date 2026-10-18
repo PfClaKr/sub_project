@@ -8,18 +8,27 @@ export type GqlResult<T> = { data?: T; error?: string; code?: string };
 // gql posts a GraphQL operation. The session cookie is always sent so
 // mutations run as the logged-in user (server components have no
 // cookie and can only run public queries).
+//
+// revalidate (seconds, server only): public lists that are the same for
+// every visitor (home, search) are kept in Next's data cache that long,
+// instead of reaching the apiserver, Elasticsearch and DynamoDB on every
+// page view. Leave it out for anything a member just changed and expects
+// to see at once (detail pages).
 export async function gql<T>(
 	query: string,
 	variables: Record<string, unknown> = {},
-	init: { timeoutMs?: number } = {},
+	init: { timeoutMs?: number; revalidate?: number } = {},
 ): Promise<GqlResult<T>> {
+	const caching = init.revalidate !== undefined && typeof window === "undefined"
+		? { next: { revalidate: init.revalidate } }
+		: { cache: "no-store" as const };
 	try {
 		const res = await fetch(GRAPHQL_URL, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ query, variables }),
 			credentials: "include",
-			cache: "no-store",
+			...caching,
 			signal: init.timeoutMs ? AbortSignal.timeout(init.timeoutMs) : undefined,
 		});
 		if (!res.ok) return { error: libText("server") };

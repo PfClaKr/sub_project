@@ -51,7 +51,7 @@ export async function ProductResults({ q, searchParams }: { q: string; searchPar
 			}
 		}`,
 		{ q, category, region, min: minPrice, max: maxPrice, sort, area: near?.area, lat: near?.lat, lng: near?.lng, km: near ? near.km : undefined, page },
-		{ timeoutMs: 5000 },
+		{ timeoutMs: 5000, revalidate: 30 },
 	);
 	const products = data?.productSearch?.Products ?? [];
 	const corrected = data?.productSearch?.Corrected ?? false;
