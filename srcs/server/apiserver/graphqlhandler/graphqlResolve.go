@@ -177,7 +177,7 @@ func attachSellerNicknames(products []map[string]interface{}) error {
 			ids = append(ids, id)
 		}
 	}
-	users, err := dynamo.BatchGet(svc, dynamo.TableUsers, "UserId", ids, "UserId, UserNickname")
+	users, err := userCache.BatchGet(svc, ids)
 	if err != nil {
 		return err
 	}
@@ -203,10 +203,11 @@ func finishProducts(items []dynamo.Item, wantSeller bool) ([]map[string]interfac
 	return products, nil
 }
 
-// productsInOrder batch-reads products and keeps the order of ids (search
-// ranking), skipping products deleted since they were indexed.
-func productsInOrder(ids []string, proj string) ([]dynamo.Item, error) {
-	found, err := dynamo.BatchGet(svc, dynamo.TableProduct, "ProductId", ids, proj)
+// productsInOrder batch-reads products (through productCache) and keeps
+// the order of ids (search ranking), skipping products deleted since they
+// were indexed.
+func productsInOrder(ids []string) ([]dynamo.Item, error) {
+	found, err := productCache.BatchGet(svc, ids)
 	if err != nil {
 		return nil, err
 	}
@@ -314,8 +315,8 @@ func resolveRecentProducts(p graphql.ResolveParams) (interface{}, error) {
 	if err != nil {
 		return nil, internal(err)
 	}
-	proj, wantSeller := productProjection(p, "ProductId")
-	items, err := productsInOrder(ids, proj)
+	_, wantSeller := productProjection(p, "ProductId")
+	items, err := productsInOrder(ids)
 	if err != nil {
 		return nil, internal(err)
 	}
@@ -392,7 +393,7 @@ func resolveProductSearch(p graphql.ResolveParams) (interface{}, error) {
 	if wantSeller {
 		fields = append(fields, "UserId")
 	}
-	items, err := productsInOrder(ids, projection(fields, productAttrs, "ProductId"))
+	items, err := productsInOrder(ids)
 	if err != nil {
 		return nil, internal(err)
 	}
@@ -464,8 +465,8 @@ func resolveSearchProducts(p graphql.ResolveParams) (interface{}, error) {
 	if err != nil {
 		return nil, internal(err)
 	}
-	proj, wantSeller := productProjection(p, "ProductId")
-	items, err := productsInOrder(ids, proj)
+	_, wantSeller := productProjection(p, "ProductId")
+	items, err := productsInOrder(ids)
 	if err != nil {
 		return nil, internal(err)
 	}
@@ -815,6 +816,7 @@ func updateProductResolver(p graphql.ResolveParams) (interface{}, error) {
 	if err != nil {
 		return nil, internal(err)
 	}
+	productCache.Forget(productId)
 	if err := eshandler.IndexProduct(eshandler.DocFromItem(out.Attributes)); err != nil {
 		log.Printf("reindex of %s failed, search shows stale data: %v", productId, err)
 	}
@@ -844,6 +846,7 @@ func SetProductStatus(productId, status string) (dynamo.Item, error) {
 	if err != nil {
 		return nil, internal(err)
 	}
+	productCache.Forget(productId)
 	if err := eshandler.IndexProduct(eshandler.DocFromItem(out.Attributes)); err != nil {
 		log.Printf("reindex of %s failed: %v", productId, err)
 	}
@@ -865,6 +868,7 @@ func RemoveProduct(productId, ownerId string) error {
 	if photos := out.Attributes["ProductImage"]; photos != nil {
 		uploadhandler.DeleteImages(aws.StringValueSlice(photos.SS)...)
 	}
+	productCache.Forget(productId)
 	if err := eshandler.DeleteProduct(productId); err != nil {
 		log.Printf("es delete of %s failed; search skips it anyway: %v", productId, err)
 	}
@@ -941,5 +945,6 @@ func updateProfileResolver(p graphql.ResolveParams) (interface{}, error) {
 	if err != nil {
 		return nil, internal(err)
 	}
+	ForgetUser(userId)
 	return userToMap(out.Attributes), nil
 }
