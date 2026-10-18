@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { LEGAL_VERSION } from "./legal";
+import { colors } from "@/theme/colorPalette";
 import {
 	CATEGORIES, EMPLOYMENT_TYPES, FREE_TOPICS, HOUSING_KINDS, JOB_LANGUAGES, JOB_SECTORS, QNA_TOPICS, REGIONS, REPORT_REASONS, STATUSES, STATUS_SELLING,
 } from "./constants";
@@ -56,5 +57,14 @@ describe("frontend ↔ apiserver contract", () => {
 	it("stores the terms version the legal pages show", () => {
 		const signup = readFileSync(fileURLToPath(new URL("../../server/loginserver/signuphandler/signuphandler.go", import.meta.url)), "utf8");
 		expect(signup.match(/const TermsVersion = "([^"]+)"/)?.[1]).toBe(LEGAL_VERSION);
+	});
+
+	it("mails start from the site's built-in colours", () => {
+		const theme = readFileSync(fileURLToPath(new URL("../../server/package/mailer/theme.go", import.meta.url)), "utf8");
+		const block = theme.match(/var DefaultTheme = Theme\{([^}]*)\}/)?.[1] ?? "";
+		const fields = Object.fromEntries(Array.from(block.matchAll(/(\w+):\s*"(#[0-9a-f]{6})"/g), m => [m[1], m[2]]));
+		expect(fields).toEqual({
+			Primary: colors.primary, Heading: colors.heading, Text: colors.text, Muted: colors.muted, Surface: colors.surface, Border: colors.border,
+		});
 	});
 });

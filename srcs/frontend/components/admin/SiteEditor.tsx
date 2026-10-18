@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowDown, ArrowUp, RotateCcw } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, RotateCcw } from "lucide-react";
 import ko from "@/messages/ko.json";
 import fr from "@/messages/fr.json";
 import en from "@/messages/en.json";
@@ -17,7 +17,8 @@ import { colors, type ColorToken } from "@/theme/colorPalette";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { Chip, ChipRow, ErrorText, GhostButton, Muted } from "@/styles/styledUi";
 import { Table, TableWrap } from "@/styles/styledAdmin";
-import { EditorGrid, KeyCell, SectionRow, Swatch, TextRow } from "@/styles/styledSiteEditor";
+import { EditorGrid, KeyCell, SectionRow, Swatch, TextRow, WithPreview } from "@/styles/styledSiteEditor";
+import { MailPreview, SitePreview, pageForKey, type Draft, type PreviewPage } from "./SitePreview";
 
 type LogEntry = { At: number; Target: string; Old: string; New: string; Admin: string };
 export type AdminSite = {
@@ -25,7 +26,22 @@ export type AdminSite = {
 	Settings: SiteSettings;
 	Log: LogEntry[];
 	ThemeTokens: ColorToken[];
+	MailTypes: string[];
 };
+
+// A tab hands its unsaved changes to the preview, which is null while
+// the preview is closed.
+type Preview = ((draft: Draft, fixedLocale?: Locale) => ReactNode) | null;
+
+// Editor and preview side by side (stacked on narrow screens).
+function Layout({ preview, children }: { preview: ReactNode; children: ReactNode }) {
+	return (
+		<WithPreview $open={!!preview}>
+			<div>{children}</div>
+			{preview}
+		</WithPreview>
+	);
+}
 
 const CATALOGS: Record<Locale, Tree> = { ko, fr, en };
 const TABS = ["texts", "notice", "home", "theme", "log"] as const;
@@ -70,26 +86,58 @@ async function send(method: "PUT" | "POST", path: string, body: unknown): Promis
 // home sections and hero image, theme colours and the change log.
 export function SiteEditor({ initial, tab: initialTab }: { initial: AdminSite; tab?: string }) {
 	const t = useTranslations("admin.site");
+	const pageLocale = useLocale() as Locale;
 	const [tab, setTab] = useState<Tab>(TABS.includes(initialTab as Tab) ? (initialTab as Tab) : "texts");
+	const [previewOpen, setPreviewOpen] = useState(false);
+	const [page, setPage] = useState<PreviewPage>("/");
+	const [previewLocale, setPreviewLocale] = useState<Locale>(pageLocale);
+	const canPreview = tab !== "log";
+
+	const preview: Preview = previewOpen && canPreview
+		? (draft, fixedLocale) => (
+			<SitePreview
+				draft={draft}
+				locale={fixedLocale ?? previewLocale}
+				onLocale={fixedLocale ? undefined : setPreviewLocale}
+				page={page}
+				onPage={setPage}
+				onClose={() => setPreviewOpen(false)}
+			/>
+		)
+		: null;
+	const showInPreview = useCallback((p: PreviewPage | null) => {
+		if (p) setPage(p);
+		setPreviewOpen(true);
+	}, []);
+
 	return (
 		<div>
-			<ChipRow aria-label={t("tabs")} style={{ margin: "16px 0" }}>
-				{TABS.map(k => (
-					<Chip key={k} href={`?tab=${k}`} $active={tab === k} onClick={e => { e.preventDefault(); setTab(k); window.history.replaceState(null, "", `?tab=${k}`); }}>
-						{t(`tab.${k}`)}
-					</Chip>
-				))}
-			</ChipRow>
-			{tab === "texts" && <TextsTab overrides={initial.Texts} />}
-			{tab === "notice" && <NoticeTab settings={initial.Settings} />}
-			{tab === "home" && <HomeTab settings={initial.Settings} />}
-			{tab === "theme" && <ThemeTab settings={initial.Settings} tokens={initial.ThemeTokens} />}
+			<div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, margin: "16px 0" }}>
+				<ChipRow aria-label={t("tabs")} style={{ flex: 1, margin: 0 }}>
+					{TABS.map(k => (
+						<Chip key={k} href={`?tab=${k}`} $active={tab === k} onClick={e => { e.preventDefault(); setTab(k); window.history.replaceState(null, "", `?tab=${k}`); }}>
+							{t(`tab.${k}`)}
+						</Chip>
+					))}
+				</ChipRow>
+				{canPreview && (
+					<GhostButton type="button" aria-pressed={previewOpen} onClick={() => setPreviewOpen(o => !o)}>
+						<Eye size={16} aria-hidden /> {previewOpen ? t("preview.hide") : t("preview.show")}
+					</GhostButton>
+				)}
+			</div>
+			{tab === "texts" && <TextsTab overrides={initial.Texts} preview={preview} onShow={showInPreview} />}
+			{tab === "notice" && <NoticeTab settings={initial.Settings} preview={preview} />}
+			{tab === "home" && <HomeTab settings={initial.Settings} preview={preview} />}
+			{tab === "theme" && <ThemeTab settings={initial.Settings} tokens={initial.ThemeTokens} mailTypes={initial.MailTypes ?? []} preview={preview} />}
 			{tab === "log" && <LogTab log={initial.Log} />}
 		</div>
 	);
 }
 
-function TextsTab({ overrides }: { overrides: AdminSite["Texts"] }) {
+function TextsTab({ overrides, preview, onShow }: {
+	overrides: AdminSite["Texts"]; preview: Preview; onShow: (page: PreviewPage | null) => void;
+}) {
 	const t = useTranslations("admin.site");
 	const router = useRouter();
 	const pageLocale = useLocale() as Locale;
@@ -99,6 +147,18 @@ function TextsTab({ overrides }: { overrides: AdminSite["Texts"] }) {
 	const defaults = useMemo(() => flatten(CATALOGS[locale]), [locale]);
 	const korean = useMemo(() => flatten(CATALOGS.ko), []);
 	const current = overrides[locale] ?? {};
+	// Unsaved edits of the rows on screen, for the preview.
+	const [drafts, setDrafts] = useState<Record<string, string>>({});
+	useEffect(() => setDrafts({}), [locale]);
+	const onDraft = useCallback((key: string, text: string | null) => {
+		setDrafts(d => {
+			if (text === null ? !(key in d) : d[key] === text) return d;
+			const next = { ...d };
+			if (text === null) delete next[key];
+			else next[key] = text;
+			return next;
+		});
+	}, []);
 
 	const q = query.trim().toLowerCase();
 	const rows = Object.keys(defaults).filter(key => {
@@ -109,7 +169,7 @@ function TextsTab({ overrides }: { overrides: AdminSite["Texts"] }) {
 	const shown = rows.slice(0, 60);
 
 	return (
-		<div>
+		<Layout preview={preview?.({ Texts: { [locale]: drafts } }, locale)}>
 			<EditorGrid>
 				<label>
 					{t("language")}
@@ -135,14 +195,17 @@ function TextsTab({ overrides }: { overrides: AdminSite["Texts"] }) {
 					korean={locale === "ko" ? "" : korean[key]}
 					override={current[key]}
 					onSaved={() => router.refresh()}
+					onDraft={onDraft}
+					onShow={() => onShow(pageForKey(key))}
 				/>
 			))}
-		</div>
+		</Layout>
 	);
 }
 
-function TextEditor({ locale, textKey, builtIn, korean, override, onSaved }: {
+function TextEditor({ locale, textKey, builtIn, korean, override, onSaved, onDraft, onShow }: {
 	locale: Locale; textKey: string; builtIn: string; korean: string; override?: string; onSaved: () => void;
+	onDraft: (key: string, text: string | null) => void; onShow: () => void;
 }) {
 	const t = useTranslations("admin.site");
 	const [value, setValue] = useState(override ?? builtIn);
@@ -150,6 +213,11 @@ function TextEditor({ locale, textKey, builtIn, korean, override, onSaved }: {
 	const [error, setError] = useState("");
 	const [saved, setSaved] = useState(false);
 	const dirty = value !== (override ?? builtIn);
+
+	useEffect(() => {
+		onDraft(textKey, dirty ? (value === builtIn ? "" : value) : null);
+	}, [onDraft, textKey, dirty, value, builtIn]);
+	useEffect(() => () => onDraft(textKey, null), [onDraft, textKey]);
 
 	const save = async (text: string) => {
 		setError("");
@@ -181,6 +249,7 @@ function TextEditor({ locale, textKey, builtIn, korean, override, onSaved }: {
 			/>
 			<div className="actions">
 				{override !== undefined && <Muted as="span" className="builtin">{t("builtIn")}: {builtIn}</Muted>}
+				<GhostButton type="button" onClick={onShow}><Eye size={14} aria-hidden /> {t("preview.row")}</GhostButton>
 				{override !== undefined && (
 					<GhostButton type="button" disabled={busy} onClick={() => save("")}><RotateCcw size={14} aria-hidden /> {t("reset")}</GhostButton>
 				)}
@@ -216,12 +285,12 @@ function useSettingsSaver() {
 	return { busy, save, status };
 }
 
-function NoticeTab({ settings }: { settings: SiteSettings }) {
+function NoticeTab({ settings, preview }: { settings: SiteSettings; preview: Preview }) {
 	const t = useTranslations("admin.site");
 	const [notice, setNotice] = useState(settings.Notice);
 	const { busy, save, status } = useSettingsSaver();
 	return (
-		<div>
+		<Layout preview={preview?.({ Settings: { ...settings, Notice: notice } })}>
 			<Muted as="p">{t("noticeLead")}</Muted>
 			<EditorGrid>
 				<label className="check">
@@ -247,11 +316,11 @@ function NoticeTab({ settings }: { settings: SiteSettings }) {
 			))}
 			<button type="button" disabled={busy} onClick={() => save({ ...settings, Notice: notice })}>{t("save")}</button>
 			{status}
-		</div>
+		</Layout>
 	);
 }
 
-function HomeTab({ settings }: { settings: SiteSettings }) {
+function HomeTab({ settings, preview }: { settings: SiteSettings; preview: Preview }) {
 	const t = useTranslations("admin.site");
 	const [home, setHome] = useState(settings.Home);
 	const [hero, setHero] = useState(settings.Hero);
@@ -279,7 +348,7 @@ function HomeTab({ settings }: { settings: SiteSettings }) {
 	};
 
 	return (
-		<div>
+		<Layout preview={preview?.({ Settings: { ...settings, Home: home, Hero: hero } })}>
 			<h3>{t("sections")}</h3>
 			<Muted as="p">{t("sectionsLead")}</Muted>
 			<ol style={{ padding: 0, listStyle: "none" }}>
@@ -307,16 +376,18 @@ function HomeTab({ settings }: { settings: SiteSettings }) {
 			{error && <ErrorText role="alert">{error}</ErrorText>}
 			<button type="button" disabled={busy || uploading} onClick={() => save({ ...settings, Home: home, Hero: hero })}>{t("save")}</button>
 			{status}
-		</div>
+		</Layout>
 	);
 }
 
-function ThemeTab({ settings, tokens: list }: { settings: SiteSettings; tokens: ColorToken[] }) {
+function ThemeTab({ settings, tokens: list, mailTypes, preview }: {
+	settings: SiteSettings; tokens: ColorToken[]; mailTypes: string[]; preview: Preview;
+}) {
 	const t = useTranslations("admin.site");
 	const [theme, setTheme] = useState(settings.Theme);
 	const { busy, save, status } = useSettingsSaver();
 	return (
-		<div>
+		<Layout preview={preview?.({ Settings: { ...settings, Theme: theme } })}>
 			<Muted as="p">{t("themeLead")}</Muted>
 			<TableWrap>
 				<Table>
@@ -351,7 +422,8 @@ function ThemeTab({ settings, tokens: list }: { settings: SiteSettings; tokens: 
 				<button type="button" disabled={busy} onClick={() => save({ ...settings, Theme: theme })}>{t("save")}</button>
 				{status}
 			</div>
-		</div>
+			{mailTypes.length > 0 && <div style={{ marginTop: 20 }}><MailPreview theme={theme} types={mailTypes} /></div>}
+		</Layout>
 	);
 }
 

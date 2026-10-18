@@ -1,6 +1,8 @@
 package sitehandler
 
 import (
+	"encoding/json"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -62,5 +64,56 @@ func TestTextKeys(t *testing.T) {
 	}
 	if keyPattern.MatchString("home hero") || keyPattern.MatchString("") {
 		t.Error("bad key accepted")
+	}
+}
+
+func TestCheckDraft(t *testing.T) {
+	d, err := checkDraft(Draft{
+		Settings: &Settings{Theme: map[string]string{"primary": "#AA3300"}},
+		Texts:    map[string]map[string]string{"fr": {"home.hero.lead": "Bonjour \n"}},
+	}, Defaults())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.Settings.Theme["primary"] != "#aa3300" || len(d.Settings.Home) != len(HomeSections) || d.Texts["fr"]["home.hero.lead"] != "Bonjour" {
+		t.Errorf("draft = %+v / %+v", d.Settings, d.Texts)
+	}
+	for name, bad := range map[string]Draft{
+		"bad colour":   {Settings: &Settings{Theme: map[string]string{"primary": "red"}}},
+		"bad language": {Texts: map[string]map[string]string{"de": {"a": "b"}}},
+		"bad key":      {Texts: map[string]map[string]string{"ko": {"a b": "c"}}},
+		"long text":    {Texts: map[string]map[string]string{"ko": {"a": strings.Repeat("가", maxText+1)}}},
+	} {
+		if _, err := checkDraft(bad, Defaults()); err == nil {
+			t.Errorf("%s: accepted", name)
+		}
+	}
+}
+
+func TestMergeTexts(t *testing.T) {
+	got := mergeTexts(map[string]string{"a": "saved", "b": "saved"}, map[string]string{"b": "", "c": "draft"})
+	if len(got) != 2 || got["a"] != "saved" || got["c"] != "draft" {
+		t.Errorf("merged = %v (an empty draft text goes back to the built-in one)", got)
+	}
+}
+
+func TestPreviewMail(t *testing.T) {
+	for _, typ := range MailTypes {
+		rr := httptest.NewRecorder()
+		body := `{"Type":"` + typ + `","Locale":"fr","Theme":{"primary":"#aa3300","danger":"#000000"}}`
+		previewMailHandler(rr, httptest.NewRequest("POST", "/admin/site/preview/mail", strings.NewReader(body)))
+		var out struct{ Subject, From, HTML string }
+		json.Unmarshal(rr.Body.Bytes(), &out)
+		if rr.Code != 200 || !strings.HasPrefix(out.Subject, "[Itnyang]") || out.From != "Itnyang" {
+			t.Fatalf("%s: %d %+v", typ, rr.Code, out)
+		}
+		if !strings.Contains(out.HTML, "#aa3300") || strings.Contains(out.HTML, "#0048b4") || !strings.Contains(out.HTML, `lang="fr"`) {
+			t.Errorf("%s: the draft colour or the language is missing", typ)
+		}
+	}
+	rr := httptest.NewRecorder()
+	previewMailHandler(rr, httptest.NewRequest("POST", "/admin/site/preview/mail", strings.NewReader(`{"Type":"nope"}`)))
+	if rr.Code != 400 {
+		t.Errorf("unknown type = %d, want 400", rr.Code)
 	}
 }

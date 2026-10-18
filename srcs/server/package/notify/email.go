@@ -40,11 +40,17 @@ func DigestDelay() time.Duration {
 // send is swapped in tests.
 var send = mailer.SendMessage
 
-// composeMail builds one mail in the member's language (Users.Locale):
-// a card per notification, a button to the notification list, and the
-// settings and unsubscribe links (unsubscribe is the page link). To and
-// the headers are left to the caller.
+// composeMail builds one mail in the member's language (Users.Locale).
+// To and the headers are left to the caller.
 func composeMail(lang, nickname string, items []Notification, appURL, unsubscribe string) mailer.Message {
+	subject, content := composeContent(lang, nickname, items, appURL, unsubscribe)
+	return content.Message("", subject)
+}
+
+// composeContent: a card per notification, a button to the notification
+// list, and the settings and unsubscribe links (unsubscribe is the page
+// link).
+func composeContent(lang, nickname string, items []Notification, appURL, unsubscribe string) (string, mailer.Content) {
 	name := nickname
 	if name == "" {
 		name = i18n.T(lang, "이웃")
@@ -75,7 +81,17 @@ func composeMail(lang, nickname string, items []Notification, appURL, unsubscrib
 	if len(items) > 1 {
 		subject = i18n.T(lang, "[잇냥] 새 알림 %d개", len(items))
 	}
-	return content.Message("", subject)
+	return subject, content
+}
+
+// SampleMail is a two-notification digest with made-up content, for the
+// admin preview of the mail design.
+func SampleMail(lang string) (string, mailer.Content) {
+	appURL := mailer.AppURL()
+	return composeContent(lang, "", []Notification{
+		{Type: TypeComment, Preview: "CAF 서류는 이렇게 준비했어요", Link: "/community"},
+		{Type: TypeAccepted, Preview: "은행 계좌 여는 순서 정리", Link: "/community"},
+	}, appURL, appURL+"/notifications/unsubscribe")
 }
 
 func unsubscribeQuery(userId string) string {

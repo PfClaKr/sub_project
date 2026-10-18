@@ -23,6 +23,7 @@ import (
 	"local.com/i18n"
 	"local.com/jsonresponse"
 	"local.com/jwt"
+	"local.com/mailer"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -191,7 +192,10 @@ func loadSettings() (Settings, string, error) {
 	return fixed, raw, nil
 }
 
+// saveSettings also makes this process's mails pick up a new theme at
+// once (loginserver rereads it within a minute).
 func saveSettings(s Settings) (string, error) {
+	defer mailer.ForgetTheme()
 	b, _ := json.Marshal(s)
 	_, err := svc.PutItem(&dynamodb.PutItemInput{
 		TableName: aws.String(dynamo.TableSiteContent),
@@ -336,6 +340,10 @@ func Register(r *mux.Router, requireAdmin func(http.Handler) http.Handler) {
 	a.HandleFunc("/text", setTextHandler).Methods("PUT")
 	a.HandleFunc("/settings", setSettingsHandler).Methods("PUT")
 	a.HandleFunc("/revert", revertHandler).Methods("POST")
+	a.HandleFunc("/preview", getPreviewHandler).Methods("GET")
+	a.HandleFunc("/preview", putPreviewHandler).Methods("PUT")
+	a.HandleFunc("/preview", deletePreviewHandler).Methods("DELETE")
+	a.HandleFunc("/preview/mail", previewMailHandler).Methods("POST")
 }
 
 // publicHandler: GET /site?locale=fr → the overrides of that language
@@ -380,7 +388,7 @@ func adminGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonresponse.New(w, http.StatusOK, map[string]interface{}{
-		"Texts": texts, "Settings": settings, "Log": entries, "Sections": HomeSections, "ThemeTokens": ThemeTokens,
+		"Texts": texts, "Settings": settings, "Log": entries, "Sections": HomeSections, "ThemeTokens": ThemeTokens, "MailTypes": MailTypes,
 	})
 }
 

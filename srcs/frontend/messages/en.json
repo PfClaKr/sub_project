@@ -1460,7 +1460,7 @@
       "uploading": "Uploading…",
       "chooseImage": "Choose an image",
       "useMascot": "Use the cat",
-      "themeLead": "Colours apply across the site. Check that text stays readable.",
+      "themeLead": "Changed colours apply at once to every page and to the emails members receive. Make sure text stays readable on its background.",
       "token": "Token",
       "color": "Colour",
       "tokens": {
@@ -1493,7 +1493,44 @@
         "Theme": "colours"
       },
       "changedParts": "Changed: {parts}",
-      "nothing": "No change"
+      "nothing": "No change",
+      "preview": {
+        "show": "Preview",
+        "hide": "Close preview",
+        "row": "Preview",
+        "title": "Preview (not saved)",
+        "lead": "Shows your unsaved changes on the real site. Only you can see this preview.",
+        "close": "Close preview",
+        "page": "Page",
+        "language": "Language",
+        "device": "Device",
+        "desktop": "Computer",
+        "tablet": "Tablet",
+        "phone": "Phone",
+        "reload": "Reload",
+        "newWindow": "New window",
+        "frameTitle": "Site preview",
+        "pages": {
+          "home": "Home",
+          "search": "Second-hand",
+          "community": "Community",
+          "housing": "Housing",
+          "jobs": "Jobs",
+          "safety": "Safety guide",
+          "notifications": "Notifications",
+          "myaccount": "My account"
+        }
+      },
+      "mail": {
+        "title": "Email preview",
+        "lead": "Emails sent to members follow these colours too. The content is an example.",
+        "type": "Email type",
+        "types": {
+          "verify": "Sign-up verification",
+          "reset": "Password reset",
+          "digest": "Notification digest"
+        }
+      }
     }
   },
   "names": {
@@ -1505,5 +1542,9 @@
   "notice": {
     "close": "Close the notice",
     "more": "Learn more"
+  },
+  "preview": {
+    "bar": "Admin preview: unsaved changes are shown.",
+    "end": "End preview"
   }
 }

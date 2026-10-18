@@ -21,6 +21,7 @@ var catalog = map[string][2]string{
 	"거주지를 확인해주세요.":                                             {"Vérifiez votre lieu de résidence.", "Check where you live."},
 	"비밀번호는 8자 이상 72바이트 이하여야 해요.":                               {"Le mot de passe doit faire au moins 8 caractères et au plus 72 octets.", "Passwords must be at least 8 characters and at most 72 bytes."},
 	"이미 사용 중인 이메일이에요.":                                         {"Cet e-mail est déjà utilisé.", "This email is already in use."},
+	"미리보기 문구가 너무 많아요.":                                         {"Trop de textes dans l'aperçu.", "Too many texts in the preview."},
 	// Mails (package mailer frames them; loginserver and notify fill them).
 	"잇냥":             {"Itnyang", "Itnyang"},
 	"프랑스 한인 생활 커뮤니티": {"la communauté coréenne en France", "the Korean community in France"},

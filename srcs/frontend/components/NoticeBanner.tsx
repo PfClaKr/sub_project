@@ -14,8 +14,11 @@ export function noticePrepaint(version: number): string {
 }
 
 // NoticeBanner: the site-wide announcement set on /admin/site. Closing it
-// lasts until admins change its text (the version moves).
-export function NoticeBanner({ text, tone, link, version }: { text: string; tone: "info" | "warning"; link: string; version: number }) {
+// lasts until admins change its text (the version moves). alwaysShow
+// ignores a past close (the editor's preview).
+export function NoticeBanner({ text, tone, link, version, alwaysShow }: {
+	text: string; tone: "info" | "warning"; link: string; version: number; alwaysShow?: boolean;
+}) {
 	const t = useTranslations("notice");
 	const close = () => {
 		try {
@@ -28,7 +31,7 @@ export function NoticeBanner({ text, tone, link, version }: { text: string; tone
 	const Icon = tone === "warning" ? TriangleAlert : Info;
 	return (
 		<>
-			<script dangerouslySetInnerHTML={{ __html: noticePrepaint(version) }} />
+			{!alwaysShow && <script dangerouslySetInnerHTML={{ __html: noticePrepaint(version) }} />}
 			<NoticeBar $tone={tone} data-notice="" role="status">
 				<Icon size={16} aria-hidden />
 				<span>
