@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Heart, MessageCircle, SquarePen } from "lucide-react";
+import { Bell, Heart, MessageCircle } from "lucide-react";
 import { StyledLink, StyledNavbar } from "@/styles/styledLink";
 import { Nav, NavInner, Brand, SectionTabs, NavSpacer, NavUser, IconLink, Badge, DesktopOnly, MobileOnly } from "@/styles/styledNav";
 import { GhostButton, LinkButton } from "@/styles/styledUi";
 import { Avatar } from "@/components/ui/Avatar";
+import { WriteMenu } from "@/components/WriteMenu";
 import { SECTIONS, isActive } from "@/libs/sections";
 import { useSession } from "@/libs/session";
 import { useNotifications } from "@/libs/notifications";
@@ -55,15 +56,13 @@ export default function Navigation() {
 				{!loading && (session ? (
 					<NavUser>
 						<DesktopOnly>
-							<LinkButton href="/sell">판매하기</LinkButton>
+							<WriteMenu />
 							<IconLink as={Link} href="/wishlist" aria-label="찜 목록" aria-current={current("/wishlist")}>
 								<Heart size={20} />
 							</IconLink>
 						</DesktopOnly>
 						<MobileOnly>
-							<IconLink as={Link} href="/sell" aria-label="판매하기" aria-current={current("/sell")}>
-								<SquarePen size={20} />
-							</IconLink>
+							<WriteMenu compact />
 						</MobileOnly>
 						<IconLink as={Link} href="/chat" aria-label="채팅" aria-current={current("/chat")}>
 							<MessageCircle size={20} />

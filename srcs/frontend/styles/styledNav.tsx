@@ -1,7 +1,7 @@
 'use client';
 
 import styled from "styled-components";
-import palette, { breakpoint } from "@/theme/colorPalette";
+import palette, { breakpoint, radius } from "@/theme/colorPalette";
 
 export const Nav = styled.nav`
 	position: sticky;
@@ -87,8 +87,15 @@ export const IconLink = styled.a`
 	border-radius: 50%;
 	color: ${palette.text};
 
-	&:hover,
-	&[aria-current="page"] {
+	/* Also used as a <button> (the write menu): undo the global button look. */
+	&& {
+		padding: 0;
+		border: none;
+		background-color: transparent;
+	}
+	&&:hover,
+	&&[aria-current="page"],
+	&&[aria-expanded="true"] {
 		color: ${palette.primary};
 		background-color: ${palette.primarySoft};
 	}
@@ -164,5 +171,87 @@ export const BottomSpacer = styled.div`
 	@media (max-width: ${breakpoint.sm}) {
 		display: block;
 		height: calc(56px + env(safe-area-inset-bottom));
+	}
+`;
+
+// The write menu (WriteMenu): a button on desktop, the pencil on phones.
+export const WriteWrap = styled.div`
+	position: relative;
+	display: inline-flex;
+
+	/* On phones the panel hangs from the whole header (Nav is sticky, so
+	   positioned) rather than from the pencil icon. */
+	@media (max-width: ${breakpoint.sm}) {
+		position: static;
+	}
+`;
+
+export const WriteButton = styled.button`
+	gap: 4px;
+
+	svg:last-child {
+		opacity: 0.8;
+	}
+`;
+
+export const WritePanel = styled.div`
+	position: absolute;
+	right: 0;
+	top: calc(100% + 8px);
+	z-index: 30;
+	width: 260px;
+	max-width: calc(100vw - 32px);
+	padding: 6px;
+	border: 1px solid ${palette.border};
+	border-radius: ${radius.md};
+	background-color: ${palette.bg};
+	box-shadow: 0 12px 32px rgba(16, 23, 80, 0.16);
+	animation: write-menu-in 0.14s ease-out;
+
+	@keyframes write-menu-in {
+		from { opacity: 0; transform: translateY(-4px); }
+		to { opacity: 1; transform: none; }
+	}
+
+	@media (max-width: ${breakpoint.sm}) {
+		top: calc(100% + 6px);
+		right: 16px;
+	}
+`;
+
+export const WriteItem = styled.a`
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px;
+	border-radius: ${radius.sm};
+	color: ${palette.text};
+	text-decoration: none;
+
+	&:hover,
+	&:focus-visible {
+		background-color: ${palette.surface};
+	}
+
+	.icon {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 36px;
+		height: 36px;
+		border-radius: 50%;
+		background-color: ${palette.primarySoft};
+		color: ${palette.primary};
+	}
+	strong {
+		display: block;
+		font-size: 15px;
+		font-weight: 600;
+	}
+	small {
+		display: block;
+		margin-top: 1px;
+		color: ${palette.muted};
+		font-size: 13px;
 	}
 `;
