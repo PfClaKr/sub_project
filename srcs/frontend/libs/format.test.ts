@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDateTime, formatPrice, formatRelative, formatTime, imageUrl, toMs } from "./format";
+import { formatDate, formatDateTime, formatPrice, formatRelative, formatTime, imageUrl, toMs } from "./format";
 
 describe("formatPrice", () => {
 	it("formats euros without useless decimals", () => {
@@ -57,5 +57,25 @@ describe("time formats", () => {
 		expect(formatTime(ts)).toBe("17:04");
 		expect(formatDateTime(ts)).toContain("17:04");
 		expect(formatDateTime(ts)).not.toMatch(/AM|PM|오전|오후/);
+	});
+});
+
+describe("other languages", () => {
+	const now = Date.UTC(2026, 8, 23, 12, 0, 0);
+	const ago = (s: number) => (now - s * 1000) / 1000;
+	it("format relative times", () => {
+		expect(formatRelative(ago(5 * 60), now, "fr")).toBe("il y a 5 minutes");
+		expect(formatRelative(ago(3 * 3600), now, "en")).toBe("3 hours ago");
+		expect(formatRelative(ago(10), now, "fr")).toBe("à l'instant");
+	});
+	it("format prices the local way", () => {
+		expect(formatPrice(1250, "fr")).toMatch(/^1\s?250\s?€$/);
+		expect(formatPrice(1250, "en")).toBe("€1,250");
+	});
+	it("format dates", () => {
+		const ts = Date.UTC(2026, 9, 17, 15, 4);
+		expect(formatDate(ts, "fr")).toBe("17 octobre 2026");
+		expect(formatDate(ts, "en")).toBe("17 October 2026");
+		expect(formatTime(ts, "en")).toBe("17:04");
 	});
 });
