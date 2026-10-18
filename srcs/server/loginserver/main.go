@@ -15,6 +15,7 @@ import (
 	"loginserver/verifyhandler"
 
 	"local.com/cors"
+	"local.com/i18n"
 	"local.com/jwt"
 
 	"github.com/gorilla/mux"
@@ -58,5 +59,5 @@ func main() {
 	}
 
 	fmt.Println("Starting login server on :" + port)
-	log.Fatal(http.ListenAndServe(":"+port, cors.Middleware(r)))
+	log.Fatal(http.ListenAndServe(":"+port, cors.Middleware(i18n.Middleware(r))))
 }

@@ -28,6 +28,7 @@ require (
 	local.com/account v0.0.0
 	local.com/cors v0.0.0
 	local.com/dynamo v0.0.0
+	local.com/i18n v0.0.0
 	local.com/jsonresponse v0.0.0
 	local.com/jwt v0.0.0
 	local.com/notify v0.0.0
@@ -46,3 +47,5 @@ replace local.com/account => ../package/account
 replace local.com/notify => ../package/notify
 
 replace local.com/mailer => ../package/mailer
+
+replace local.com/i18n => ../package/i18n
