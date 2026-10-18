@@ -8,9 +8,15 @@
 //   node scripts/beta-sim/cost.mjs [--results=scripts/beta-sim/results]
 //        [--compare=<other results dir>]   side by side, e.g. before/after
 //        [--cpuFactor=2]                   local core ÷ Lightsail vCPU
+//        [--cdn]                           photos through CloudFront
 import { readFileSync, existsSync } from "node:fs";
 
-const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, "").split("=")));
+const args = Object.fromEntries(
+	process.argv.slice(2).map(a => {
+		const [k, v] = a.replace(/^--/, "").split("=");
+		return [k, v ?? "true"];
+	}),
+);
 
 export const PRICES = {
 	// Lightsail Linux bundles with IPv4 (docs: amazon-lightsail-bundles,
@@ -32,6 +38,12 @@ export const PRICES = {
 	s3GetPer1000: 0.00042,
 	internetOutGB: 0.09, // after 100 GB/month free (all services together)
 	internetFreeGB: 100,
+	// CloudFront always-free tier: 1 TB out and 10M requests a month;
+	// fetches from S3 to CloudFront are free.
+	cloudfrontFreeGB: 1000,
+	cloudfrontOutGB: 0.085,
+	cloudfrontFreeRequests: 10e6,
+	cloudfrontPer10kRequests: 0.012,
 	sesPer1000: 0.1,
 	domainPerMonth: 10 / 12,
 };
@@ -44,7 +56,13 @@ const SCENARIOS = [
 	{ name: "초기", members: 1000, visits: 12, months: 6 },
 	{ name: "성장", members: 5000, visits: 10, months: 12 },
 	{ name: "확장", members: 20000, visits: 8, months: 18 },
+	// About everyone: 27,000 Koreans live in France (MOFA 2023).
+	{ name: "프랑스 한인 전체", members: 30000, visits: 8, months: 24 },
 ];
+// A visit lasts about 2.5 minutes (5–6 pages, 20–30 s each): what turns
+// visits per month into people on the site at the same time.
+const VISIT_MINUTES = 2.5;
+const SECONDS_PER_PAGE = 25;
 const SERVER = ["caddy", "nextjs", "apiserver", "loginserver", "chatserver", "elasticsearch"];
 // Evenings carry most visits: the busiest hour sees about three times
 // the average rate.
@@ -52,6 +70,7 @@ const PEAK = 3;
 // A Lightsail vCPU is assumed to do half the work of a core of the
 // machine the simulation ran on (unknown hardware, so on the safe side).
 const CPU_FACTOR = Number(args.cpuFactor ?? 2);
+const CDN = args.cdn !== undefined;
 
 // Real DynamoDB bills at least 0.5 RRU per read call and 1 WRU per write
 // call; DynamoDB Local reports 0 for empty results.
@@ -103,9 +122,10 @@ function analyze(dir) {
 		const mediaGB = (v * perVisit.mediaMB) / 1e3;
 		const storedGB = (v * s.months * perVisit.storedMB) / 1e3;
 		// Background jobs: the mail worker (a query a minute) and the
-		// listing expiry scan of Posts every 30 minutes (posts grow).
-		const posts = s.members * s.months * 2;
-		const rru = v * perVisit.rru + 43200 * 0.5 + 1440 * Math.max(0.5, (posts * 1.5) / 4 / 2);
+		// listing expiry pass every 30 minutes, which reads only the few
+		// listings due soon (the search index names them; before that it
+		// scanned the whole Posts table, the largest read cost at scale).
+		const rru = v * perVisit.rru + 43200 * 0.5 + 1440 * 1;
 		const wru = v * perVisit.wru;
 		// Notification digests plus sign-ups and password resets.
 		const mails = v * Math.max(perVisit.mails, perVisit.notifications * 0.5) + s.members * 0.2;
@@ -116,16 +136,25 @@ function analyze(dir) {
 			PRICES.lightsail.find(p => p.vcpu * p.baseline >= avgVcpu && p.vcpu * 0.7 >= peakVcpu && p.mem * 1024 * 0.85 >= memPeak + 250) ??
 			PRICES.lightsail.at(-1);
 		const serverGB = (v * perVisit.serverMB) / 1e3;
+		const mediaRequests = v * perVisit.mediaRequests;
+		// Through CloudFront, S3 sees only the first fetch of each photo
+		// (about what is uploaded); without it, every view is a GET.
+		const s3Gets = CDN ? v * perVisit.uploads * 2 * 3 : mediaRequests;
+		const transfer = CDN
+			? Math.max(0, mediaGB - PRICES.cloudfrontFreeGB) * PRICES.cloudfrontOutGB +
+				(Math.max(0, mediaRequests - PRICES.cloudfrontFreeRequests) / 1e4) * PRICES.cloudfrontPer10kRequests
+			: Math.max(0, mediaGB - PRICES.internetFreeGB) * PRICES.internetOutGB;
 		const lines = {
 			lightsail: plan.usd + Math.max(0, serverGB - plan.transferTB * 1000) * PRICES.lightsailOverGB,
 			dynamodb: (rru / 1e6) * PRICES.dynamoReadPerMillion + (wru / 1e6) * PRICES.dynamoWritePerMillion,
-			s3: storedGB * PRICES.s3StorageGB + ((v * perVisit.uploads * 2) / 1000) * PRICES.s3PutPer1000 + ((v * perVisit.mediaRequests) / 1000) * PRICES.s3GetPer1000,
-			transfer: Math.max(0, mediaGB - PRICES.internetFreeGB) * PRICES.internetOutGB,
+			s3: storedGB * PRICES.s3StorageGB + ((v * perVisit.uploads * 2) / 1000) * PRICES.s3PutPer1000 + (s3Gets / 1000) * PRICES.s3GetPer1000,
+			transfer,
 			ses: (mails / 1000) * PRICES.sesPer1000,
 			domain: PRICES.domainPerMonth,
 		};
+		const peakConcurrent = (v / 30 / 24) * PEAK * (VISIT_MINUTES / 60);
 		return {
-			...s, visitsPerMonth: v, pageviews: Math.round(v * perVisit.pageviews), plan: plan.name, avgVcpu, peakVcpu,
+			...s, visitsPerMonth: v, peakConcurrent, pageviews: Math.round(v * perVisit.pageviews), plan: plan.name, avgVcpu, peakVcpu,
 			rru, wru, serverGB, mediaGB, storedGB, mails, lines, total: Object.values(lines).reduce((a, b) => a + b, 0),
 		};
 	};
@@ -145,7 +174,7 @@ function print(a) {
 	}
 	for (const r of a.scenarios) {
 		console.log(
-			`${r.name} ${r.members}명: 방문 ${fmt(r.visitsPerMonth)}, PV ${fmt(r.pageviews)}, Lightsail ${r.plan} (평균 ${r.avgVcpu.toFixed(2)} / 피크 ${r.peakVcpu.toFixed(2)} vCPU)` +
+			`${r.name} ${r.members}명: 방문 ${fmt(r.visitsPerMonth)}, PV ${fmt(r.pageviews)}, 피크 동시 접속 약 ${Math.ceil(r.peakConcurrent)}명, Lightsail ${r.plan} (평균 ${r.avgVcpu.toFixed(2)} / 피크 ${r.peakVcpu.toFixed(2)} vCPU)` +
 				` | RRU ${fmt(r.rru)} WRU ${fmt(r.wru)} | 서버 전송 ${r.serverGB.toFixed(1)} GB, 사진 전송 ${r.mediaGB.toFixed(0)} GB, 사진 저장 ${r.storedGB.toFixed(1)} GB | 메일 ${fmt(r.mails)}`,
 		);
 		console.log("   ", Object.entries(r.lines).map(([k, v]) => `${k} ${usd(v)}`).join(", "), `→ 합계 ${usd(r.total)}/월`);
@@ -154,6 +183,16 @@ function print(a) {
 
 const main = analyze(args.results ?? "scripts/beta-sim/results");
 print(main);
+
+// Sized by people on the site at once: each opens a page about every
+// SECONDS_PER_PAGE seconds; the CPU a page costs comes from the run.
+const cpuPerPage = (main.perVisit.cpuSeconds / main.perVisit.pageviews) * CPU_FACTOR;
+console.log(`\n### 동시 접속 기준 (페이지당 서버 CPU ${cpuPerPage.toFixed(3)} vCPU초, 한 사람이 ${SECONDS_PER_PAGE}초마다 페이지 1개)`);
+for (const c of [50, 100, 500, 1000, 5000]) {
+	const pps = c / SECONDS_PER_PAGE;
+	const vcpu = pps * cpuPerPage;
+	console.log(`동시 ${c}명: ${pps.toFixed(1)} 페이지/초, 서버 CPU 약 ${vcpu.toFixed(1)} vCPU 필요`);
+}
 if (args.compare) {
 	const other = analyze(args.compare);
 	print(other);

@@ -18,7 +18,7 @@
 scripts/beta-sim/run.sh up                       # 측정용 리허설 (https://localhost:8443)
 cd scripts/beta-sim && npm install && cd -       # playwright
 CHROMIUM_PATH=<chrome 실행 파일, 선택> taskset -c 6-11 scripts/beta-sim/run.sh sim --users=150 --days=3
-node scripts/beta-sim/cost.mjs                   # 월 비용 표 (--compare=<다른 결과>로 나란히 비교)
+node scripts/beta-sim/cost.mjs                   # 월 비용 표 (--compare=<다른 결과> 비교, --cdn 사진을 CloudFront로)
 scripts/beta-sim/run.sh down                     # 정리 (볼륨까지 삭제)
 ```
 
@@ -31,6 +31,10 @@ scripts/beta-sim/run.sh down                     # 정리 (볼륨까지 삭제)
   - **load:** 생각하는 시간 없이 동시 세션을 늘려가며(`--levels=2,4,8,16`) 처리량과 응답 시간을 봅니다.
 - 사진은 사이트처럼 업로드 전에 긴 변 1600px로 줄여서 올립니다. `--raw-upload`를 주면 원본 그대로 올립니다(사진 리사이즈 전 동작).
 - 브라우저는 localhost 말고는 이름을 찾지 못하게 막혀 있습니다. 그래서 OpenStreetMap 같은 공개 서비스에는 시뮬레이션 트래픽이 가지 않습니다. 위치는 파리의 몇 지점만 써서 Nominatim 조회도 몇 번뿐입니다.
+
+`cost.mjs`가 출력하는 것:
+- 회원 수 시나리오별 월 비용(프랑스 한인 전체인 3만 명까지)과 피크 동시 접속 추정
+- 동시 접속자 수별로 필요한 서버 CPU
 
 ## 한계
 
