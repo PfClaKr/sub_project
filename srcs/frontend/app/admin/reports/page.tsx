@@ -20,12 +20,13 @@ type QueueItem = {
 const TYPE_LABEL: Record<string, string> = { post: "글", comment: "댓글", product: "상품", user: "회원", chat: "채팅" };
 const STATUS_LABEL: Record<string, string> = { active: "공개", hidden: "숨김", deleted: "삭제됨", expired: "만료" };
 
+// A target that is gone (or already deleted) can only be closed.
 function actionsFor(item: QueueItem): string[] {
-	if (item.Missing) return ["dismiss"];
+	if (item.Missing) return ["resolve"];
 	switch (item.TargetType) {
 		case "post":
 		case "comment":
-			return item.TargetStatus === "deleted" ? ["dismiss"] : ["dismiss", "hide", "delete"];
+			return item.TargetStatus === "deleted" ? ["resolve"] : ["hide", "dismiss", "delete"];
 		case "product":
 			return ["dismiss", "delete"];
 		default:
@@ -71,19 +72,19 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
 									{item.Body && <div><small>{item.Body}</small></div>}
 									{item.Flags?.map(f => <div key={f}><small>⚠ {warningText(f).title}</small></div>)}
 								</td>
-								<td>
+								<td data-label="작성자">
 									{item.OwnerId
 										? <Link href={`/admin/users?q=${encodeURIComponent(item.OwnerEmail || item.OwnerNickname)}`}>{item.OwnerNickname || "(탈퇴)"}</Link>
 										: "—"}
 									{item.Anonymous && <div><small>익명으로 작성</small></div>}
 								</td>
-								<td>
+								<td data-label="신고">
 									<strong>{item.Count}건</strong> <small>(집계 {item.Counted})</small>
 									{Object.entries(item.Reasons).map(([r, n]) => <div key={r}><small>{r} {n}</small></div>)}
 									{item.Details?.map((d, i) => <div key={i}><small>“{d}”</small></div>)}
 								</td>
-								<td>{STATUS_LABEL[item.TargetStatus] ?? (item.TargetStatus || "—")}</td>
-								<td>{formatDateTime(item.LastAt)}</td>
+								<td data-label="상태">{STATUS_LABEL[item.TargetStatus] ?? (item.TargetStatus || "—")}</td>
+								<td data-label="마지막 신고">{formatDateTime(item.LastAt)}</td>
 								{status === "open" && <td><ReportActions targetType={item.TargetType} targetId={item.TargetId} actions={actionsFor(item)} /></td>}
 							</tr>
 						))}
