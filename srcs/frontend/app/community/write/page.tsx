@@ -1,18 +1,19 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
 import { NewPost } from "@/components/community/PostForm";
 import { PageHeader } from "@/styles/styledLayout";
 import { WriteLayout } from "@/components/form/WriteLayout";
 
-export const metadata: Metadata = { title: "글쓰기" };
+export const generateMetadata = pageMetadata("pages.writePost");
 
 type Props = { searchParams: { board?: string } };
 
-export default function Page({ searchParams }: Props) {
+export default async function Page({ searchParams }: Props) {
 	const board = searchParams.board === "free" ? "free" : "qna";
 	return (
 		<div>
 			<PageHeader>
-				<h1>{board === "qna" ? "질문하기" : "글쓰기"}</h1>
+				<h1>{(await getTranslations("pages"))(board === "qna" ? "askQuestion.title" : "writePost.title")}</h1>
 			</PageHeader>
 			<WriteLayout kind={board}><NewPost board={board} /></WriteLayout>
 		</div>

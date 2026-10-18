@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AlertTriangle, HelpCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { GhostButton } from "@/styles/styledUi";
 import { Backdrop, DangerSolid, Dialog, DialogActions, DialogField, DialogIcon } from "@/styles/styledModal";
 
@@ -51,6 +52,7 @@ export function useConfirm() {
 }
 
 function ConfirmModal({ options, onClose }: { options: ConfirmOptions; onClose: (ok: boolean) => void }) {
+	const t = useTranslations();
 	const [typed, setTyped] = useState("");
 	const confirmRef = useRef<HTMLButtonElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -91,13 +93,13 @@ function ConfirmModal({ options, onClose }: { options: ConfirmOptions; onClose: 
 				>
 					{options.requireText && (
 						<DialogField>
-							<span>{options.requireLabel ?? "확인을 위해 입력해주세요"}: <code>{options.requireText}</code></span>
+							<span>{options.requireLabel ?? t("confirm.typeToConfirm")}: <code>{options.requireText}</code></span>
 							<input ref={inputRef} value={typed} onChange={e => setTyped(e.target.value)} autoComplete="off" />
 						</DialogField>
 					)}
 					<DialogActions>
-						<GhostButton type="button" onClick={() => onClose(false)}>{options.cancelLabel ?? "취소"}</GhostButton>
-						<Confirm ref={confirmRef} type="submit" disabled={!valid}>{options.confirmLabel ?? "확인"}</Confirm>
+						<GhostButton type="button" onClick={() => onClose(false)}>{options.cancelLabel ?? t("common.cancel")}</GhostButton>
+						<Confirm ref={confirmRef} type="submit" disabled={!valid}>{options.confirmLabel ?? t("confirm.ok")}</Confirm>
 					</DialogActions>
 				</form>
 			</Dialog>

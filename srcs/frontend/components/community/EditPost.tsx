@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { gql, POST_DETAIL_FIELDS } from "@/libs/graphql";
 import { EmptyState, LinkButton, Skeleton } from "@/styles/styledUi";
 import { RequireLogin } from "@/components/ui/RequireLogin";
@@ -14,6 +15,7 @@ export function EditPost({ postId }: { postId: string }) {
 }
 
 function EditForm({ postId }: { postId: string }) {
+	const t = useTranslations("community.post");
 	const [post, setPost] = useState<Post | null | undefined>(undefined);
 
 	useEffect(() => {
@@ -25,8 +27,8 @@ function EditForm({ postId }: { postId: string }) {
 	if (!post || !post.IsMine) {
 		return (
 			<EmptyState>
-				<p>내가 쓴 글만 수정할 수 있어요.</p>
-				<LinkButton href={`/community/${postId}`}>글로 돌아가기</LinkButton>
+				<p>{t("onlyMine")}</p>
+				<LinkButton href={`/community/${postId}`}>{t("backToPost")}</LinkButton>
 			</EmptyState>
 		);
 	}

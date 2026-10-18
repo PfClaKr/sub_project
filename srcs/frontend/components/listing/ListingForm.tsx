@@ -2,12 +2,14 @@
 
 import { useEffect, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
 import {
 	EMPLOYMENT_TYPES, HOUSING_KINDS, JOB_LANGUAGES, JOB_SECTORS, LISTING_MODES, MAX_LISTING_IMAGES, REGIONS, type ListingType,
 } from "@/libs/constants";
 import { gql } from "@/libs/graphql";
 import { uploadImages } from "@/libs/upload";
-import { LISTING_PATH, warningText } from "@/libs/listing";
+import { LISTING_PATH } from "@/libs/listing";
 import { useRegion } from "@/libs/region";
 import { useSession } from "@/libs/session";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
@@ -28,6 +30,9 @@ const today = () => new Date().toISOString().slice(0, 10);
 // given. Risky text (contacts, prepayment) is never refused: the author
 // sees why it is risky and confirms.
 export function ListingForm({ type, post }: { type: ListingType; post?: Post }) {
+	const t = useTranslations("listing.form");
+	const c = useTranslations("common");
+	const L = useLabels();
 	const router = useRouter();
 	const confirm = useConfirm();
 	const { session } = useSession();
@@ -124,10 +129,10 @@ export function ListingForm({ type, post }: { type: ListingType; post?: Post }) 
 	const submit = async (e: FormEvent) => {
 		e.preventDefault();
 		setError("");
-		if (!(kinds as readonly string[]).includes(kind)) return setError(type === "housing" ? "집 형태를 골라주세요." : "업종을 골라주세요.");
-		if (!location.point) return setError("지도에서 위치를 골라주세요.");
-		if (offering && photos.length === 0) return setError("방 사진을 1장 이상 올려주세요.");
-		if (offering && !pledge) return setError("안전 약속에 동의해주세요.");
+		if (!(kinds as readonly string[]).includes(kind)) return setError(t(type === "housing" ? "chooseKind" : "chooseSector"));
+		if (!location.point) return setError(t("choosePlace"));
+		if (offering && photos.length === 0) return setError(t("needPhoto"));
+		if (offering && !pledge) return setError(t("needPledge"));
 		setSubmitting(true);
 		try {
 			// Upload once; a confirmation round trip reuses the URLs.
@@ -139,25 +144,25 @@ export function ListingForm({ type, post }: { type: ListingType; post?: Post }) 
 
 			let { result, error } = await send(input, false);
 			if (result && !result.Post && result.Warnings.length > 0) {
-				const message = result.Warnings.map(code => `• ${warningText(code).title}\n${warningText(code).text}`).join("\n\n");
+				const message = result.Warnings.map(code => `• ${L.warning(code).title}\n${L.warning(code).text}`).join("\n\n");
 				const ok = await confirm({
-					title: "올리기 전에 확인해주세요",
-					message: `${message}\n\n그래도 올리면 운영진이 먼저 확인할 수 있어요.`,
-					confirmLabel: "그래도 올리기",
-					cancelLabel: "수정하기",
+					title: t("checkTitle"),
+					message: `${message}\n\n${t("checkFooter")}`,
+					confirmLabel: t("postAnyway"),
+					cancelLabel: t("fix"),
 					danger: true,
 				});
 				if (!ok) return;
 				({ result, error } = await send(input, true));
 			}
 			if (!result?.Post) {
-				setError(error ?? "저장하지 못했어요. 다시 시도해주세요.");
+				setError(error ?? c("saveError"));
 				return;
 			}
 			router.push(`${LISTING_PATH[type]}/${result.Post.PostId}`);
 			router.refresh();
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "저장하지 못했어요.");
+			setError(err instanceof Error ? err.message : c("saveError"));
 		} finally {
 			setSubmitting(false);
 		}
@@ -166,22 +171,22 @@ export function ListingForm({ type, post }: { type: ListingType; post?: Post }) 
 	return (
 		<FormColumn onSubmit={submit} style={{ maxWidth: 720 }}>
 			<FormSection aria-labelledby="sec-kind">
-				<header><h2 id="sec-kind">어떤 글인가요?</h2></header>
-				<Segmented role="group" aria-label="글 종류">
+				<header><h2 id="sec-kind">{t("whatKind")}</h2></header>
+				<Segmented role="group" aria-label={t("modes")}>
 					{LISTING_MODES[type].map(m => (
-						<button key={m.value} type="button" aria-pressed={mode === m.value} disabled={!!post} onClick={() => setMode(m.value)}>{m.label}</button>
+						<button key={m.value} type="button" aria-pressed={mode === m.value} disabled={!!post} onClick={() => setMode(m.value)}>{L.mode(type, m.value)}</button>
 					))}
 				</Segmented>
 				<TwoColumns>
-					<FieldLabel>{type === "housing" ? "집 형태" : "업종"}
+					<FieldLabel>{t(type === "housing" ? "kind" : "sector")}
 						<select value={kind} required onChange={e => setKind(e.target.value)}>
-							<option value="" disabled>선택해주세요</option>
-							{kinds.map(k => <option key={k} value={k}>{k}</option>)}
+							<option value="" disabled>{c("choose")}</option>
+							{kinds.map(k => <option key={k} value={k}>{L.enum(type === "housing" ? "housingKind" : "jobSector", k)}</option>)}
 						</select>
 					</FieldLabel>
-					<FieldLabel>지역 <Hint>지역 필터에 쓰여요</Hint>
+					<FieldLabel>{c("region")} <Hint>{c("regionHint")}</Hint>
 						<select value={region} onChange={e => setRegion(e.target.value)}>
-							{REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+							{REGIONS.map(r => <option key={r} value={r}>{L.enum("region", r)}</option>)}
 						</select>
 					</FieldLabel>
 				</TwoColumns>
@@ -190,90 +195,90 @@ export function ListingForm({ type, post }: { type: ListingType; post?: Post }) 
 			{type === "housing" ? (
 				<FormSection aria-labelledby="sec-terms">
 					<header>
-						<h2 id="sec-terms">조건</h2>
-						{!offering && <p>구하는 조건을 적어주세요. 월세는 최대 예산이에요.</p>}
+						<h2 id="sec-terms">{t("terms")}</h2>
+						{!offering && <p>{t("seekTip")}</p>}
 					</header>
 					<TwoColumns>
-						<FieldLabel>{offering ? "월세" : "최대 월세"}
+						<FieldLabel>{offering ? t("rent") : t("maxRent")}
 							<Adorned><span aria-hidden>€</span>
 								<input type="number" required min={0} max={20000} inputMode="numeric" value={rent} onChange={e => setRent(e.target.value)} />
 							</Adorned>
 						</FieldLabel>
-						<FieldLabel>보증금 <Hint>선택</Hint>
+						<FieldLabel>{t("deposit")} <Hint>{t("optional")}</Hint>
 							<Adorned><span aria-hidden>€</span>
 								<input type="number" min={0} max={50000} inputMode="numeric" value={deposit} onChange={e => setDeposit(e.target.value)} />
 							</Adorned>
 						</FieldLabel>
-						<FieldLabel>입주 가능일
+						<FieldLabel>{t("moveIn")}
 							<input type="date" required min={post ? undefined : today()} value={from} onChange={e => setFrom(e.target.value)} />
 						</FieldLabel>
-						<FieldLabel>종료일 <Hint>{kind === "서블렛" ? "서블렛은 필수" : "선택"}</Hint>
+						<FieldLabel>{t("endDate")} <Hint>{kind === "서블렛" ? t("endSublet") : t("optional")}</Hint>
 							<input type="date" required={kind === "서블렛"} min={from || undefined} value={end} onChange={e => setEnd(e.target.value)} />
 						</FieldLabel>
-						<FieldLabel>최소 기간 <Hint>개월, 선택</Hint>
+						<FieldLabel>{t("minStay")} <Hint>{t("minStayHint")}</Hint>
 							<input type="number" min={1} max={36} inputMode="numeric" value={minMonths} onChange={e => setMinMonths(e.target.value)} />
 						</FieldLabel>
-						<FieldLabel>면적·방 수 <Hint>선택</Hint>
+						<FieldLabel>{t("sizeRooms")} <Hint>{t("optional")}</Hint>
 							<div style={{ display: "flex", gap: 8 }}>
-								<input type="number" min={1} max={1000} inputMode="numeric" placeholder="m²" aria-label="면적" value={size} onChange={e => setSize(e.target.value)} />
-								<input type="number" min={1} max={20} inputMode="numeric" placeholder="방 수" aria-label="방 수" value={rooms} onChange={e => setRooms(e.target.value)} />
+								<input type="number" min={1} max={1000} inputMode="numeric" placeholder="m²" aria-label={t("size")} value={size} onChange={e => setSize(e.target.value)} />
+								<input type="number" min={1} max={20} inputMode="numeric" placeholder={t("rooms")} aria-label={t("rooms")} value={rooms} onChange={e => setRooms(e.target.value)} />
 							</div>
 						</FieldLabel>
 					</TwoColumns>
 					<CheckRow>
-						<label><input type="checkbox" checked={charges} onChange={e => setCharges(e.target.checked)} /> 관리비 포함</label>
-						<label><input type="checkbox" checked={furnished} onChange={e => setFurnished(e.target.checked)} /> 가구 포함</label>
-						<label><input type="checkbox" checked={caf} onChange={e => setCaf(e.target.checked)} /> CAF(APL) 신청 가능</label>
-						<label><input type="checkbox" checked={pets} onChange={e => setPets(e.target.checked)} /> 반려동물 가능</label>
+						<label><input type="checkbox" checked={charges} onChange={e => setCharges(e.target.checked)} /> {t("charges")}</label>
+						<label><input type="checkbox" checked={furnished} onChange={e => setFurnished(e.target.checked)} /> {t("furnished")}</label>
+						<label><input type="checkbox" checked={caf} onChange={e => setCaf(e.target.checked)} /> {t("caf")}</label>
+						<label><input type="checkbox" checked={pets} onChange={e => setPets(e.target.checked)} /> {t("pets")}</label>
 					</CheckRow>
 				</FormSection>
 			) : (
 				<FormSection aria-labelledby="sec-terms">
-					<header><h2 id="sec-terms">근무 조건</h2></header>
+					<header><h2 id="sec-terms">{t("jobTerms")}</h2></header>
 					<TwoColumns>
-						<FieldLabel>고용 형태
+						<FieldLabel>{t("employment")}
 							<select required value={employment} onChange={e => setEmployment(e.target.value)}>
-								<option value="" disabled>선택해주세요</option>
-								{EMPLOYMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+								<option value="" disabled>{c("choose")}</option>
+								{EMPLOYMENT_TYPES.map(e => <option key={e} value={e}>{L.enum("employment", e)}</option>)}
 							</select>
 						</FieldLabel>
-						<FieldLabel>급여
+						<FieldLabel>{t("pay")}
 							<div style={{ display: "flex", gap: 8 }}>
-								<select value={wageType} onChange={e => setWageType(e.target.value)} aria-label="급여 방식" style={{ width: "auto" }}>
-									<option value="hourly">시급</option>
-									<option value="monthly">월급</option>
-									<option value="negotiable">협의</option>
+								<select value={wageType} onChange={e => setWageType(e.target.value)} aria-label={t("payType")} style={{ width: "auto" }}>
+									<option value="hourly">{t("hourly")}</option>
+									<option value="monthly">{t("monthly")}</option>
+									<option value="negotiable">{t("negotiable")}</option>
 								</select>
 								{wageType !== "negotiable" && (
 									<Adorned style={{ flex: 1 }}><span aria-hidden>€</span>
-										<input type="number" required min={0} step={0.01} inputMode="decimal" value={wage} onChange={e => setWage(e.target.value)} aria-label="금액" />
+										<input type="number" required min={0} step={0.01} inputMode="decimal" value={wage} onChange={e => setWage(e.target.value)} aria-label={t("amount")} />
 									</Adorned>
 								)}
 							</div>
 						</FieldLabel>
 					</TwoColumns>
-					<FieldLabel>근무 요일·시간 <Hint>선택</Hint>
-						<input type="text" maxLength={200} placeholder="예: 주말 11시~16시, 주 2회" value={schedule} onChange={e => setSchedule(e.target.value)} />
+					<FieldLabel>{t("schedule")} <Hint>{t("optional")}</Hint>
+						<input type="text" maxLength={200} placeholder={t("schedulePlaceholder")} value={schedule} onChange={e => setSchedule(e.target.value)} />
 					</FieldLabel>
-					<FieldLabel as="div">언어
+					<FieldLabel as="div">{t("languages")}
 						<CheckRow>
 							{JOB_LANGUAGES.map(l => (
 								<label key={l}>
-									<input type="checkbox" checked={languages.includes(l)} onChange={e => setLanguages(prev => e.target.checked ? [...prev, l] : prev.filter(x => x !== l))} /> {l}
+									<input type="checkbox" checked={languages.includes(l)} onChange={e => setLanguages(prev => e.target.checked ? [...prev, l] : prev.filter(x => x !== l))} /> {L.enum("jobLanguage", l)}
 								</label>
 							))}
 						</CheckRow>
 					</FieldLabel>
 					<CheckRow>
-						<label><input type="checkbox" checked={permit} onChange={e => setPermit(e.target.checked)} /> 근로 가능한 체류증 필요</label>
+						<label><input type="checkbox" checked={permit} onChange={e => setPermit(e.target.checked)} /> {t("permit")}</label>
 					</CheckRow>
-					<Hint>성별·나이·국적 조건은 적을 수 없어요(프랑스 차별금지 규정). &lsquo;한국어 가능&rsquo; 같은 직무 조건은 괜찮아요.</Hint>
+					<Hint>{t("discrimination")}</Hint>
 					{hiring && !post && (
 						<TwoColumns>
-							<FieldLabel>연락처 전화 <Hint>선택 · 로그인한 회원에게만 보여요</Hint>
+							<FieldLabel>{t("phone")} <Hint>{t("phoneHint")}</Hint>
 								<input type="tel" maxLength={30} placeholder="06 12 34 56 78" value={phone} onChange={e => setPhone(e.target.value)} />
 							</FieldLabel>
-							<FieldLabel>연락처 이메일 <Hint>선택</Hint>
+							<FieldLabel>{t("email")} <Hint>{t("optional")}</Hint>
 								<input type="email" maxLength={100} value={email} onChange={e => setEmail(e.target.value)} />
 							</FieldLabel>
 						</TwoColumns>
@@ -282,28 +287,28 @@ export function ListingForm({ type, post }: { type: ListingType; post?: Post }) 
 			)}
 
 			<FormSection aria-labelledby="sec-content">
-				<header><h2 id="sec-content">소개</h2></header>
-				<FieldLabel>제목
+				<header><h2 id="sec-content">{t("about")}</h2></header>
+				<FieldLabel>{c("title")}
 					<input type="text" required minLength={2} maxLength={100} value={title} onChange={e => setTitle(e.target.value)}
-						placeholder={type === "housing" ? "예: 15구 메트로 6분, 채광 좋은 쉐어 방" : "예: 11구 한식당 주말 홀서빙 구해요"} />
+						placeholder={t(type === "housing" ? "titleHousing" : "titleJob")} />
 				</FieldLabel>
 				<FieldLabel>
-					<span className="sr-only">내용</span>
+					<span className="sr-only">{t("content")}</span>
 					<textarea required rows={8} maxLength={5000} value={body} onChange={e => setBody(e.target.value)}
-						placeholder={type === "housing" ? "집 상태, 함께 사는 사람, 주변 환경, 원하는 입주자 등을 적어주세요." : "하는 일, 근무 환경, 원하는 사람(또는 내 경력)을 적어주세요."} />
-					<Counter>{body.length.toLocaleString()} / 5,000</Counter>
+						placeholder={t(type === "housing" ? "bodyHousing" : "bodyJob")} />
+					<Counter>{body.length.toLocaleString()} / {(5000).toLocaleString()}</Counter>
 				</FieldLabel>
 				<ImageUploader photos={photos} onChange={next => setPhotos(next.slice(0, MAX_LISTING_IMAGES))} uploading={submitting} />
-				{offering && <Hint>방 사진은 1장 이상 필요해요. 실제 사진이 신뢰를 높여요.</Hint>}
+				{offering && <Hint>{t("photoTip")}</Hint>}
 			</FormSection>
 
 			<FormSection aria-labelledby="sec-place">
-				<header><h2 id="sec-place">위치</h2></header>
+				<header><h2 id="sec-place">{t("place")}</h2></header>
 				<LocationField
 					value={location}
 					onChange={setLocation}
 					areaOnly={type === "housing"}
-					exactHint="가게 위치가 핀으로 보여요."
+					exactHint={t("shopPin")}
 				/>
 			</FormSection>
 
@@ -311,12 +316,12 @@ export function ListingForm({ type, post }: { type: ListingType; post?: Post }) 
 				<CheckRow>
 					<label style={{ borderRadius: 8 }}>
 						<input type="checkbox" checked={pledge} onChange={e => setPledge(e.target.checked)} />
-						집을 보여주기 전에는 보증금이나 월세를 받지 않을게요.
+						{t("pledge")}
 					</label>
 				</CheckRow>
 			)}
 			{error && <ErrorText role="alert">{error}</ErrorText>}
-			<SubmitButton type="submit" disabled={submitting}>{submitting ? "저장 중..." : post ? "수정 완료" : "올리기"}</SubmitButton>
+			<SubmitButton type="submit" disabled={submitting}>{submitting ? c("saving") : post ? t("update") : t("post")}</SubmitButton>
 		</FormColumn>
 	);
 }

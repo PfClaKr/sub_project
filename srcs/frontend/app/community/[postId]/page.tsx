@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { PostDetail } from "@/components/community/PostDetail";
 import { gql, POST_DETAIL_FIELDS } from "@/libs/graphql";
 import type { Post } from "@/libs/types";
@@ -17,7 +18,7 @@ async function getPost(postId: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const post = await getPost(params.postId);
-	if (!post) return { title: "글을 찾을 수 없어요" };
+	if (!post) return { title: (await getTranslations("pages.notFound"))("title") };
 	return { title: post.Title, description: post.BodyPreview };
 }
 

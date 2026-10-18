@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
 import { ChevronRight, HelpCircle, ShieldCheck } from "lucide-react";
 import { QNA_TOPICS } from "@/libs/constants";
 import { boardHref, type BoardParams } from "@/libs/community";
@@ -17,6 +19,8 @@ type Open = Pick<Post, "PostId" | "Title" | "CommentCount">;
 // region), and the safety guide. Hidden on tablets and phones, where the
 // topic chips cover it.
 export function BoardSide({ params }: { params: BoardParams }) {
+	const t = useTranslations("community.side");
+	const L = useLabels();
 	const { city } = useRegion();
 	const [open, setOpen] = useState<Open[] | null>(null);
 
@@ -32,16 +36,16 @@ export function BoardSide({ params }: { params: BoardParams }) {
 	}, [city]);
 
 	return (
-		<SideColumn aria-label="커뮤니티 바로가기">
+		<SideColumn aria-label={t("label")}>
 			<SideCard>
-				<h2>생활 Q&A 주제</h2>
+				<h2>{t("topics")}</h2>
 				<SideList>
-					{QNA_TOPICS.map(t => {
-						const active = params.board === "qna" && params.topic === t;
+					{QNA_TOPICS.map(topic => {
+						const active = params.board === "qna" && params.topic === topic;
 						return (
-							<li key={t}>
-								<Link href={boardHref(params, { board: "qna", topic: t })} aria-current={active ? "page" : undefined}>
-									{t} <ChevronRight size={14} aria-hidden />
+							<li key={topic}>
+								<Link href={boardHref(params, { board: "qna", topic })} aria-current={active ? "page" : undefined}>
+									{L.enum("topic", topic)} <ChevronRight size={14} aria-hidden />
 								</Link>
 							</li>
 						);
@@ -51,25 +55,25 @@ export function BoardSide({ params }: { params: BoardParams }) {
 
 			{open && open.length > 0 && (
 				<SideCard>
-					<h2><HelpCircle size={16} aria-hidden /> 답을 기다리는 질문</h2>
+					<h2><HelpCircle size={16} aria-hidden /> {t("waiting")}</h2>
 					<SideList>
 						{open.map(p => (
 							<li key={p.PostId}>
 								<Link href={`/community/${p.PostId}`}>
 									<span>{p.Title}</span>
-									<small>{p.CommentCount ? `답변 ${p.CommentCount}` : "첫 답변을 남겨주세요"}</small>
+									<small>{p.CommentCount ? t("answers", { count: p.CommentCount }) : t("firstAnswer")}</small>
 								</Link>
 							</li>
 						))}
 					</SideList>
-					<Link className="more" href={boardHref({}, { board: "qna", solved: "open" })}>전체 보기</Link>
+					<Link className="more" href={boardHref({}, { board: "qna", solved: "open" })}>{t("all")}</Link>
 				</SideCard>
 			)}
 
 			<SideCard $soft>
-				<h2><ShieldCheck size={16} aria-hidden /> 거래·계약 전에</h2>
-				<p>보기 전에 돈을 보내거나, 외부 메신저로 옮기자는 요청은 사기일 수 있어요.</p>
-				<Link className="more" href="/safety">안전 가이드 보기</Link>
+				<h2><ShieldCheck size={16} aria-hidden /> {t("safetyTitle")}</h2>
+				<p>{t("safetyBody")}</p>
+				<Link className="more" href="/safety">{t("safetyLink")}</Link>
 			</SideCard>
 		</SideColumn>
 	);

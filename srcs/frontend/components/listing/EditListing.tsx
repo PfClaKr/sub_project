@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { gql, LISTING_DETAIL_FIELDS } from "@/libs/graphql";
 import { LISTING_PATH } from "@/libs/listing";
 import { RequireLogin } from "@/components/ui/RequireLogin";
@@ -14,6 +15,7 @@ export function EditListing({ type, postId }: { type: ListingType; postId: strin
 }
 
 function EditForm({ type, postId }: { type: ListingType; postId: string }) {
+	const t = useTranslations("community.post");
 	const [post, setPost] = useState<Post | null | undefined>(undefined);
 	useEffect(() => {
 		gql<{ listing: Post | null }>(`query($id: String!) { listing(PostId: $id) { ${LISTING_DETAIL_FIELDS} } }`, { id: postId })
@@ -24,8 +26,8 @@ function EditForm({ type, postId }: { type: ListingType; postId: string }) {
 	if (!post || !post.IsMine || post.Type !== type) {
 		return (
 			<EmptyState>
-				<p>내가 쓴 글만 수정할 수 있어요.</p>
-				<LinkButton href={`${LISTING_PATH[type]}/${postId}`}>글로 돌아가기</LinkButton>
+				<p>{t("onlyMine")}</p>
+				<LinkButton href={`${LISTING_PATH[type]}/${postId}`}>{t("backToPost")}</LinkButton>
 			</EmptyState>
 		);
 	}

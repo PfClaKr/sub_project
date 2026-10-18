@@ -1,14 +1,15 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
 import { EditPost } from "@/components/community/EditPost";
 import { PageHeader } from "@/styles/styledLayout";
 
-export const metadata: Metadata = { title: "글 수정" };
+export const generateMetadata = pageMetadata("pages.editPost");
 
-export default function Page({ params }: { params: { postId: string } }) {
+export default async function Page({ params }: { params: { postId: string } }) {
 	return (
 		<div>
 			<PageHeader>
-				<h1>글 수정</h1>
+				<h1>{(await getTranslations("pages.editPost"))("title")}</h1>
 			</PageHeader>
 			<EditPost postId={params.postId} />
 		</div>

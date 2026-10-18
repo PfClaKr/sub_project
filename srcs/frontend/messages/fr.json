@@ -172,5 +172,646 @@
     "title": "Page introuvable",
     "body": "Elle a été supprimée ou l'adresse est erronée.",
     "home": "Retour à l'accueil"
+  },
+  "enums": {
+    "category": {
+      "전자기기": "Électronique",
+      "가구": "Meubles",
+      "의류": "Vêtements",
+      "도서": "Livres",
+      "식품": "Alimentation",
+      "기타": "Autre"
+    },
+    "region": {
+      "파리": "Paris",
+      "일드프랑스": "Île-de-France",
+      "리옹": "Lyon",
+      "마르세유": "Marseille",
+      "툴루즈": "Toulouse",
+      "스트라스부르": "Strasbourg",
+      "니스": "Nice",
+      "프랑스 기타": "Ailleurs en France",
+      "기타 유럽": "Ailleurs en Europe"
+    },
+    "status": {
+      "판매중": "En vente",
+      "예약중": "Réservé",
+      "판매완료": "Vendu"
+    },
+    "topic": {
+      "일상": "Quotidien",
+      "정보": "Bons plans",
+      "맛집·장보기": "Restos et courses",
+      "행사·모임": "Sorties et rencontres",
+      "고민": "Conseils",
+      "체류증·비자": "Titre de séjour et visa",
+      "행정·CAF·세금": "Démarches, CAF, impôts",
+      "은행·통신": "Banque et téléphone",
+      "학교·어학": "Études et langues",
+      "의료": "Santé",
+      "집·이사": "Logement et déménagement",
+      "일·취업": "Travail",
+      "기타": "Autre"
+    },
+    "board": {
+      "free": "Forum libre",
+      "qna": "Questions pratiques",
+      "housing": "Logement",
+      "job": "Jobs"
+    },
+    "reportReason": {
+      "사기 의심": "Arnaque probable",
+      "스팸·광고": "Spam ou publicité",
+      "욕설·혐오": "Insultes ou haine",
+      "개인정보 노출": "Données personnelles exposées",
+      "불법 행위": "Activité illégale",
+      "기타": "Autre"
+    },
+    "housingKind": {
+      "쉐어": "Colocation",
+      "스튜디오·원룸": "Studio",
+      "아파트 전체": "Appartement entier",
+      "서블렛": "Sous-location",
+      "단기·민박": "Court séjour"
+    },
+    "jobSector": {
+      "식당·카페": "Restauration",
+      "판매·매장": "Vente en boutique",
+      "사무": "Bureau",
+      "과외·강사": "Cours et enseignement",
+      "베이비시터": "Baby-sitting",
+      "가이드·통역": "Guide et interprète",
+      "기타": "Autre"
+    },
+    "employment": {
+      "알바": "Temps partiel",
+      "정규직": "CDI",
+      "인턴": "Stage",
+      "프리랜서": "Freelance"
+    },
+    "jobLanguage": {
+      "한국어": "Coréen",
+      "프랑스어": "Français",
+      "영어": "Anglais"
+    },
+    "mode": {
+      "housing": {
+        "offer": "Je propose",
+        "seek": "Je cherche"
+      },
+      "job": {
+        "hiring": "Je recrute",
+        "seeking": "Je cherche un job"
+      }
+    },
+    "deal": {
+      "open": "Disponible",
+      "reserved": "Réservé",
+      "closed": "Terminé"
+    }
+  },
+  "listing": {
+    "labels": {
+      "rent": "{price}/mois",
+      "rentMax": "{price}/mois max.",
+      "charges": "{base} · charges comprises",
+      "negotiable": "Salaire à négocier",
+      "hourly": "{price}/h",
+      "monthly": "{price}/mois",
+      "now": "Dès maintenant",
+      "from": "À partir du {date}",
+      "thisAreaOnly": "Cette zone uniquement"
+    },
+    "warnings": {
+      "contact": {
+        "title": "Le texte contient un contact ou un identifiant de messagerie",
+        "text": "Passer sur KakaoTalk ou Telegram est le début le plus fréquent des arnaques. Les messages d'Itnyang gardent une trace que vous pouvez signaler en cas de problème."
+      },
+      "prepay": {
+        "title": "Le texte demande un paiement d'avance",
+        "text": "Demander une caution ou un acompte avant la visite ou la rencontre est très souvent une arnaque. Ces annonces sont vérifiées par l'équipe."
+      },
+      "low_wage": {
+        "title": "Le salaire horaire est inférieur au SMIC",
+        "text": "Un salaire horaire sous le SMIC est illégal en France. Vérifiez le montant."
+      },
+      "unknown": {
+        "title": "Un point est à vérifier",
+        "text": "Relisez votre annonce."
+      }
+    },
+    "board": {
+      "housing": {
+        "title": "Logement",
+        "search": "Quartier, station, critère (ex. : coloc 15e)",
+        "write": "Publier un logement",
+        "empty": "Aucun logement ne correspond.",
+        "allKinds": "Tous les types",
+        "kindsLabel": "Type de logement",
+        "safety": "N'envoyez ni caution ni loyer avant d'avoir visité et signé un bail."
+      },
+      "job": {
+        "title": "Jobs",
+        "search": "Secteur, quartier (ex. : café week-end)",
+        "write": "Publier une offre",
+        "empty": "Aucune annonce ne correspond.",
+        "allKinds": "Tous les secteurs",
+        "kindsLabel": "Secteur",
+        "safety": "Demander d'abord une pièce d'identité, un RIB ou de l'argent avant de commencer : c'est une arnaque."
+      },
+      "modesLabel": "Type d'annonce",
+      "all": "Tout",
+      "newest": "Plus récents",
+      "rentAsc": "Loyer croissant",
+      "available": "Disponible le plus tôt",
+      "wageDesc": "Salaire décroissant",
+      "distance": "Plus proches",
+      "filters": "Filtres",
+      "place": "Lieu",
+      "chosenPlace": "Lieu choisi",
+      "sort": "Tri",
+      "view": "Affichage",
+      "list": "Liste",
+      "map": "Carte",
+      "guide": "Guide de sécurité",
+      "corrected": "Aucun résultat exact : voici des annonces proches.",
+      "loadError": "Impossible de charger les annonces.",
+      "pages": "Pages",
+      "maxRent": "Loyer max.",
+      "moveInBy": "Disponible avant le",
+      "noLimit": "Sans limite",
+      "furnished": "Meublé",
+      "caf": "CAF possible",
+      "pets": "Animaux acceptés",
+      "employment": "Type de contrat",
+      "minWage": "Salaire horaire min.",
+      "permitFree": "Sans condition de titre de séjour",
+      "reset": "Réinitialiser",
+      "apply": "Appliquer"
+    },
+    "row": {
+      "furnished": "Meublé",
+      "permit": "Titre de séjour requis"
+    },
+    "detail": {
+      "furnished": "Meublé",
+      "caf": "CAF possible",
+      "pets": "Animaux acceptés",
+      "budget": "Budget",
+      "rent": "Loyer",
+      "deposit": "Caution",
+      "moveIn": "Entrée",
+      "minStay": "Durée min.",
+      "months": "{count} mois",
+      "size": "Surface",
+      "rooms": "{count, plural, one {# pièce} other {# pièces}}",
+      "options": "Options",
+      "pay": "Salaire",
+      "employment": "Contrat",
+      "schedule": "Horaires",
+      "languages": "Langues",
+      "permit": "Titre de séjour",
+      "permitRequired": "Titre de séjour autorisant le travail requis",
+      "permitNone": "Aucune condition",
+      "showContact": "Voir le contact",
+      "location": "Localisation",
+      "exactInChat": "{area} · adresse exacte par message",
+      "deleteTitle": "Supprimer cette annonce ?",
+      "deleteBody": "Cette action est définitive.",
+      "manage": "Gérer mon annonce",
+      "expired": "Expirée. Prolongez-la pour qu'elle réapparaisse.",
+      "expiresIn": "Expire dans {days} j",
+      "status": "État",
+      "bump": "Remonter",
+      "extend": "Prolonger de 30 jours",
+      "missing": "Annonce introuvable : elle a peut-être été supprimée ou a expiré.",
+      "backToList": "Retour à la liste",
+      "expiredTag": "Expirée",
+      "hidden": "Masquée après signalement · visible par vous seul",
+      "expiredPost": "Annonce expirée",
+      "closedPost": "Annonce terminée",
+      "askChat": "Contacter par message",
+      "applyChat": "Postuler par message",
+      "chat": "Envoyer un message",
+      "saved": "Enregistré",
+      "save": "Enregistrer",
+      "safetyHousing": "N'envoyez ni caution ni loyer avant la visite et le bail. Méfiez-vous des demandes de passer sur une autre messagerie.",
+      "safetyJob": "Demander de l'argent avant de commencer, ou une photo de pièce d'identité ou de RIB d'emblée : c'est une arnaque.",
+      "guide": "Guide de sécurité",
+      "about": "Description"
+    },
+    "form": {
+      "chooseKind": "Choisissez le type de logement.",
+      "chooseSector": "Choisissez le secteur.",
+      "choosePlace": "Choisissez un lieu sur la carte.",
+      "needPhoto": "Ajoutez au moins une photo du logement.",
+      "needPledge": "Acceptez l'engagement de sécurité.",
+      "checkTitle": "À vérifier avant de publier",
+      "checkFooter": "Si vous publiez quand même, l'équipe pourra vérifier l'annonce d'abord.",
+      "postAnyway": "Publier quand même",
+      "fix": "Corriger",
+      "whatKind": "Quel type d'annonce ?",
+      "modes": "Type d'annonce",
+      "kind": "Type de logement",
+      "sector": "Secteur",
+      "terms": "Conditions",
+      "seekTip": "Décrivez ce que vous cherchez. Le loyer est votre budget maximum.",
+      "rent": "Loyer",
+      "maxRent": "Loyer max.",
+      "deposit": "Caution",
+      "optional": "Facultatif",
+      "moveIn": "Disponible à partir du",
+      "endDate": "Date de fin",
+      "endSublet": "Obligatoire pour une sous-location",
+      "minStay": "Durée minimale",
+      "minStayHint": "mois, facultatif",
+      "sizeRooms": "Surface et pièces",
+      "size": "Surface",
+      "rooms": "Pièces",
+      "charges": "Charges comprises",
+      "furnished": "Meublé",
+      "caf": "CAF (APL) possible",
+      "pets": "Animaux acceptés",
+      "jobTerms": "Conditions de travail",
+      "employment": "Type de contrat",
+      "pay": "Salaire",
+      "payType": "Type de salaire",
+      "hourly": "Horaire",
+      "monthly": "Mensuel",
+      "negotiable": "À négocier",
+      "amount": "Montant",
+      "schedule": "Jours et horaires",
+      "schedulePlaceholder": "Ex. : week-end 11 h–16 h, 2 fois par semaine",
+      "languages": "Langues",
+      "permit": "Titre de séjour autorisant le travail requis",
+      "discrimination": "Pas de critère de sexe, d'âge ni de nationalité (loi française anti-discrimination). Une compétence comme « parle coréen » est permise.",
+      "phone": "Téléphone",
+      "phoneHint": "Facultatif · visible des membres connectés uniquement",
+      "email": "E-mail",
+      "about": "Description",
+      "titleHousing": "Ex. : coloc lumineuse dans le 15e, à 6 min du métro",
+      "titleJob": "Ex. : restaurant coréen du 11e cherche serveur le week-end",
+      "content": "Contenu",
+      "bodyHousing": "État du logement, colocataires, quartier, profil recherché…",
+      "bodyJob": "Missions, cadre de travail, profil recherché (ou votre expérience)…",
+      "photoTip": "Au moins une photo est requise. De vraies photos inspirent confiance.",
+      "place": "Lieu",
+      "shopPin": "L'adresse du commerce s'affiche avec une épingle.",
+      "pledge": "Je ne demanderai ni caution ni loyer avant la visite.",
+      "update": "Enregistrer",
+      "post": "Publier"
+    }
+  },
+  "common": {
+    "region": "Région",
+    "allRegions": "Toutes les régions",
+    "search": "Rechercher",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "close": "Fermer",
+    "prev": "← Précédent",
+    "next": "Suivant →",
+    "breadcrumb": "Fil d'Ariane",
+    "photo": "Photo jointe",
+    "edited": " · modifié",
+    "solved": "Résolu",
+    "waiting": "En attente",
+    "choose": "Choisissez",
+    "regionHint": "Sert au filtre par région",
+    "saving": "Enregistrement…",
+    "saveError": "Impossible d'enregistrer. Réessayez.",
+    "title": "Titre",
+    "body": "Texte",
+    "profilePhoto": "Photo de profil de {name}",
+    "member": "Membre"
+  },
+  "community": {
+    "title": "Communauté",
+    "write": "Écrire",
+    "ask": "Poser une question",
+    "all": "Tout",
+    "allTopics": "Tous les sujets",
+    "boardsLabel": "Rubriques",
+    "topicsLabel": "Sujets",
+    "searchLabel": "Rechercher dans la communauté",
+    "searchQna": "Cherchez une question (ex. : renouvellement du titre de séjour)",
+    "searchAll": "Rechercher",
+    "solvedLabel": "État",
+    "allQuestions": "Toutes les questions",
+    "openQuestions": "Sans réponse",
+    "solvedQuestions": "Résolues",
+    "sortLabel": "Tri",
+    "relevance": "Pertinence",
+    "newest": "Plus récents",
+    "popular": "Populaires",
+    "corrected": "Aucun résultat exact : voici des messages proches.",
+    "noMatch": "Aucun message pour « {q} ».",
+    "empty": "Aucun message pour l'instant. Écrivez le premier !",
+    "pages": "Pages",
+    "commentsCount": "{count, plural, one {# commentaire} other {# commentaires}}",
+    "likesCount": "{count, plural, one {# j'aime} other {# j'aime}}",
+    "side": {
+      "label": "Raccourcis",
+      "topics": "Sujets des questions",
+      "waiting": "Questions sans réponse",
+      "answers": "{count, plural, one {# réponse} other {# réponses}}",
+      "firstAnswer": "Soyez le premier à répondre",
+      "all": "Tout voir",
+      "safetyTitle": "Avant un échange ou un contrat",
+      "safetyBody": "Payer avant de voir, ou passer sur une autre messagerie : ce sont des signes d'arnaque.",
+      "safetyLink": "Voir le guide de sécurité"
+    },
+    "post": {
+      "deleteTitle": "Supprimer ce message ?",
+      "deleteBody": "Cette action est définitive.",
+      "missing": "Message introuvable : il a peut-être été supprimé ou masqué.",
+      "back": "Retour à la communauté",
+      "hidden": "Masqué après signalement · visible par vous seul",
+      "like": "J'aime {count}",
+      "bookmark": "Enregistrer",
+      "bookmarked": "Enregistré",
+      "onlyMine": "Vous ne pouvez modifier que vos propres messages.",
+      "backToPost": "Retour au message"
+    },
+    "loadError": "Impossible de charger les messages.",
+    "form": {
+      "similar": "Des questions proches existent déjà",
+      "similarSolved": "· résolue",
+      "similarAnswers": "· {count, plural, one {# réponse} other {# réponses}}",
+      "chooseTopic": "Choisissez un sujet.",
+      "where": "Où publier ?",
+      "board": "Rubrique",
+      "topic": "Sujet",
+      "question": "Question",
+      "content": "Contenu",
+      "questionTip": "Plus votre situation est précise, meilleures seront les réponses (statut, région, dates…).",
+      "titleQna": "Ex. : renouvellement du titre étudiant, quand ouvrent les rendez-vous ?",
+      "titleFree": "Saisissez un titre",
+      "bodyQna": "Décrivez votre question en détail.",
+      "bodyFree": "Exprimez-vous librement.",
+      "anonymous": "Publier anonymement",
+      "anonymousHint": "« Anonyme » s'affiche à la place de votre pseudo. Impossible de changer après publication.",
+      "update": "Enregistrer",
+      "postQna": "Publier la question",
+      "postFree": "Publier"
+    },
+    "comments": {
+      "acceptTitle": "Accepter cette réponse ?",
+      "acceptBody": "Vous ne pouvez accepter qu'une réponse ; elle sera épinglée en haut.",
+      "accept": "Accepter",
+      "deleteTitle": "Supprimer ce commentaire ?",
+      "hidden": "Commentaire masqué après signalement.",
+      "deleted": "Commentaire supprimé.",
+      "accepted": "Réponse acceptée",
+      "author": "Auteur",
+      "reply": "Répondre",
+      "answers": "{count, plural, one {# réponse} other {# réponses}}",
+      "comments": "{count, plural, one {# commentaire} other {# commentaires}}",
+      "loginAnswer": "Connectez-vous pour répondre",
+      "loginComment": "Connectez-vous pour commenter",
+      "replyPlaceholder": "Votre réponse",
+      "answerPlaceholder": "Partagez ce que vous savez : votre expérience aide aussi.",
+      "commentPlaceholder": "Votre commentaire",
+      "replyLabel": "Réponse",
+      "commentLabel": "Commentaire",
+      "authorAnon": "Vos commentaires s'affichent comme « Anonyme (auteur) ».",
+      "anonymous": "Anonyme",
+      "posting": "Envoi…",
+      "post": "Publier"
+    },
+    "activity": {
+      "label": "Mon activité",
+      "mine": "Mes messages",
+      "listings": "Mes annonces",
+      "bookmarks": "Enregistrés",
+      "noBookmarks": "Rien d'enregistré. Appuyez sur « Enregistrer » sur un message pour le retrouver ici.",
+      "noPosts": "Vous n'avez encore rien publié.",
+      "ask": "Poser une question",
+      "postRoom": "Publier un logement"
+    }
+  },
+  "report": {
+    "button": "Signaler",
+    "done": "Signalé",
+    "chooseReason": "Choisissez un motif.",
+    "title": "Signaler",
+    "lead": "L'équipe vérifie puis agit. La personne signalée ne sait pas qui l'a signalée.",
+    "reason": "Motif",
+    "detail": "Détails (facultatif)",
+    "detailPlaceholder": "Ex. : on me demande la caution avant la visite.",
+    "sending": "Envoi…",
+    "submit": "Signaler"
+  },
+  "pages": {
+    "community": {
+      "title": "Communauté",
+      "description": "Les Coréens de France s'entraident : titre de séjour, CAF, banque, études, santé, et un forum libre."
+    },
+    "housing": {
+      "title": "Logement",
+      "description": "Colocations, studios et sous-locations à Paris et en France, par critères et sur la carte."
+    },
+    "jobs": {
+      "title": "Jobs",
+      "description": "Petits boulots dans les commerces coréens, cours, baby-sitting : offres et demandes."
+    },
+    "notFound": {
+      "title": "Message introuvable"
+    },
+    "editPost": {
+      "title": "Modifier le message"
+    },
+    "writePost": {
+      "title": "Écrire"
+    },
+    "askQuestion": {
+      "title": "Poser une question"
+    },
+    "writeHousing": {
+      "title": "Publier un logement"
+    },
+    "writeJob": {
+      "title": "Publier une offre ou une demande"
+    }
+  },
+  "writeTips": {
+    "label": "Conseils de rédaction",
+    "guide": "Guide de sécurité",
+    "product": {
+      "title": "Pour vendre vite",
+      "item1": "Photographiez à la lumière, sous plusieurs angles. La première photo apparaît dans la liste.",
+      "item2": "Mettez la marque et le modèle dans le titre pour être trouvé.",
+      "item3": "Comparez avec des objets similaires pour fixer le prix.",
+      "item4": "Signalez honnêtement rayures et défauts.",
+      "safety": "Échangez en main propre après avoir vu l'objet. Ne demandez ni n'acceptez de paiement d'avance."
+    },
+    "qna": {
+      "title": "Pour obtenir de bonnes réponses",
+      "item1": "Résumez votre question en une phrase dans le titre.",
+      "item2": "Précisez votre statut, votre ville et vos dates.",
+      "item3": "Cherchez d'abord si la question a déjà été posée.",
+      "item4": "Acceptez la réponse qui vous a aidé : elle aidera d'autres aussi.",
+      "safety": "Ne publiez pas de numéro de passeport, de titre de séjour ni d'adresse."
+    },
+    "free": {
+      "title": "Un espace partagé",
+      "item1": "Restez respectueux.",
+      "item2": "Les publicités peuvent être masquées.",
+      "item3": "Pas de visages ni de données personnelles d'autrui sur les photos.",
+      "safety": "Un message gênant ? Appuyez sur « Signaler », l'équipe vérifiera."
+    },
+    "housing": {
+      "title": "Une annonce qui attire",
+      "item1": "Montrez de vraies photos : elles sont obligatoires pour une offre.",
+      "item2": "Indiquez le loyer, les charges et la caution.",
+      "item3": "Précisez la date d'entrée et la durée minimale.",
+      "safety": "Aucun paiement avant la visite. Signez un bail."
+    },
+    "job": {
+      "title": "Une offre qui attire",
+      "item1": "Précisez le salaire horaire et les horaires. Le salaire doit être au moins égal au SMIC.",
+      "item2": "Indiquez les langues et le titre de séjour requis.",
+      "item3": "Mentionnez contrat et fiches de paie : c'est rassurant.",
+      "safety": "Ne demandez jamais d'argent, de pièce d'identité ni de RIB en premier."
+    }
+  },
+  "location": {
+    "noArea": "Impossible de trouver la zone de ce lieu. Choisissez-en un autre ou affichez le lieu exact.",
+    "checkError": "Impossible de vérifier ce lieu.",
+    "gpsError": "Impossible d'obtenir votre position.",
+    "modeLabel": "Affichage du lieu",
+    "areaOnly": "Quartier seulement",
+    "exact": "Lieu exact",
+    "exactHint": "Une épingle s'affiche à l'endroit exact. Préférez une gare ou un lieu public.",
+    "areaHintChat": "Seul le contour du quartier (l'arrondissement à Paris) est visible. Donnez l'adresse exacte par message.",
+    "areaHintBuyer": "Les acheteurs ne voient que le contour du quartier (l'arrondissement à Paris), jamais l'adresse.",
+    "searchPlaceholder": "Adresse, gare, quartier (ex. : Porte de Versailles)",
+    "searchLabel": "Rechercher un lieu",
+    "myPosition": "Ma position",
+    "results": "Lieux trouvés",
+    "checking": "Vérification du lieu…",
+    "pinShown": "{area} · l'épingle est visible telle quelle",
+    "areaShown": "{area} · cette zone sera affichée",
+    "pickHint": "Touchez la carte ou cherchez un lieu.",
+    "label": "Nom du lieu affiché",
+    "labelHint": "Visible dans la liste et sur l'annonce",
+    "labelPlaceholder": "Ex. : Paris 15e · Vaugirard"
+  },
+  "uploader": {
+    "rejected": "{count, plural, one {# photo écartée : format autre que jpg, png, gif ou webp, ou plus de 5 Mo.} other {# photos écartées : format autre que jpg, png, gif ou webp, ou plus de 5 Mo.}}",
+    "max": "{max} photos maximum.",
+    "add": "Ajouter des photos",
+    "drop": "Glissez vos photos ici ou touchez pour en ajouter",
+    "limits": "{max} max. · jpg, png, gif, webp · 5 Mo par photo",
+    "list": "Photos à publier",
+    "photo": "Photo {n}",
+    "cover": "Principale",
+    "uploading": "Envoi en cours",
+    "makeCover": "Mettre en photo principale",
+    "remove": "Supprimer la photo",
+    "removeShort": "Supprimer",
+    "tip": "Glissez pour réordonner ; ★ choisit la photo principale."
+  },
+  "confirm": {
+    "typeToConfirm": "Saisissez pour confirmer",
+    "ok": "OK"
+  },
+  "auth": {
+    "required": {
+      "title": "Cette page nécessite une connexion.",
+      "login": "Se connecter"
+    }
+  },
+  "chatButton": {
+    "sold": "Vendu",
+    "chat": "Envoyer un message",
+    "opening": "Ouverture…",
+    "error": "Impossible d'ouvrir la conversation."
+  },
+  "safety": {
+    "title": "Guide de sécurité",
+    "description": "Les arnaques courantes dans le logement, les jobs et l'occasion, comment les éviter et où les signaler.",
+    "lead": "À l'étranger, un préjudice est bien plus difficile à réparer. Ces quelques règles évitent la plupart des arnaques.",
+    "housing": {
+      "title": "Logement",
+      "items": {
+        "1": {
+          "title": "N'envoyez pas d'argent avant la visite",
+          "body": "Une caution, un acompte ou des « frais d'envoi des clés » demandés d'avance : c'est presque toujours une arnaque. Visitez (ou faites visiter par une personne de confiance) et payez après la signature du bail."
+        },
+        "2": {
+          "title": "Loyer trop bas, propriétaire trop pressé",
+          "body": "Un loyer bien sous le marché, « je suis à l'étranger, je ne peux pas faire visiter », « il faut décider aujourd'hui » : ce sont des classiques."
+        },
+        "3": {
+          "title": "Passer sur une autre messagerie",
+          "body": "Sur KakaoTalk, Telegram ou WhatsApp, rien n'est conservé et le signalement est difficile. Restez sur la messagerie d'Itnyang."
+        },
+        "4": {
+          "title": "Le strict nécessaire en documents",
+          "body": "Ajoutez un filigrane (« pour dossier de location ») sur les copies de passeport ou de titre de séjour. Ne donnez jamais vos accès bancaires."
+        }
+      }
+    },
+    "jobs": {
+      "title": "Jobs",
+      "items": {
+        "1": {
+          "title": "Fuyez ceux qui font payer avant de travailler",
+          "body": "Frais de formation, d'uniforme ou d'inscription demandés d'avance : c'est une arnaque."
+        },
+        "2": {
+          "title": "Pièce d'identité et RIB par formulaire en ligne ?",
+          "body": "Certains récupèrent pièce d'identité et coordonnées bancaires avant tout entretien. Vérifiez d'abord que le commerce existe, son adresse et son contact."
+        },
+        "3": {
+          "title": "Contrat et fiche de paie",
+          "body": "En France, l'emploi déclaré (contrat, fiche de paie) est la règle. Salaire sous le SMIC ou paiement uniquement en espèces : réfléchissez-y à deux fois."
+        }
+      }
+    },
+    "market": {
+      "title": "Occasion",
+      "items": {
+        "1": {
+          "title": "En main propre, dans un lieu public",
+          "body": "Vérifiez l'objet et payez dans un lieu fréquenté, comme une gare ou un café."
+        },
+        "2": {
+          "title": "Paiement d'avance « avant mon départ »",
+          "body": "Beaucoup encaissent un virement (souvent vers un compte coréen) puis disparaissent. Méfiance redoublée pour les envois par colis."
+        }
+      }
+    },
+    "help": {
+      "title": "Si vous êtes victime",
+      "items": {
+        "1": {
+          "title": "Signaler sur Itnyang",
+          "body": "Utilisez le bouton « Signaler » d'un message, d'un commentaire ou d'une conversation. L'équipe vérifie et restreint l'auteur. Gardez vos échanges et preuves de paiement."
+        },
+        "2": {
+          "title": "Police et signalement en ligne",
+          "body": "Pour une cyber-arnaque, 17Cyber, le site officiel de la police et de la gendarmerie, établit un diagnostic et indique comment porter plainte. Signalez les contenus frauduleux ou illicites sur PHAROS (internet-signalement.gouv.fr). En cas de perte d'argent, déposez plainte au commissariat."
+        },
+        "3": {
+          "title": "Numéros d'urgence",
+          "body": "Police 17, numéro d'urgence européen 112. Si vous ne pouvez pas parler, envoyez un SMS au 114."
+        },
+        "4": {
+          "title": "Aide consulaire de l'ambassade",
+          "body": "Service consulaire de l'ambassade de Corée en France : aux heures d'ouverture (9 h 30–18 h) +33 1 47 53 01 01, urgence en dehors +33 6 80 28 53 96. Centre d'appel consulaire (Séoul, 24 h/24) +82 2 3210 0404. Des escrocs se font passer pour l'ambassade : rappelez vous-même ces numéros pour vérifier."
+        }
+      }
+    },
+    "embassy": "Ambassade de Corée en France",
+    "ask": "Demander à la communauté"
+  },
+  "gallery": {
+    "none": "Pas de photo",
+    "alt": "{name}, photo {n}/{total}",
+    "show": "Voir la photo {n}"
   }
 }

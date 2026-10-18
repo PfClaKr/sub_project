@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { ListingDetail } from "@/components/listing/ListingDetail";
 import { gql, LISTING_DETAIL_FIELDS } from "@/libs/graphql";
 import type { Post } from "@/libs/types";
@@ -17,7 +18,7 @@ async function getListing(postId: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const post = await getListing(params.postId);
-	if (!post) return { title: "글을 찾을 수 없어요" };
+	if (!post) return { title: (await getTranslations("pages.notFound"))("title") };
 	return { title: post.Title, description: post.Body?.slice(0, 120) };
 }
 
