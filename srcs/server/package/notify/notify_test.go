@@ -137,6 +137,11 @@ func TestComposeMail(t *testing.T) {
 	if one.Subject != "[잇냥] 내 답변이 채택됐어요" || !strings.Contains(one.Body, "https://itnyang.test/community/p1#c-1") {
 		t.Errorf("single mail = %+v", one)
 	}
+	for _, want := range []string{"냥이님, 잇냥에서 알려드려요.", "CAF 질문", `href="https://itnyang.test/community/p1#c-1"`, `href="https://itnyang.test/notifications"`, `href="https://itnyang.test/u"`} {
+		if !strings.Contains(one.HTML, want) {
+			t.Errorf("html mail lacks %q", want)
+		}
+	}
 	many := composeMail("", "", []Notification{{Type: TypeComment}, {Type: TypeReply}}, "https://x", "https://x/u")
 	if many.Subject != "[잇냥] 새 알림 2개" || !strings.Contains(many.Body, "이웃님") || !strings.Contains(many.Body, "https://x/u") {
 		t.Errorf("digest mail = %+v", many)
@@ -146,7 +151,7 @@ func TestComposeMail(t *testing.T) {
 		t.Errorf("french mail = %+v", fr)
 	}
 	en := composeMail("en", "", []Notification{{Type: TypeAccepted}}, "https://x", "https://x/u")
-	if en.Subject != "[Itnyang] Your answer was accepted" || !strings.Contains(en.Body, "Hi neighbour") {
+	if en.Subject != "[Itnyang] Your answer was accepted" || !strings.Contains(en.Body, "Hi neighbour") || !strings.Contains(en.HTML, "See all notifications") || en.FromName != "Itnyang" {
 		t.Errorf("english mail = %+v", en)
 	}
 }
