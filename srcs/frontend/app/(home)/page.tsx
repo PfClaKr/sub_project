@@ -1,4 +1,7 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import { getSite } from "@/libs/site.server";
+import type { HomeSectionId } from "@/libs/site";
+import { Fragment } from "react";
 import ProductGrid from "@/components/product/ProductGrid";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { NeighborFeed, NewcomerChecklist, PurposeCards, TrustAndJoin, type HomeCounts } from "@/components/landing/HomeSections";
@@ -38,13 +41,13 @@ export default async function HomePage() {
 	const products = data?.recentProducts ?? [];
 	const t = await getTranslations("home.recent");
 
-	return (
-		<div>
-			<LandingHero />
-			<PurposeCards counts={counts} />
-			<NewcomerChecklist />
-			<NeighborFeed />
-
+	// Section order and visibility come from /admin/site.
+	const { Settings: site } = await getSite(await getLocale());
+	const sections: Record<HomeSectionId, React.ReactNode> = {
+		purposes: <PurposeCards counts={counts} />,
+		checklist: <NewcomerChecklist />,
+		feed: <NeighborFeed />,
+		recent: (
 			<section aria-labelledby="recent">
 				<SectionHead>
 					<div>
@@ -63,8 +66,14 @@ export default async function HomePage() {
 					<Reveal><ProductGrid products={products} preview /></Reveal>
 				)}
 			</section>
+		),
+		trust: <TrustAndJoin />,
+	};
 
-			<TrustAndJoin />
+	return (
+		<div>
+			<LandingHero image={site.Hero} />
+			{site.Home.filter(s => s.Enabled && sections[s.Id]).map(s => <Fragment key={s.Id}>{sections[s.Id]}</Fragment>)}
 		</div>
 	);
 }

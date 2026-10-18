@@ -13,6 +13,7 @@ const LINKS = [
 	{ href: "/admin/users", key: "users" },
 	{ href: "/admin/products", key: "products" },
 	{ href: "/admin/conversations", key: "conversations" },
+	{ href: "/admin/site", key: "site" },
 ] as const;
 
 export function AdminNav() {

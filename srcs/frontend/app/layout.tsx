@@ -13,6 +13,9 @@ import { ConfirmProvider } from "@/components/ui/ConfirmDialog";
 import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar";
 import GlobalStyle from "@/styles/globalStyles";
 import { Main } from "@/styles/styledLayout";
+import { NoticeBanner } from "@/components/NoticeBanner";
+import { getSite } from "@/libs/site.server";
+import { colors, cssVar, type ColorToken } from "@/theme/colorPalette";
 
 export async function generateMetadata(): Promise<Metadata> {
 	const t = await getTranslations("meta");
@@ -36,11 +39,21 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
 	const locale = await getLocale();
 	const messages = await getMessages();
+	const { Settings: site } = await getSite(locale);
+	const notice = site.Notice;
+	const noticeText = notice.Enabled ? notice.Text[locale] || notice.Text.ko || "" : "";
+	// Theme colours changed on /admin/site, as CSS variables over the
+	// built-in values (theme/colorPalette.ts).
+	const themeCss = (Object.entries(site.Theme) as [ColorToken, string][])
+		.filter(([token, value]) => token in colors && /^#[0-9a-f]{6}$/i.test(value))
+		.map(([token, value]) => `${cssVar(token)}:${value}`)
+		.join(";");
 	return (
 		// The home page's pre-paint script may add data-arrival-hidden
 		// (libs/arrival.ts) before React hydrates.
 		<html lang={locale} suppressHydrationWarning>
 			<body>
+				{themeCss && <style dangerouslySetInnerHTML={{ __html: `:root{${themeCss}}` }} />}
 				<NextIntlClientProvider locale={locale} messages={messages}>
 					<StyledComponentsRegistry>
 						<GlobalStyle />
@@ -50,6 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 								<RegionProvider>
 									<ConfirmProvider>
 										<Navigation />
+										{noticeText && <NoticeBanner text={noticeText} tone={notice.Tone} link={notice.Link} version={notice.Version} />}
 										<SuspendedBanner />
 										<Main>{children}</Main>
 										<Footer />

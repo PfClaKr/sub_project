@@ -1213,7 +1213,8 @@
       "posts": "Posts",
       "users": "Members",
       "products": "Items",
-      "conversations": "Chats"
+      "conversations": "Chats",
+      "site": "Site content"
     },
     "pages": "Pages",
     "pageInfo": "Page {page} of {total} · {count} in all",
@@ -1412,6 +1413,87 @@
     },
     "transcript": {
       "title": "Chat transcript"
+    },
+    "site": {
+      "title": "Site content",
+      "lead": "Change texts, the notice, the home page and colours without a deploy. Changes apply right away and can be undone from the log.",
+      "tabs": "Sections",
+      "tab": {
+        "texts": "Texts",
+        "notice": "Notice",
+        "home": "Home page",
+        "theme": "Colours",
+        "log": "Change log"
+      },
+      "language": "Language",
+      "search": "Search",
+      "searchPlaceholder": "Find a text or key (e.g. home.hero)",
+      "onlyChanged": "Changed only",
+      "count": "Showing {shown} of {total}; narrow it with search",
+      "changed": "Changed",
+      "builtIn": "Built-in",
+      "reset": "Reset",
+      "save": "Save",
+      "saved": "Saved",
+      "savedAll": "Saved. The site is updated.",
+      "tokensChanged": "Keep the placeholders and tags as they are: {tokens}.",
+      "noticeLead": "Shown at the top of every page. Once a visitor closes it, it stays closed until the text changes.",
+      "noticeOn": "Show the notice",
+      "tone": "Style",
+      "toneInfo": "Info",
+      "toneWarning": "Warning",
+      "link": "Link (optional)",
+      "required": "required",
+      "sections": "Home sections",
+      "sectionsLead": "Choose the sections under the hero and their order.",
+      "section": {
+        "purposes": "Purpose cards",
+        "checklist": "Newcomer checklist",
+        "feed": "Neighbour feed",
+        "recent": "New listings",
+        "trust": "Trust & sign-up (visitors)"
+      },
+      "up": "Move up",
+      "down": "Move down",
+      "hero": "Hero image",
+      "heroLead": "Replaces the cat at the top of the home page. A transparent PNG works best.",
+      "uploading": "Uploading…",
+      "chooseImage": "Choose an image",
+      "useMascot": "Use the cat",
+      "themeLead": "Colours apply across the site. Check that text stays readable.",
+      "token": "Token",
+      "color": "Colour",
+      "tokens": {
+        "primary": "Primary",
+        "primaryHover": "Primary (hover)",
+        "primarySoft": "Primary (soft background)",
+        "accent": "Accent",
+        "heading": "Headings",
+        "text": "Text",
+        "muted": "Muted text",
+        "surface": "Surface",
+        "border": "Borders",
+        "sky": "Sky accent",
+        "pink": "Pink accent"
+      },
+      "noLog": "No changes yet.",
+      "when": "When",
+      "who": "Admin",
+      "what": "What",
+      "before": "Before",
+      "after": "After",
+      "settingsTarget": "Settings (notice, home, colours)",
+      "revert": "Revert",
+      "revertTitle": "Revert this change?",
+      "revertBody": "The previous value comes back. The revert is logged too, so it can be undone.",
+      "parts": {
+        "Notice": "notice",
+        "Home": "home sections",
+        "Hero": "hero image",
+        "Theme": "colours"
+      },
+      "changedParts": "Changed: {parts}",
+      "nothing": "No change"
     }
   },
   "names": {
@@ -1419,5 +1501,9 @@
     "anonymousAuthor": "Anonymous (author)",
     "anonymousN": "Anonymous {n}",
     "deleted": "Former member"
+  },
+  "notice": {
+    "close": "Close the notice",
+    "more": "Learn more"
   }
 }

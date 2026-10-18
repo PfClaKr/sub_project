@@ -1213,7 +1213,8 @@
       "posts": "Messages",
       "users": "Membres",
       "products": "Objets",
-      "conversations": "Conversations"
+      "conversations": "Conversations",
+      "site": "Contenu du site"
     },
     "pages": "Pages",
     "pageInfo": "Page {page} / {total} · {count} au total",
@@ -1412,6 +1413,87 @@
     },
     "transcript": {
       "title": "Historique de conversation"
+    },
+    "site": {
+      "title": "Contenu du site",
+      "lead": "Modifiez textes, annonce, accueil et couleurs sans redéploiement. Les changements sont immédiats et peuvent être annulés depuis l'historique.",
+      "tabs": "Sections",
+      "tab": {
+        "texts": "Textes",
+        "notice": "Annonce",
+        "home": "Accueil",
+        "theme": "Couleurs",
+        "log": "Historique"
+      },
+      "language": "Langue",
+      "search": "Recherche",
+      "searchPlaceholder": "Rechercher un texte ou une clé (ex. : home.hero)",
+      "onlyChanged": "Seulement les textes modifiés",
+      "count": "{shown} sur {total} — affinez avec la recherche",
+      "changed": "Modifié",
+      "builtIn": "Par défaut",
+      "reset": "Rétablir",
+      "save": "Enregistrer",
+      "saved": "Enregistré",
+      "savedAll": "Enregistré. Le site est à jour.",
+      "tokensChanged": "Gardez les variables et balises telles quelles : {tokens}.",
+      "noticeLead": "Annonce affichée en haut de chaque page. Fermée par un visiteur, elle ne réapparaît qu'une fois le texte modifié.",
+      "noticeOn": "Afficher l'annonce",
+      "tone": "Style",
+      "toneInfo": "Information",
+      "toneWarning": "Avertissement",
+      "link": "Lien (facultatif)",
+      "required": "obligatoire",
+      "sections": "Sections de l'accueil",
+      "sectionsLead": "Choisissez les sections sous l'en-tête et leur ordre.",
+      "section": {
+        "purposes": "Cartes d'entrée",
+        "checklist": "Liste d'installation",
+        "feed": "Dernières nouvelles",
+        "recent": "Derniers objets",
+        "trust": "Confiance et inscription (visiteurs)"
+      },
+      "up": "Monter",
+      "down": "Descendre",
+      "hero": "Image de l'en-tête",
+      "heroLead": "Remplace le chat en haut de l'accueil. Un PNG à fond transparent est conseillé.",
+      "uploading": "Envoi…",
+      "chooseImage": "Choisir une image",
+      "useMascot": "Revenir au chat",
+      "themeLead": "Les couleurs s'appliquent à tout le site. Vérifiez que le contraste reste suffisant.",
+      "token": "Élément",
+      "color": "Couleur",
+      "tokens": {
+        "primary": "Couleur principale",
+        "primaryHover": "Principale (survol)",
+        "primarySoft": "Principale (fond clair)",
+        "accent": "Accent",
+        "heading": "Titres",
+        "text": "Texte",
+        "muted": "Texte secondaire",
+        "surface": "Fond des blocs",
+        "border": "Bordures",
+        "sky": "Décor bleu ciel",
+        "pink": "Décor rose"
+      },
+      "noLog": "Aucune modification pour l'instant.",
+      "when": "Date",
+      "who": "Admin",
+      "what": "Cible",
+      "before": "Avant",
+      "after": "Après",
+      "settingsTarget": "Réglages (annonce, accueil, couleurs)",
+      "revert": "Annuler",
+      "revertTitle": "Annuler cette modification ?",
+      "revertBody": "La valeur précédente est rétablie. L'annulation est aussi enregistrée et peut être annulée.",
+      "parts": {
+        "Notice": "annonce",
+        "Home": "sections de l'accueil",
+        "Hero": "image de l'en-tête",
+        "Theme": "couleurs"
+      },
+      "changedParts": "Modifié : {parts}",
+      "nothing": "Aucun changement"
     }
   },
   "names": {
@@ -1419,5 +1501,9 @@
     "anonymousAuthor": "Anonyme (auteur)",
     "anonymousN": "Anonyme {n}",
     "deleted": "Membre parti"
+  },
+  "notice": {
+    "close": "Fermer l'annonce",
+    "more": "En savoir plus"
   }
 }

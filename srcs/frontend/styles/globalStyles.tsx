@@ -147,6 +147,9 @@ const GlobalStyle = createGlobalStyle`
 		z-index: 0;
 	}
 	/* The dismissed home checklist (libs/arrival.ts), hidden before paint. */
+	html[data-notice-hidden] [data-notice] {
+		display: none;
+	}
 	html[data-arrival-hidden] [data-arrival] {
 		display: none;
 	}
