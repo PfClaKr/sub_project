@@ -1,24 +1,29 @@
 'use client';
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { FooterBar, FooterLegal, FooterLinks } from "@/styles/styledLayout";
 import { SECTIONS } from "@/libs/sections";
 
 export default function Footer() {
+	const t = useTranslations("footer");
+	const nav = useTranslations("nav");
 	return (
 		<FooterBar>
-			<FooterLinks aria-label="사이트 메뉴">
-				{SECTIONS.map(s => <Link key={s.href} href={s.href}>{s.label}</Link>)}
-				<Link href="/sell">판매하기</Link>
-				<Link href="/safety">안전 가이드</Link>
+			<FooterLinks aria-label={t("siteMenu")}>
+				{SECTIONS.map(s => <Link key={s.href} href={s.href}>{nav(s.key)}</Link>)}
+				<Link href="/sell">{t("sell")}</Link>
+				<Link href="/safety">{t("safety")}</Link>
 			</FooterLinks>
-			<FooterLegal aria-label="약관과 정책">
-				<Link href="/terms">이용약관</Link>
-				<Link href="/privacy"><strong>개인정보처리방침</strong></Link>
-				<Link href="/legal">운영자 정보 · Mentions légales</Link>
+			<FooterLegal aria-label={t("legalMenu")}>
+				<Link href="/terms">{t("terms")}</Link>
+				<Link href="/privacy"><strong>{t("privacy")}</strong></Link>
+				<Link href="/legal">{t("legal")}</Link>
 			</FooterLegal>
-			<p><strong>잇냥</strong> · 프랑스 한인 생활 커뮤니티</p>
-			<p>거래는 직접 만나서, 안전한 공공장소에서 해주세요. 물건이나 집을 보기 전에는 돈을 보내지 마세요.</p>
+			<p><strong>{nav("brand")}</strong> · {t("tagline")}</p>
+			<p>{t("safetyNote")}</p>
+			<LanguageSwitcher />
 		</FooterBar>
 	);
 }

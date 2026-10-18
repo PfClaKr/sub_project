@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
 	BedDouble, Briefcase, Bus, Check, CreditCard, FileCheck2, HeartPulse, Home, MessageCircleQuestion,
 	MessagesSquare, ShieldCheck, ShoppingBag, Smartphone, UserCheck, X, type LucideIcon,
@@ -36,38 +37,26 @@ const TONES = {
 
 export type HomeCounts = { selling: number | null; rooms: number | null; jobs: number | null; openQuestions: number | null };
 
+// Texts: home.purposes.<key>.{title,body,count,action}.
 type Purpose = {
 	key: keyof typeof TONES;
 	Icon: LucideIcon;
-	title: string;
-	body: string;
 	href: string;
-	count: (c: HomeCounts) => string | null;
-	action: { label: string; href: string };
+	count: (c: HomeCounts) => number | null;
+	actionHref: string;
 };
 
 const PURPOSES: Purpose[] = [
-	{
-		key: "market", Icon: ShoppingBag, title: "물건 사고팔기", body: "귀국 정리, 이사 짐까지. 가까운 이웃과 직거래해요.", href: "/search",
-		count: c => (c.selling == null ? null : `판매중 ${c.selling}개`), action: { label: "판매하기", href: "/sell" },
-	},
-	{
-		key: "housing", Icon: BedDouble, title: "집 구하기", body: "쉐어, 스튜디오, 방학 서블렛. 보기 전에는 돈을 보내지 마세요.", href: "/housing",
-		count: c => (c.rooms == null ? null : `방 ${c.rooms}개`), action: { label: "방 올리기", href: "/housing/write" },
-	},
-	{
-		key: "job", Icon: Briefcase, title: "일 구하기", body: "식당, 과외, 통역. 시급과 계약 조건을 확인하고 지원해요.", href: "/jobs",
-		count: c => (c.jobs == null ? null : `공고 ${c.jobs}개`), action: { label: "구인 올리기", href: "/jobs/write" },
-	},
-	{
-		key: "community", Icon: MessageCircleQuestion, title: "생활 질문하기", body: "체류증, CAF, 은행. 먼저 겪어본 이웃이 답해줘요.", href: "/community?board=qna",
-		count: c => (c.openQuestions == null ? null : `답을 기다리는 질문 ${c.openQuestions}개`), action: { label: "질문하기", href: "/community/write?board=qna" },
-	},
+	{ key: "market", Icon: ShoppingBag, href: "/search", count: c => c.selling, actionHref: "/sell" },
+	{ key: "housing", Icon: BedDouble, href: "/housing", count: c => c.rooms, actionHref: "/housing/write" },
+	{ key: "job", Icon: Briefcase, href: "/jobs", count: c => c.jobs, actionHref: "/jobs/write" },
+	{ key: "community", Icon: MessageCircleQuestion, href: "/community?board=qna", count: c => c.openQuestions, actionHref: "/community/write?board=qna" },
 ];
 
 export function PurposeCards({ counts }: { counts: HomeCounts }) {
+	const t = useTranslations("home.purposes");
 	return (
-		<PurposeGrid aria-label="무엇이 필요하세요?">
+		<PurposeGrid aria-label={t("label")}>
 			{PURPOSES.map((p, i) => {
 				const tone = TONES[p.key];
 				const count = p.count(counts);
@@ -75,10 +64,10 @@ export function PurposeCards({ counts }: { counts: HomeCounts }) {
 					<Reveal key={p.key} delay={i * 70}>
 						<PurposeCard $tint={tone.tint} $ink={tone.ink}>
 							<span className="icon" aria-hidden="true"><p.Icon size={22} /></span>
-							<h3><Link href={p.href}>{p.title}</Link></h3>
-							<p>{p.body}</p>
-							{count && <span className="count">{count}</span>}
-							<Link className="action" href={p.action.href}>{p.action.label}</Link>
+							<h3><Link href={p.href}>{t(`${p.key}.title`)}</Link></h3>
+							<p>{t(`${p.key}.body`)}</p>
+							{count != null && <span className="count">{t(`${p.key}.count`, { count })}</span>}
+							<Link className="action" href={p.actionHref}>{t(`${p.key}.action`)}</Link>
 						</PurposeCard>
 					</Reveal>
 				);
@@ -91,14 +80,15 @@ export function PurposeCards({ counts }: { counts: HomeCounts }) {
 // (the whole topic, not a keyword search, which a young board often
 // leaves empty). Ticks are kept in this browser only (a guide, not
 // account data).
-const STEPS: { id: string; Icon: LucideIcon; title: string; body: string; href: string }[] = [
-	{ id: "visa", Icon: FileCheck2, title: "체류증·비자", body: "비자 종류에 따라 도착 후 온라인 인증이나 체류증 신청(ANEF)이 필요해요.", href: topicHref("체류증·비자") },
-	{ id: "bank", Icon: CreditCard, title: "은행 계좌", body: "월세, 월급, CAF에 계좌 증명서(RIB)가 필요해요.", href: topicHref("은행·통신") },
-	{ id: "phone", Icon: Smartphone, title: "휴대폰 개통", body: "선불 유심으로 시작해 요금제로 바꾸는 경우가 많아요.", href: topicHref("은행·통신") },
-	{ id: "caf", Icon: Home, title: "집과 CAF", body: "집을 구했다면 주거보조금(APL)을 받을 수 있는지 확인하세요.", href: topicHref("행정·CAF·세금") },
-	{ id: "health", Icon: HeartPulse, title: "건강보험", body: "건강보험(Ameli)에 가입하고 주치의(médecin traitant)를 정해두세요.", href: topicHref("의료") },
-	// No transport topic: search every board.
-	{ id: "transport", Icon: Bus, title: "교통", body: "나비고 정기권, 26세 미만 학생이라면 Imagine R 할인을 알아보세요.", href: `/community?${new URLSearchParams({ q: "나비고" })}` },
+// Texts: home.checklist.steps.<id>. topic: the Q&A topic it links to;
+// transport has none, so it searches every board (checklist.transportQuery).
+const STEPS: { id: "visa" | "bank" | "phone" | "caf" | "health" | "transport"; Icon: LucideIcon; topic?: string }[] = [
+	{ id: "visa", Icon: FileCheck2, topic: "체류증·비자" },
+	{ id: "bank", Icon: CreditCard, topic: "은행·통신" },
+	{ id: "phone", Icon: Smartphone, topic: "은행·통신" },
+	{ id: "caf", Icon: Home, topic: "행정·CAF·세금" },
+	{ id: "health", Icon: HeartPulse, topic: "의료" },
+	{ id: "transport", Icon: Bus },
 ];
 
 function topicHref(topic: string): string {
@@ -116,6 +106,7 @@ function readDone(): string[] {
 }
 
 export function NewcomerChecklist() {
+	const t = useTranslations("home.checklist");
 	const [done, setDone] = useState<string[]>([]);
 	// Dismissed during this visit: a one-line note with an undo replaces it.
 	const [dismissed, setDismissed] = useState(false);
@@ -142,36 +133,38 @@ export function NewcomerChecklist() {
 			<script dangerouslySetInnerHTML={{ __html: ARRIVAL_PREPAINT }} />
 			{dismissed && (
 				<DismissedNote role="status">
-					정착 체크리스트를 숨겼어요. 마이페이지의 &lsquo;계정&rsquo;에서 다시 볼 수 있어요.
-					<button type="button" onClick={() => dismiss(false)}>되돌리기</button>
+					{t("dismissed")}
+					<button type="button" onClick={() => dismiss(false)}>{t("undo")}</button>
 				</DismissedNote>
 			)}
 		<Checklist aria-labelledby="arrival" data-arrival="">
 			<header>
 				<div>
-					<h2 id="arrival">프랑스에 막 왔다면 ✈︎</h2>
-					<p>처음 몇 주 동안 챙길 것들이에요. 막히면 먼저 겪어본 이웃에게 물어보세요.</p>
+					<h2 id="arrival">{t("title")}</h2>
+					<p>{t("lead")}</p>
 				</div>
 				<div className="progress" aria-live="polite">
-					{done.length === STEPS.length ? "모두 챙겼어요" : `${done.length} / ${STEPS.length} 완료`}
+					{done.length === STEPS.length ? t("allDone") : t("progress", { done: done.length, total: STEPS.length })}
 					<div className="bar" aria-hidden="true"><span style={{ width: `${ratio * 100}%` }} /></div>
 				</div>
 				<button type="button" className="dismiss" onClick={() => dismiss(true)}>
-					<X size={14} aria-hidden /> 다시 보지 않기
+					<X size={14} aria-hidden /> {t("dismiss")}
 				</button>
 			</header>
 			<ul>
 				{STEPS.map(s => {
 					const on = done.includes(s.id);
+					const title = t(`steps.${s.id}.title`);
+					const href = s.topic ? topicHref(s.topic) : `/community?${new URLSearchParams({ q: t("transportQuery") })}`;
 					return (
 						<ChecklistItem key={s.id} $done={on}>
-							<button type="button" onClick={() => toggle(s.id)} aria-pressed={on} aria-label={`${s.title} ${on ? "완료 취소" : "완료로 표시"}`}>
+							<button type="button" onClick={() => toggle(s.id)} aria-pressed={on} aria-label={t(on ? "markUndone" : "markDone", { step: title })}>
 								{on ? <Check size={15} strokeWidth={3} aria-hidden /> : <s.Icon size={14} color="#5d6382" aria-hidden />}
 							</button>
 							<div>
-								<strong>{s.title}</strong>
-								<p>{s.body}</p>
-								<Link href={s.href}>관련 질문 보기 →</Link>
+								<strong>{title}</strong>
+								<p>{t(`steps.${s.id}.body`)}</p>
+								<Link href={href}>{t("related")}</Link>
 							</div>
 						</ChecklistItem>
 					);
@@ -190,14 +183,15 @@ const FEED_QUERY = `query HomeFeed($city: String) {
 
 type FeedData = { posts: PostPage; housing: PostPage; jobs: PostPage };
 
-function feedTone(post: Post) {
-	if (post.Type === "housing") return { ...TONES.housing, label: "집", Icon: BedDouble };
-	if (post.Type === "job") return { ...TONES.job, label: "알바", Icon: Briefcase };
+function feedTone(post: Post, t: ReturnType<typeof useTranslations<"home.feed">>) {
+	if (post.Type === "housing") return { ...TONES.housing, label: t("housing"), Icon: BedDouble };
+	if (post.Type === "job") return { ...TONES.job, label: t("job"), Icon: Briefcase };
 	return { ...TONES.community, label: boardLabel(post.Type), Icon: post.Type === "qna" ? MessageCircleQuestion : MessagesSquare };
 }
 
 function NeighborRow({ post }: { post: Post }) {
-	const tone = feedTone(post);
+	const t = useTranslations("home.feed");
+	const tone = feedTone(post, t);
 	const listing = post.Type === "housing" || post.Type === "job";
 	const href = listing ? `${LISTING_PATH[post.Type as ListingType]}/${post.PostId}` : postHref(post);
 	const thumb = imageUrl(post.Images?.[0]);
@@ -212,8 +206,8 @@ function NeighborRow({ post }: { post: Post }) {
 						{listing ? `${tone.label} · ${modeLabel(post.Type as ListingType, post.Housing?.Mode ?? post.Job?.Mode)}` : tone.label}
 					</FeedBadge>
 					{price && <span className="price">{price}</span>}
-					{!listing && post.Type === "qna" && <span>{post.Solved ? "해결" : `답변 ${post.CommentCount ?? 0}`}</span>}
-					{!listing && post.Type !== "qna" && <span>댓글 {post.CommentCount ?? 0}</span>}
+					{!listing && post.Type === "qna" && <span>{post.Solved ? t("solved") : t("answers", { count: post.CommentCount ?? 0 })}</span>}
+					{!listing && post.Type !== "qna" && <span>{t("comments", { count: post.CommentCount ?? 0 })}</span>}
 					<span>{post.AreaName || post.City}</span>
 					<TimeAgo ts={Math.max(post.BumpedAt ?? 0, post.CreatedAt)} />
 				</span>
@@ -225,6 +219,7 @@ function NeighborRow({ post }: { post: Post }) {
 // The newest questions, posts, rooms and jobs in the chosen region, mixed
 // by time.
 export function NeighborFeed() {
+	const t = useTranslations("home.feed");
 	const { city } = useRegion();
 	const [items, setItems] = useState<Post[] | null>(null);
 
@@ -246,15 +241,15 @@ export function NeighborFeed() {
 		<section aria-labelledby="neighbors">
 			<SectionHead style={{ flexWrap: "wrap" }}>
 				<div>
-					<h2 id="neighbors">이웃들의 최근 소식</h2>
-					<p>질문, 이야기, 방, 알바를 새로 올라온 순서로 모았어요.</p>
+					<h2 id="neighbors">{t("title")}</h2>
+					<p>{t("lead")}</p>
 				</div>
 				<RegionChip />
 			</SectionHead>
 			{!items ? (
 				<Skeleton $h="260px" />
 			) : items.length === 0 ? (
-				<Muted as="p">이 지역에는 아직 새 소식이 없어요. <Link href="/community/write">첫 글을 남겨보세요.</Link></Muted>
+				<Muted as="p">{t("empty")} <Link href="/community/write">{t("emptyAction")}</Link></Muted>
 			) : (
 				<FeedList>
 					{items.map(p => <li key={p.PostId}><NeighborRow post={p} /></li>)}
@@ -264,14 +259,16 @@ export function NeighborFeed() {
 	);
 }
 
+// Texts: home.trust.<key>.
 const TRUST = [
-	{ Icon: UserCheck, title: "이메일 인증 회원", body: "인증한 회원만 글을 쓰고 채팅할 수 있어요. 가입 7일이 지나야 집·알바 글을 올릴 수 있어요." },
-	{ Icon: ShieldCheck, title: "신고하면 바로 숨김", body: "신고가 3건 쌓인 글은 운영진 확인 전까지 숨겨지고, 채팅에서는 상대를 차단할 수 있어요." },
-	{ Icon: MessageCircleQuestion, title: "사기 수법 미리 알림", body: "선입금 요구, 외부 메신저 유도, 최저임금 미만 공고는 글을 올릴 때부터 경고해요." },
-];
+	{ key: "verified", Icon: UserCheck },
+	{ key: "reports", Icon: ShieldCheck },
+	{ key: "scams", Icon: MessageCircleQuestion },
+] as const;
 
 // For visitors who are not logged in: why it is safe, then sign up.
 export function TrustAndJoin() {
+	const t = useTranslations("home");
 	const { session, loading } = useSession();
 	if (loading || session) return null;
 	return (
@@ -279,25 +276,25 @@ export function TrustAndJoin() {
 			<section aria-labelledby="trust">
 				<SectionHead>
 					<div>
-						<h2 id="trust">안심하고 쓰도록</h2>
-						<p>해외에서는 피해를 되돌리기 어려워서, 처음부터 막는 데 신경 썼어요. <Link href="/safety">안전 가이드</Link></p>
+						<h2 id="trust">{t("trust.title")}</h2>
+						<p>{t("trust.lead")} <Link href="/safety">{t("trust.guide")}</Link></p>
 					</div>
 				</SectionHead>
 				<TrustGrid>
-					{TRUST.map(t => (
-						<li key={t.title}>
-							<t.Icon size={24} aria-hidden />
-							<h3>{t.title}</h3>
-							<p>{t.body}</p>
+					{TRUST.map(item => (
+						<li key={item.key}>
+							<item.Icon size={24} aria-hidden />
+							<h3>{t(`trust.${item.key}.title`)}</h3>
+							<p>{t(`trust.${item.key}.body`)}</p>
 						</li>
 					))}
 				</TrustGrid>
 			</section>
 			<Reveal>
 				<CtaBand>
-					<h2>프랑스 한인 이웃들과 연결되냥 <Paw /></h2>
-					<p>가입은 1분이면 충분해요. 물건, 집, 일, 질문 모두 무료예요.</p>
-					<CtaButton href="/account/sign-up">무료로 가입하기</CtaButton>
+					<h2>{t("cta.title")} <Paw /></h2>
+					<p>{t("cta.lead")}</p>
+					<CtaButton href="/account/sign-up">{t("cta.button")}</CtaButton>
 				</CtaBand>
 			</Reveal>
 		</>

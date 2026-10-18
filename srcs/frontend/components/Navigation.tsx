@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Bell, Heart, MessageCircle } from "lucide-react";
 import { StyledLink, StyledNavbar } from "@/styles/styledLink";
 import { Nav, NavInner, Brand, SectionTabs, NavSpacer, NavUser, IconLink, Badge, DesktopOnly, MobileOnly } from "@/styles/styledNav";
@@ -14,6 +15,7 @@ import { useNotifications } from "@/libs/notifications";
 import { badgeText } from "@/libs/notificationText";
 
 export default function Navigation() {
+	const t = useTranslations("nav");
 	const { session, loading, logout } = useSession();
 	const { unread } = useNotifications();
 	const pathname = usePathname();
@@ -29,10 +31,10 @@ export default function Navigation() {
 	const badge = badgeText(unread);
 
 	return (
-		<Nav aria-label="주 메뉴">
+		<Nav aria-label={t("mainMenu")}>
 			<NavInner>
 				<Brand>
-					<StyledLink href="/">잇냥</StyledLink>
+					<StyledLink href="/">{t("brand")}</StyledLink>
 				</Brand>
 				<SectionTabs>
 					{SECTIONS.map(s => (
@@ -42,14 +44,14 @@ export default function Navigation() {
 								$active={isActive(s, pathname)}
 								aria-current={isActive(s, pathname) ? "page" : undefined}
 							>
-								{s.label}
+								{t(s.key)}
 							</StyledNavbar>
 						</li>
 					))}
 				</SectionTabs>
 				{session?.Role === "admin" && (
 					<DesktopOnly>
-						<StyledNavbar href="/admin" $active={pathname.startsWith("/admin")}>관리자</StyledNavbar>
+						<StyledNavbar href="/admin" $active={pathname.startsWith("/admin")}>{t("admin")}</StyledNavbar>
 					</DesktopOnly>
 				)}
 				<NavSpacer />
@@ -57,34 +59,34 @@ export default function Navigation() {
 					<NavUser>
 						<DesktopOnly>
 							<WriteMenu />
-							<IconLink as={Link} href="/wishlist" aria-label="찜 목록" aria-current={current("/wishlist")}>
+							<IconLink as={Link} href="/wishlist" aria-label={t("wishlist")} aria-current={current("/wishlist")}>
 								<Heart size={20} />
 							</IconLink>
 						</DesktopOnly>
 						<MobileOnly>
 							<WriteMenu compact />
 						</MobileOnly>
-						<IconLink as={Link} href="/chat" aria-label="채팅" aria-current={current("/chat")}>
+						<IconLink as={Link} href="/chat" aria-label={t("chat")} aria-current={current("/chat")}>
 							<MessageCircle size={20} />
 						</IconLink>
 						<IconLink
 							as={Link}
 							href="/notifications"
-							aria-label={badge ? `알림 ${badge}개` : "알림"}
+							aria-label={badge ? t("notificationsCount", { count: badge }) : t("notifications")}
 							aria-current={current("/notifications")}
 						>
 							<Bell size={20} />
 							{badge && <Badge aria-hidden>{badge}</Badge>}
 						</IconLink>
-						<StyledNavbar href="/myaccount" $active={pathname === "/myaccount"} aria-label="내 계정">
+						<StyledNavbar href="/myaccount" $active={pathname === "/myaccount"} aria-label={t("myAccount")}>
 							<Avatar src={session.ProfileImage} name={session.UserNickname} size={30} />
 						</StyledNavbar>
 						<DesktopOnly>
-							<GhostButton onClick={handleLogout}>로그아웃</GhostButton>
+							<GhostButton onClick={handleLogout}>{t("logout")}</GhostButton>
 						</DesktopOnly>
 					</NavUser>
 				) : (
-					<LinkButton href="/login">로그인</LinkButton>
+					<LinkButton href="/login">{t("login")}</LinkButton>
 				))}
 			</NavInner>
 		</Nav>
