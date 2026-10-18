@@ -67,11 +67,15 @@ func Issue(email, lang string) error {
 // sendVerification mails the account activation link.
 func sendVerification(to, token, lang string) error {
 	link := fmt.Sprintf("%s/account/verify?token=%s", mailer.AppURL(), token)
-	body := i18n.T(lang,
-		"잇냥에 가입해주셔서 감사합니다!\n\n아래 링크를 눌러 이메일 인증을 완료해주세요.\n\n%s\n\n본인이 요청하지 않았다면 이 메일을 무시하셔도 됩니다.\n",
-		link,
-	)
-	return mailer.Send(to, i18n.T(lang, "[잇냥] 이메일 인증을 완료해주세요"), body)
+	content := mailer.Content{
+		Lang:      lang,
+		Preheader: i18n.T(lang, "이메일 주소를 인증하면 가입이 끝나요."),
+		Heading:   i18n.T(lang, "잇냥에 가입해주셔서 감사합니다!"),
+		Intro:     []string{i18n.T(lang, "이메일 주소를 인증하면 가입이 끝나요.")},
+		Button:    mailer.Link{Label: i18n.T(lang, "이메일 인증하기"), URL: link},
+		Notes:     []string{i18n.T(lang, "본인이 요청하지 않았다면 이 메일을 무시하셔도 됩니다.")},
+	}
+	return mailer.SendMessage(content.Message(to, i18n.T(lang, "[잇냥] 이메일 인증을 완료해주세요")))
 }
 
 // IsVerified reports whether the credential row is activated.

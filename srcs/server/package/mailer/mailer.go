@@ -1,15 +1,21 @@
-// Package mailer sends plain-text UTF-8 mail through the configured SMTP
-// server: MailHog locally (no auth), SES or another provider in the cloud
+// Package mailer sends UTF-8 mail (plain text, or text plus HTML built
+// from a Content) through the configured SMTP server: MailHog locally (no auth), SES or another provider in the cloud
 // (SMTP_USER/SMTP_PASSWORD, STARTTLS when the server offers it).
 package mailer
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"mime"
+	"mime/multipart"
+	"mime/quotedprintable"
+	"net/mail"
 	"net/smtp"
+	"net/textproto"
 	"os"
 	"strings"
+	"time"
 )
 
 func env(key, fallback string) string {
@@ -24,12 +30,16 @@ func AppURL() string {
 	return strings.TrimRight(env("PUBLIC_APP_URL", "http://localhost:3000"), "/")
 }
 
-// Message is one mail. Headers carries extras such as List-Unsubscribe.
+// Message is one mail. Body is the plain text; with HTML set the mail is
+// multipart/alternative and clients show the HTML. FromName is the
+// sender's display name. Headers carries extras such as List-Unsubscribe.
 type Message struct {
-	To      string
-	Subject string
-	Body    string
-	Headers map[string]string
+	To       string
+	Subject  string
+	Body     string
+	HTML     string
+	FromName string
+	Headers  map[string]string
 }
 
 // Send is a shortcut for a message without extra headers.
@@ -37,16 +47,19 @@ func Send(to, subject, body string) error {
 	return SendMessage(Message{To: to, Subject: subject, Body: body})
 }
 
-// build renders the RFC 5322 message; the subject is RFC 2047 encoded so
-// Korean text survives every mail client.
+// build renders the RFC 5322 message; the subject and the sender name
+// are RFC 2047 encoded so Korean text survives every mail client.
 func build(from string, m Message) []byte {
+	sender := from
+	if m.FromName != "" && !strings.Contains(from, "<") {
+		sender = (&mail.Address{Name: m.FromName, Address: from}).String()
+	}
 	headers := []string{
-		"From: " + from,
+		"From: " + sender,
 		"To: " + m.To,
 		"Subject: " + mime.BEncoding.Encode("utf-8", m.Subject),
+		"Date: " + time.Now().Format(time.RFC1123Z),
 		"MIME-Version: 1.0",
-		"Content-Type: text/plain; charset=\"utf-8\"",
-		"Content-Transfer-Encoding: 8bit",
 	}
 	for k, v := range m.Headers {
 		// Header injection guard: values come from our own code, but
@@ -56,7 +69,31 @@ func build(from string, m Message) []byte {
 		}
 		headers = append(headers, k+": "+v)
 	}
-	return []byte(strings.Join(headers, "\r\n") + "\r\n\r\n" + m.Body)
+	if m.HTML == "" {
+		headers = append(headers, "Content-Type: text/plain; charset=\"utf-8\"", "Content-Transfer-Encoding: 8bit")
+		return []byte(strings.Join(headers, "\r\n") + "\r\n\r\n" + m.Body)
+	}
+
+	// Text first, HTML last: clients show the last part they support.
+	// The text stays 8bit (readable as is, links unencoded); the HTML is
+	// quoted-printable so its long lines stay under the SMTP limit.
+	var body bytes.Buffer
+	parts := multipart.NewWriter(&body)
+	text, _ := parts.CreatePart(textproto.MIMEHeader{
+		"Content-Type":              {"text/plain; charset=\"utf-8\""},
+		"Content-Transfer-Encoding": {"8bit"},
+	})
+	text.Write([]byte(m.Body))
+	html, _ := parts.CreatePart(textproto.MIMEHeader{
+		"Content-Type":              {"text/html; charset=\"utf-8\""},
+		"Content-Transfer-Encoding": {"quoted-printable"},
+	})
+	qp := quotedprintable.NewWriter(html)
+	qp.Write([]byte(m.HTML))
+	qp.Close()
+	parts.Close()
+	headers = append(headers, "Content-Type: multipart/alternative; boundary=\""+parts.Boundary()+"\"")
+	return []byte(strings.Join(headers, "\r\n") + "\r\n\r\n" + body.String())
 }
 
 func SendMessage(m Message) error {

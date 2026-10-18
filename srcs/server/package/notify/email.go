@@ -2,7 +2,6 @@ package notify
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -41,40 +40,42 @@ func DigestDelay() time.Duration {
 // send is swapped in tests.
 var send = mailer.SendMessage
 
-// Mail is the composed message for one member.
-type Mail struct {
-	Subject string
-	Body    string
-}
-
-// composeMail builds the text of one mail in the member's language
-// (Users.Locale): a single headline, or a list when several notifications
-// go out together. unsubscribe is the page link printed at the bottom.
-func composeMail(lang, nickname string, items []Notification, appURL, unsubscribe string) Mail {
-	var b strings.Builder
+// composeMail builds one mail in the member's language (Users.Locale):
+// a card per notification, a button to the notification list, and the
+// settings and unsubscribe links (unsubscribe is the page link). To and
+// the headers are left to the caller.
+func composeMail(lang, nickname string, items []Notification, appURL, unsubscribe string) mailer.Message {
 	name := nickname
 	if name == "" {
 		name = i18n.T(lang, "이웃")
 	}
-	b.WriteString(i18n.T(lang, "%s님, 잇냥에서 알려드려요.\n\n", name))
-	for _, n := range items {
-		fmt.Fprintf(&b, "■ %s\n", TitleIn(lang, n.Type))
-		if n.Preview != "" {
-			fmt.Fprintf(&b, "  %s\n", n.Preview)
-		}
-		if n.Link != "" {
-			fmt.Fprintf(&b, "  %s%s\n", appURL, n.Link)
-		}
-		b.WriteString("\n")
+	content := mailer.Content{
+		Lang:    lang,
+		Heading: i18n.T(lang, "%s님, 잇냥에서 알려드려요.", name),
+		Button:  mailer.Link{Label: i18n.T(lang, "알림 모두 보기"), URL: appURL + "/notifications"},
+		Notes:   []string{i18n.T(lang, "잇냥 알림 설정에 따라 보내드리는 메일이에요.")},
+		Footer: []mailer.Link{
+			{Label: i18n.T(lang, "알림 설정"), URL: appURL + "/myaccount/notifications"},
+			{Label: i18n.T(lang, "이메일 알림 끄기"), URL: unsubscribe},
+		},
 	}
-	b.WriteString(i18n.T(lang, "알림 설정: %s/myaccount/notifications\n", appURL))
-	b.WriteString(i18n.T(lang, "이메일 알림 끄기: %s\n", unsubscribe))
+	for _, n := range items {
+		item := mailer.Item{Title: TitleIn(lang, n.Type), Text: n.Preview}
+		if n.Link != "" {
+			item.Link = mailer.Link{Label: i18n.T(lang, "보기"), URL: appURL + n.Link}
+		}
+		content.Items = append(content.Items, item)
+	}
+	content.Preheader = content.Items[0].Title
+	if p := items[0].Preview; p != "" {
+		content.Preheader += " · " + p
+	}
 
 	subject := i18n.T(lang, "[잇냥] %s", TitleIn(lang, items[0].Type))
 	if len(items) > 1 {
 		subject = i18n.T(lang, "[잇냥] 새 알림 %d개", len(items))
 	}
-	return Mail{Subject: subject, Body: b.String()}
+	return content.Message("", subject)
 }
 
 func unsubscribeQuery(userId string) string {
@@ -141,13 +142,15 @@ func (n *Notifier) mailUser(userId string) error {
 	if len(unread) > 0 && email != "" && PrefsOf(user).EmailEnabled {
 		appURL := mailer.AppURL()
 		mail := composeMail(dynamo.S(user, "Locale"), dynamo.S(user, "UserNickname"), unread, appURL, appURL+"/notifications/unsubscribe?"+unsubscribeQuery(userId))
+		mail.To = email
 		headers := map[string]string{}
 		// RFC 8058 one-click unsubscribe, when the API URL is known.
 		if api := strings.TrimRight(os.Getenv("PUBLIC_API_URL"), "/"); api != "" {
 			headers["List-Unsubscribe"] = "<" + api + "/notifications/unsubscribe?" + unsubscribeQuery(userId) + ">"
 			headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
 		}
-		if err := send(mailer.Message{To: email, Subject: mail.Subject, Body: mail.Body, Headers: headers}); err != nil {
+		mail.Headers = headers
+		if err := send(mail); err != nil {
 			return err // stays queued; retried on the next run
 		}
 		state = EmailSent
