@@ -64,7 +64,7 @@ export function CommunityBoard() {
 		return () => {
 			alive = false;
 		};
-	}, [key, city]);
+	}, [key, city, t]);
 
 	useEffect(() => setQuery(parseBoardParams(new URLSearchParams(key)).q ?? ""), [key]);
 

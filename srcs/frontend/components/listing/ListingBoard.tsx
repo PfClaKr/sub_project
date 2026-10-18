@@ -68,7 +68,7 @@ export function ListingBoard({ type }: { type: ListingType }) {
 		return () => {
 			alive = false;
 		};
-	}, [key, city, type]);
+	}, [key, city, type, t]);
 
 	useEffect(() => setQuery(parseListingParams(type, new URLSearchParams(key)).q ?? ""), [key, type]);
 
