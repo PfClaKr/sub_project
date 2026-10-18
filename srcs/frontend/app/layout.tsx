@@ -1,4 +1,6 @@
 import { Metadata, Viewport } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import BottomTabs from "@/components/BottomTabs";
@@ -12,15 +14,15 @@ import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar"
 import GlobalStyle from "@/styles/globalStyles";
 import { Main } from "@/styles/styledLayout";
 
-export const metadata: Metadata = {
-	title: {
-		template: "%s | 잇냥",
-		default: "잇냥 - 프랑스 한인 생활 커뮤니티",
-	},
-	description: "프랑스에 사는 한인들이 중고 물건을 사고팔고, 집과 알바를 구하고, 생활 질문을 묻고 답하는 곳, 잇냥.",
-	applicationName: "잇냥",
-	appleWebApp: { capable: true, title: "잇냥", statusBarStyle: "default" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+	const t = await getTranslations("meta");
+	return {
+		title: { template: t("titleTemplate"), default: t("titleDefault") },
+		description: t("description"),
+		applicationName: t("siteName"),
+		appleWebApp: { capable: true, title: t("siteName"), statusBarStyle: "default" },
+	};
+}
 
 export const viewport: Viewport = {
 	width: "device-width",
@@ -31,29 +33,33 @@ export const viewport: Viewport = {
 	viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+	const locale = await getLocale();
+	const messages = await getMessages();
 	return (
 		// The home page's pre-paint script may add data-arrival-hidden
 		// (libs/arrival.ts) before React hydrates.
-		<html lang="ko" suppressHydrationWarning>
+		<html lang={locale} suppressHydrationWarning>
 			<body>
-				<StyledComponentsRegistry>
-					<GlobalStyle />
-					<ServiceWorkerRegistrar />
-					<SessionProvider>
-						<NotificationProvider>
-							<RegionProvider>
-								<ConfirmProvider>
-									<Navigation />
-									<SuspendedBanner />
-									<Main>{children}</Main>
-									<Footer />
-									<BottomTabs />
-								</ConfirmProvider>
-							</RegionProvider>
-						</NotificationProvider>
-					</SessionProvider>
-				</StyledComponentsRegistry>
+				<NextIntlClientProvider locale={locale} messages={messages}>
+					<StyledComponentsRegistry>
+						<GlobalStyle />
+						<ServiceWorkerRegistrar />
+						<SessionProvider>
+							<NotificationProvider>
+								<RegionProvider>
+									<ConfirmProvider>
+										<Navigation />
+										<SuspendedBanner />
+										<Main>{children}</Main>
+										<Footer />
+										<BottomTabs />
+									</ConfirmProvider>
+								</RegionProvider>
+							</NotificationProvider>
+						</SessionProvider>
+					</StyledComponentsRegistry>
+				</NextIntlClientProvider>
 			</body>
 		</html>
 	);

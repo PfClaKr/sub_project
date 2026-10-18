@@ -99,3 +99,19 @@ export const FooterLegal = styled.nav`
 		}
 	}
 `;
+
+// The language menu in the footer.
+export const LanguageSelect = styled.label`
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 12px;
+	color: ${palette.muted};
+
+	select {
+		width: auto;
+		padding: 5px 30px 5px 10px;
+		font-size: 13px;
+		background-position: right 10px center;
+	}
+`;

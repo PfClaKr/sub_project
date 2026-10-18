@@ -1,0 +1,176 @@
+{
+  "meta": {
+    "siteName": "Itnyang",
+    "titleTemplate": "%s | Itnyang",
+    "titleDefault": "Itnyang - la communauté coréenne en France",
+    "description": "Itnyang : les Coréens de France y vendent et achètent d'occasion, trouvent un logement ou un petit boulot, et s'entraident sur la vie pratique."
+  },
+  "nav": {
+    "brand": "Itnyang",
+    "mainMenu": "Menu principal",
+    "sectionsMenu": "Rubriques",
+    "home": "Accueil",
+    "market": "Occasion",
+    "community": "Communauté",
+    "housing": "Logement",
+    "jobs": "Jobs",
+    "admin": "Admin",
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "wishlist": "Favoris",
+    "chat": "Messages",
+    "notifications": "Notifications",
+    "notificationsCount": "{count, plural, one {# notification} other {# notifications}}",
+    "myAccount": "Mon compte"
+  },
+  "write": {
+    "button": "Publier",
+    "menuLabel": "Que voulez-vous publier ?",
+    "sell": "Vendre un objet",
+    "sellHint": "Une annonce d'occasion",
+    "housing": "Logement",
+    "housingHint": "Colocation, studio, sous-location",
+    "job": "Emploi",
+    "jobHint": "Petit boulot, cours, interprétariat",
+    "community": "Question ou discussion",
+    "communityHint": "Questions pratiques, forum libre"
+  },
+  "footer": {
+    "siteMenu": "Plan du site",
+    "sell": "Vendre",
+    "safety": "Guide de sécurité",
+    "legalMenu": "Conditions et politiques",
+    "terms": "Conditions d'utilisation",
+    "privacy": "Politique de confidentialité",
+    "legal": "Mentions légales",
+    "tagline": "la communauté coréenne en France",
+    "safetyNote": "Faites vos échanges en main propre, dans un lieu public. N'envoyez jamais d'argent avant d'avoir vu l'objet ou le logement.",
+    "language": "Langue"
+  },
+  "suspended": {
+    "message": "Suite à une infraction aux règles, la publication, les messages et l'envoi de photos sont bloqués sur ce compte.",
+    "messageUntil": "Suite à une infraction aux règles, la publication, les messages et l'envoi de photos sont bloqués sur ce compte jusqu'au {date}."
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "La communauté coréenne en France",
+      "headline": "La vie en France :<br></br>besoin <word> ?</word>",
+      "words": "d'un objet | d'un logement | d'un job | d'une réponse",
+      "lead": "Occasion, logement, petits boulots, titre de séjour… Les Coréens déjà installés vous donnent un coup de main.",
+      "perMonth": "690 €/mois",
+      "answers": "4 réponses",
+      "mascot": "Le chat d'Itnyang avec son béret"
+    },
+    "purposes": {
+      "label": "De quoi avez-vous besoin ?",
+      "market": {
+        "title": "Acheter et vendre",
+        "body": "Départ, déménagement : échangez en main propre avec vos voisins.",
+        "count": "{count} en vente",
+        "action": "Vendre"
+      },
+      "housing": {
+        "title": "Trouver un logement",
+        "body": "Colocation, studio, sous-location d'été. Ne payez rien avant la visite.",
+        "count": "{count, plural, one {# logement} other {# logements}}",
+        "action": "Publier un logement"
+      },
+      "job": {
+        "title": "Trouver un job",
+        "body": "Restauration, cours, interprétariat. Vérifiez le salaire et le contrat avant de postuler.",
+        "count": "{count, plural, one {# offre} other {# offres}}",
+        "action": "Publier une offre"
+      },
+      "community": {
+        "title": "Poser une question",
+        "body": "Titre de séjour, CAF, banque : ceux qui sont passés par là vous répondent.",
+        "count": "{count, plural, one {# question sans réponse} other {# questions sans réponse}}",
+        "action": "Poser une question"
+      }
+    },
+    "checklist": {
+      "title": "Fraîchement arrivé en France ✈︎",
+      "lead": "L'essentiel des premières semaines. En cas de doute, demandez à ceux qui l'ont déjà fait.",
+      "progress": "{done} / {total} fait",
+      "allDone": "Tout est fait",
+      "dismiss": "Ne plus afficher",
+      "dismissed": "Liste masquée. Vous pouvez la réafficher depuis « Mon compte ».",
+      "undo": "Annuler",
+      "markDone": "Marquer « {step} » comme fait",
+      "markUndone": "Marquer « {step} » comme à faire",
+      "related": "Voir les questions →",
+      "transportQuery": "navigo",
+      "steps": {
+        "visa": {
+          "title": "Titre de séjour",
+          "body": "Selon votre visa, une validation en ligne ou une demande de titre de séjour (ANEF) est nécessaire après l'arrivée."
+        },
+        "bank": {
+          "title": "Compte bancaire",
+          "body": "Le loyer, le salaire et la CAF demandent un RIB."
+        },
+        "phone": {
+          "title": "Téléphone",
+          "body": "Beaucoup commencent avec une carte prépayée puis passent à un forfait."
+        },
+        "caf": {
+          "title": "Logement et CAF",
+          "body": "Une fois logé, vérifiez si vous avez droit à l'APL."
+        },
+        "health": {
+          "title": "Assurance maladie",
+          "body": "Inscrivez-vous à l'Assurance maladie (Ameli) et déclarez un médecin traitant."
+        },
+        "transport": {
+          "title": "Transports",
+          "body": "Passe Navigo, et pour les étudiants de moins de 26 ans, la réduction Imagine R."
+        }
+      }
+    },
+    "feed": {
+      "title": "Les dernières nouvelles",
+      "lead": "Questions, discussions, logements et jobs, du plus récent au plus ancien.",
+      "empty": "Rien de nouveau dans cette région pour l'instant.",
+      "emptyAction": "Publiez le premier message.",
+      "housing": "Logement",
+      "job": "Job",
+      "solved": "Résolu",
+      "answers": "{count, plural, one {# réponse} other {# réponses}}",
+      "comments": "{count, plural, one {# commentaire} other {# commentaires}}"
+    },
+    "recent": {
+      "title": "Derniers objets",
+      "lead": "Départs, déménagements : les annonces les plus récentes d'abord.",
+      "more": "Voir plus",
+      "empty": "Aucun objet pour l'instant.",
+      "first": "Publier le premier objet"
+    },
+    "trust": {
+      "title": "En toute confiance",
+      "lead": "À l'étranger, un litige est difficile à régler : nous misons sur la prévention.",
+      "guide": "Guide de sécurité",
+      "verified": {
+        "title": "Membres vérifiés",
+        "body": "Seuls les membres à l'e-mail vérifié peuvent publier et discuter. Les annonces de logement et d'emploi sont ouvertes après 7 jours."
+      },
+      "reports": {
+        "title": "Signalement efficace",
+        "body": "Un message signalé 3 fois est masqué jusqu'à vérification, et vous pouvez bloquer quelqu'un dans les messages."
+      },
+      "scams": {
+        "title": "Alertes anti-arnaque",
+        "body": "Paiement d'avance, contact hors du site, salaire sous le SMIC : vous êtes prévenu dès la publication."
+      }
+    },
+    "cta": {
+      "title": "Rejoignez les Coréens de France",
+      "lead": "L'inscription prend une minute. Tout est gratuit.",
+      "button": "S'inscrire gratuitement"
+    }
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "body": "Elle a été supprimée ou l'adresse est erronée.",
+    "home": "Retour à l'accueil"
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "meta": {
+    "siteName": "잇냥",
+    "titleTemplate": "%s | 잇냥",
+    "titleDefault": "잇냥 - 프랑스 한인 생활 커뮤니티",
+    "description": "프랑스에 사는 한인들이 중고 물건을 사고팔고, 집과 알바를 구하고, 생활 질문을 묻고 답하는 곳, 잇냥."
+  },
+  "nav": {
+    "brand": "잇냥",
+    "mainMenu": "주 메뉴",
+    "sectionsMenu": "섹션",
+    "home": "홈",
+    "market": "중고",
+    "community": "커뮤니티",
+    "housing": "집",
+    "jobs": "알바",
+    "admin": "관리자",
+    "login": "로그인",
+    "logout": "로그아웃",
+    "wishlist": "찜 목록",
+    "chat": "채팅",
+    "notifications": "알림",
+    "notificationsCount": "알림 {count}개",
+    "myAccount": "내 계정"
+  },
+  "write": {
+    "button": "글쓰기",
+    "menuLabel": "무엇을 올릴까요?",
+    "sell": "물건 팔기",
+    "sellHint": "중고 물건을 올려요",
+    "housing": "방 올리기·구하기",
+    "housingHint": "쉐어, 스튜디오, 서블렛",
+    "job": "구인·구직",
+    "jobHint": "알바, 과외, 통역",
+    "community": "질문·이야기",
+    "communityHint": "생활 Q&A, 자유 게시판"
+  },
+  "footer": {
+    "siteMenu": "사이트 메뉴",
+    "sell": "판매하기",
+    "safety": "안전 가이드",
+    "legalMenu": "약관과 정책",
+    "terms": "이용약관",
+    "privacy": "개인정보처리방침",
+    "legal": "운영자 정보 · Mentions légales",
+    "tagline": "프랑스 한인 생활 커뮤니티",
+    "safetyNote": "거래는 직접 만나서, 안전한 공공장소에서 해주세요. 물건이나 집을 보기 전에는 돈을 보내지 마세요.",
+    "language": "언어"
+  },
+  "suspended": {
+    "message": "운영 정책 위반으로 글쓰기, 채팅, 사진 올리기가 제한된 계정이에요.",
+    "messageUntil": "운영 정책 위반으로 {date}까지 글쓰기, 채팅, 사진 올리기가 제한된 계정이에요."
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "프랑스 한인 생활 커뮤니티",
+      "headline": "프랑스 생활,<br></br>지금 <word></word> 필요하냥?",
+      "words": "물건이 | 집이 | 일자리가 | 답이",
+      "lead": "중고거래부터 집·알바 구하기, 체류증 같은 생활 질문까지. 먼저 와 있는 한인 이웃들이 도와줘요.",
+      "perMonth": "€690/월",
+      "answers": "답변 4",
+      "mascot": "베레모를 쓴 잇냥 고양이"
+    },
+    "purposes": {
+      "label": "무엇이 필요하세요?",
+      "market": {
+        "title": "물건 사고팔기",
+        "body": "귀국 정리, 이사 짐까지. 가까운 이웃과 직거래해요.",
+        "count": "판매중 {count}개",
+        "action": "판매하기"
+      },
+      "housing": {
+        "title": "집 구하기",
+        "body": "쉐어, 스튜디오, 방학 서블렛. 보기 전에는 돈을 보내지 마세요.",
+        "count": "방 {count}개",
+        "action": "방 올리기"
+      },
+      "job": {
+        "title": "일 구하기",
+        "body": "식당, 과외, 통역. 시급과 계약 조건을 확인하고 지원해요.",
+        "count": "공고 {count}개",
+        "action": "구인 올리기"
+      },
+      "community": {
+        "title": "생활 질문하기",
+        "body": "체류증, CAF, 은행. 먼저 겪어본 이웃이 답해줘요.",
+        "count": "답을 기다리는 질문 {count}개",
+        "action": "질문하기"
+      }
+    },
+    "checklist": {
+      "title": "프랑스에 막 왔다면 ✈︎",
+      "lead": "처음 몇 주 동안 챙길 것들이에요. 막히면 먼저 겪어본 이웃에게 물어보세요.",
+      "progress": "{done} / {total} 완료",
+      "allDone": "모두 챙겼어요",
+      "dismiss": "다시 보지 않기",
+      "dismissed": "정착 체크리스트를 숨겼어요. 마이페이지의 ‘계정’에서 다시 볼 수 있어요.",
+      "undo": "되돌리기",
+      "markDone": "{step} 완료로 표시",
+      "markUndone": "{step} 완료 취소",
+      "related": "관련 질문 보기 →",
+      "transportQuery": "나비고",
+      "steps": {
+        "visa": {
+          "title": "체류증·비자",
+          "body": "비자 종류에 따라 도착 후 온라인 인증이나 체류증 신청(ANEF)이 필요해요."
+        },
+        "bank": {
+          "title": "은행 계좌",
+          "body": "월세, 월급, CAF에 계좌 증명서(RIB)가 필요해요."
+        },
+        "phone": {
+          "title": "휴대폰 개통",
+          "body": "선불 유심으로 시작해 요금제로 바꾸는 경우가 많아요."
+        },
+        "caf": {
+          "title": "집과 CAF",
+          "body": "집을 구했다면 주거보조금(APL)을 받을 수 있는지 확인하세요."
+        },
+        "health": {
+          "title": "건강보험",
+          "body": "건강보험(Ameli)에 가입하고 주치의(médecin traitant)를 정해두세요."
+        },
+        "transport": {
+          "title": "교통",
+          "body": "나비고 정기권, 26세 미만 학생이라면 Imagine R 할인을 알아보세요."
+        }
+      }
+    },
+    "feed": {
+      "title": "이웃들의 최근 소식",
+      "lead": "질문, 이야기, 방, 알바를 새로 올라온 순서로 모았어요.",
+      "empty": "이 지역에는 아직 새 소식이 없어요.",
+      "emptyAction": "첫 글을 남겨보세요.",
+      "housing": "집",
+      "job": "알바",
+      "solved": "해결",
+      "answers": "답변 {count}",
+      "comments": "댓글 {count}"
+    },
+    "recent": {
+      "title": "새로 올라온 물건",
+      "lead": "귀국 정리, 이사 짐. 방금 올라온 물건부터 보여드려요.",
+      "more": "더 보기",
+      "empty": "아직 올라온 물건이 없어요.",
+      "first": "첫 물건 올리기"
+    },
+    "trust": {
+      "title": "안심하고 쓰도록",
+      "lead": "해외에서는 피해를 되돌리기 어려워서, 처음부터 막는 데 신경 썼어요.",
+      "guide": "안전 가이드",
+      "verified": {
+        "title": "이메일 인증 회원",
+        "body": "인증한 회원만 글을 쓰고 채팅할 수 있어요. 가입 7일이 지나야 집·알바 글을 올릴 수 있어요."
+      },
+      "reports": {
+        "title": "신고하면 바로 숨김",
+        "body": "신고가 3건 쌓인 글은 운영진 확인 전까지 숨겨지고, 채팅에서는 상대를 차단할 수 있어요."
+      },
+      "scams": {
+        "title": "사기 수법 미리 알림",
+        "body": "선입금 요구, 외부 메신저 유도, 최저임금 미만 공고는 글을 올릴 때부터 경고해요."
+      }
+    },
+    "cta": {
+      "title": "프랑스 한인 이웃들과 연결되냥",
+      "lead": "가입은 1분이면 충분해요. 물건, 집, 일, 질문 모두 무료예요.",
+      "button": "무료로 가입하기"
+    }
+  },
+  "notFound": {
+    "title": "페이지를 찾을 수 없어요",
+    "body": "삭제되었거나 주소가 잘못된 것 같아요.",
+    "home": "홈으로"
+  }
+}
