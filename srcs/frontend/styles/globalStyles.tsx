@@ -146,6 +146,11 @@ const GlobalStyle = createGlobalStyle`
 		border-radius: ${radius.md};
 		z-index: 0;
 	}
+	/* The dismissed home checklist (libs/arrival.ts), hidden before paint. */
+	html[data-arrival-hidden] [data-arrival] {
+		display: none;
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		*, *::before, *::after {
 			animation-duration: 0.01ms !important;

@@ -6,6 +6,7 @@ import { useNotifications } from "@/libs/notifications";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { TextButton } from "@/styles/styledCommunity";
 import { API_URL } from "@/libs/config";
+import { isArrivalHidden, setArrivalHidden } from "@/libs/arrival";
 import { AvatarPicker } from "@/styles/styledUi";
 import { useSession } from "@/libs/session";
 import { gql, PRODUCT_CARD_FIELDS } from "@/libs/graphql";
@@ -198,6 +199,8 @@ function LeaveButton() {
 function AccountSettings() {
 	const [open, setOpen] = useState(false);
 	const [done, setDone] = useState("");
+	const [arrivalHidden, setArrivalHiddenState] = useState(false);
+	useEffect(() => setArrivalHiddenState(isArrivalHidden()), []);
 	// After a reset the page opens with ?reset=1 (read here rather than with
 	// useSearchParams, which would need a Suspense boundary on this page).
 	useEffect(() => {
@@ -213,6 +216,11 @@ function AccountSettings() {
 					<Row style={{ gap: 8, flexWrap: "wrap" }}>
 						<GhostButton onClick={() => { setOpen(true); setDone(""); }}>비밀번호 변경</GhostButton>
 						<LinkButton href="/myaccount/blocked" $ghost>차단한 사용자</LinkButton>
+						{arrivalHidden && (
+							<GhostButton onClick={() => { setArrivalHidden(false); setArrivalHiddenState(false); setDone("홈에 정착 체크리스트를 다시 보여드려요."); }}>
+								정착 체크리스트 다시 보기
+							</GhostButton>
+						)}
 					</Row>
 				)}
 			<div style={{ marginTop: 28 }}><LeaveButton /></div>
