@@ -39,14 +39,17 @@ type Content struct {
 	Footer    []Link   // e.g. notification settings, unsubscribe
 }
 
-// Message is the mail for content: text and HTML parts, and the brand
+// Message is the mail for content: text and HTML parts in the site's
+// current theme, the logo in that colour attached inline, and the brand
 // as the sender's display name.
 func (c Content) Message(to, subject string) Message {
+	t := CurrentTheme()
 	return Message{
 		To:       to,
 		Subject:  subject,
 		Body:     c.Text(),
-		HTML:     c.HTML(),
+		HTML:     c.render(t, template.URL("cid:"+LogoID)),
+		Images:   []Image{{ID: LogoID, Name: "itnyang.png", Data: Logo(t.Primary)}},
 		FromName: i18n.T(c.Lang, "잇냥"),
 	}
 }
@@ -92,8 +95,14 @@ func (c Content) HTML() string {
 }
 
 // HTMLWith renders with the given colours (the admin preview of an
-// unsaved theme).
+// unsaved theme), the logo inline as a data URI.
 func (c Content) HTMLWith(t Theme) string {
+	return c.render(t, template.URL(LogoDataURI(t.Primary)))
+}
+
+// render: logo is the logo's src, a cid: in sent mails (template.URL, as
+// html/template would refuse cid: and data: otherwise).
+func (c Content) render(t Theme, logo template.URL) string {
 	lang := c.Lang
 	if !i18n.Valid(lang) {
 		lang = i18n.Korean
@@ -102,6 +111,7 @@ func (c Content) HTMLWith(t Theme) string {
 	err := layout.Execute(&b, map[string]interface{}{
 		"C":        c,
 		"T":        t,
+		"Logo":     logo,
 		"Lang":     lang,
 		"AppURL":   AppURL(),
 		"Brand":    i18n.T(lang, "잇냥"),
@@ -144,7 +154,7 @@ var layout = template.Must(template.New("mail").Parse(`<!doctype html>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR','Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
 <tr><td style="padding:0 4px 18px;">
 <a href="{{.AppURL}}" style="text-decoration:none;color:{{$.T.Primary}};font-size:20px;font-weight:800;letter-spacing:-0.3px;">
-<img src="{{.AppURL}}/icons/icon-192.png" width="32" height="32" alt="" style="width:32px;height:32px;border:0;border-radius:9px;vertical-align:middle;">
+<img src="{{.Logo}}" width="32" height="32" alt="" style="width:32px;height:32px;border:0;vertical-align:middle;">
 <span style="vertical-align:middle;padding-left:6px;">{{.Brand}}</span>
 </a>
 </td></tr>

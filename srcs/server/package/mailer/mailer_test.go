@@ -2,6 +2,8 @@ package mailer
 
 import (
 	"bytes"
+	"encoding/base64"
+	"image/png"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -50,11 +52,21 @@ func TestBuildMultipart(t *testing.T) {
 	if ko == nil || ko.Name != "잇냥" {
 		t.Errorf("korean From = %+v, want an encoded 잇냥", ko)
 	}
+	// multipart/related: the alternative (text, html), then the logo.
 	mediaType, params, err := mime.ParseMediaType(msg.Header.Get("Content-Type"))
-	if err != nil || mediaType != "multipart/alternative" {
+	if err != nil || mediaType != "multipart/related" {
 		t.Fatalf("Content-Type = %q (%v)", msg.Header.Get("Content-Type"), err)
 	}
-	parts := multipart.NewReader(msg.Body, params["boundary"])
+	related := multipart.NewReader(msg.Body, params["boundary"])
+	altPart, err := related.NextPart()
+	if err != nil {
+		t.Fatal(err)
+	}
+	altType, altParams, _ := mime.ParseMediaType(altPart.Header.Get("Content-Type"))
+	if altType != "multipart/alternative" {
+		t.Fatalf("first related part = %q", altType)
+	}
+	parts := multipart.NewReader(altPart, altParams["boundary"])
 	var types, bodies []string
 	for {
 		p, err := parts.NextPart() // decodes quoted-printable
@@ -65,13 +77,21 @@ func TestBuildMultipart(t *testing.T) {
 		types = append(types, strings.SplitN(p.Header.Get("Content-Type"), ";", 2)[0])
 		bodies = append(bodies, string(b))
 	}
+	logo, err := related.NextPart()
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, _ := io.ReadAll(base64.NewDecoder(base64.StdEncoding, logo))
+	if logo.Header.Get("Content-ID") != "<"+LogoID+">" || logo.Header.Get("Content-Type") != "image/png" || !bytes.Equal(data, Logo(DefaultTheme.Primary)) {
+		t.Errorf("logo part = %v (%d bytes)", logo.Header, len(data))
+	}
 	if strings.Join(types, ",") != "text/plain,text/html" {
 		t.Fatalf("parts = %v, want text then html", types)
 	}
 	if !strings.Contains(bodies[0], "Vérifier: https://itnyang.test/v?token=abc") {
 		t.Errorf("text part = %q", bodies[0])
 	}
-	if !strings.Contains(bodies[1], `href="https://itnyang.test/v?token=abc"`) || !strings.Contains(bodies[1], `<html lang="fr">`) {
+	if !strings.Contains(bodies[1], `href="https://itnyang.test/v?token=abc"`) || !strings.Contains(bodies[1], `<html lang="fr">`) || !strings.Contains(bodies[1], `src="cid:`+LogoID+`"`) {
 		t.Errorf("html part lacks the link or the language:\n%s", bodies[1])
 	}
 	for _, line := range strings.Split(string(raw), "\r\n") {
@@ -148,4 +168,48 @@ func TestTheme(t *testing.T) {
 	if CurrentTheme() != DefaultTheme {
 		t.Error("a failed first read must fall back to the built-in colours")
 	}
+}
+
+func TestLogo(t *testing.T) {
+	decode := func(b []byte) func(x, y int) (r, g, b, a uint32) {
+		img, err := png.Decode(bytes.NewReader(b))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return func(x, y int) (uint32, uint32, uint32, uint32) {
+			r, g, b, a := img.At(x, y).RGBA()
+			return r >> 8, g >> 8, b >> 8, a >> 8
+		}
+	}
+	orig := decode(logoPNG)
+	same := decode(Logo(DefaultTheme.Primary))
+	for _, p := range [][2]int{{8, 48}, {48, 48}, {30, 70}, {1, 1}} {
+		r1, g1, b1, a1 := orig(p[0], p[1])
+		r2, g2, b2, a2 := same(p[0], p[1])
+		if diff(r1, r2) > 3 || diff(g1, g2) > 3 || diff(b1, b2) > 3 || a1 != a2 {
+			t.Errorf("default colour changed pixel %v: %v → %v", p, []uint32{r1, g1, b1, a1}, []uint32{r2, g2, b2, a2})
+		}
+	}
+	red := decode(Logo("#aa3300"))
+	if r, g, b, _ := red(8, 48); diff(r, 0xaa) > 3 || diff(g, 0x33) > 3 || b > 3 {
+		t.Errorf("background = %d,%d,%d, want #aa3300", r, g, b)
+	}
+	if r1, g1, b1, _ := orig(48, 48); r1 > 250 && g1 > 250 && b1 > 250 {
+		if r, g, b, _ := red(48, 48); r < 250 || g < 250 || b < 250 {
+			t.Errorf("the white cat changed colour: %d,%d,%d", r, g, b)
+		}
+	}
+	if _, _, _, a := red(0, 0); a != 0 {
+		t.Error("the rounded corner must stay transparent")
+	}
+	if !bytes.Equal(Logo("nonsense"), Logo(DefaultTheme.Primary)) {
+		t.Error("a bad colour must fall back to the default")
+	}
+}
+
+func diff(a, b uint32) uint32 {
+	if a > b {
+		return a - b
+	}
+	return b - a
 }

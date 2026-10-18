@@ -5,6 +5,7 @@ package mailer
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"mime"
@@ -31,15 +32,24 @@ func AppURL() string {
 }
 
 // Message is one mail. Body is the plain text; with HTML set the mail is
-// multipart/alternative and clients show the HTML. FromName is the
-// sender's display name. Headers carries extras such as List-Unsubscribe.
+// multipart/alternative and clients show the HTML, with Images attached
+// inline for it (src="cid:<ID>"). FromName is the sender's display
+// name. Headers carries extras such as List-Unsubscribe.
 type Message struct {
 	To       string
 	Subject  string
 	Body     string
 	HTML     string
+	Images   []Image
 	FromName string
 	Headers  map[string]string
+}
+
+// Image is a PNG the HTML shows by Content-ID.
+type Image struct {
+	ID   string
+	Name string
+	Data []byte
 }
 
 // Send is a shortcut for a message without extra headers.
@@ -77,8 +87,8 @@ func build(from string, m Message) []byte {
 	// Text first, HTML last: clients show the last part they support.
 	// The text stays 8bit (readable as is, links unencoded); the HTML is
 	// quoted-printable so its long lines stay under the SMTP limit.
-	var body bytes.Buffer
-	parts := multipart.NewWriter(&body)
+	var alt bytes.Buffer
+	parts := multipart.NewWriter(&alt)
 	text, _ := parts.CreatePart(textproto.MIMEHeader{
 		"Content-Type":              {"text/plain; charset=\"utf-8\""},
 		"Content-Transfer-Encoding": {"8bit"},
@@ -92,7 +102,33 @@ func build(from string, m Message) []byte {
 	qp.Write([]byte(m.HTML))
 	qp.Close()
 	parts.Close()
-	headers = append(headers, "Content-Type: multipart/alternative; boundary=\""+parts.Boundary()+"\"")
+	altType := "multipart/alternative; boundary=\"" + parts.Boundary() + "\""
+	if len(m.Images) == 0 {
+		headers = append(headers, "Content-Type: "+altType)
+		return []byte(strings.Join(headers, "\r\n") + "\r\n\r\n" + alt.String())
+	}
+
+	// With inline images: multipart/related around the alternative.
+	var body bytes.Buffer
+	related := multipart.NewWriter(&body)
+	inner, _ := related.CreatePart(textproto.MIMEHeader{"Content-Type": {altType}})
+	inner.Write(alt.Bytes())
+	for _, img := range m.Images {
+		part, _ := related.CreatePart(textproto.MIMEHeader{
+			"Content-Type":              {"image/png"},
+			"Content-Transfer-Encoding": {"base64"},
+			"Content-ID":                {"<" + img.ID + ">"},
+			"Content-Disposition":       {"inline; filename=\"" + img.Name + "\""},
+		})
+		encoded := base64.StdEncoding.EncodeToString(img.Data)
+		for len(encoded) > 76 {
+			part.Write([]byte(encoded[:76] + "\r\n"))
+			encoded = encoded[76:]
+		}
+		part.Write([]byte(encoded + "\r\n"))
+	}
+	related.Close()
+	headers = append(headers, "Content-Type: multipart/related; type=\"multipart/alternative\"; boundary=\""+related.Boundary()+"\"")
 	return []byte(strings.Join(headers, "\r\n") + "\r\n\r\n" + body.String())
 }
 
