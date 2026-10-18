@@ -2,6 +2,7 @@
 
 import { Pagination, LinkButton } from "@/styles/styledUi";
 import { buildAdminHref, type SearchParams } from "@/libs/adminParams";
+import { useTranslations } from "next-intl";
 
 export function AdminPagination({ pathname, params, page, totalPages, total }: {
 	pathname: string;
@@ -10,11 +11,13 @@ export function AdminPagination({ pathname, params, page, totalPages, total }: {
 	totalPages: number;
 	total: number;
 }) {
+	const t = useTranslations("admin");
+	const c = useTranslations("common");
 	return (
-		<Pagination aria-label="페이지">
-			{page > 1 && <LinkButton $ghost href={buildAdminHref(pathname, params, { page: String(page - 1) })}>← 이전</LinkButton>}
-			<span>{page} / {totalPages} 페이지 · 총 {total}건</span>
-			{page < totalPages && <LinkButton $ghost href={buildAdminHref(pathname, params, { page: String(page + 1) })}>다음 →</LinkButton>}
+		<Pagination aria-label={t("pages")}>
+			{page > 1 && <LinkButton $ghost href={buildAdminHref(pathname, params, { page: String(page - 1) })}>{c("prev")}</LinkButton>}
+			<span>{t("pageInfo", { page, total: totalPages, count: total })}</span>
+			{page < totalPages && <LinkButton $ghost href={buildAdminHref(pathname, params, { page: String(page + 1) })}>{c("next")}</LinkButton>}
 		</Pagination>
 	);
 }

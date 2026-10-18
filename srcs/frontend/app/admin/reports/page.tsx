@@ -1,4 +1,6 @@
-import { Metadata } from "next";
+import { getLocale, getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
+import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import { AdminListFilters } from "@/components/admin/AdminListFilters";
 import { AdminPagination } from "@/components/admin/AdminPagination";
@@ -9,7 +11,7 @@ import { formatDateTime } from "@/libs/format";
 import { getLabels } from "@/libs/labels.server";
 import { EmptyRow, Note, Panel, RoleBadge, Table, TableWrap } from "@/styles/styledAdmin";
 
-export const metadata: Metadata = { title: "신고" };
+export const generateMetadata = pageMetadata("admin.reports");
 
 type QueueItem = {
 	TargetType: string; TargetId: string; Count: number; Counted: number; Reasons: Record<string, number>;
@@ -17,8 +19,6 @@ type QueueItem = {
 	OwnerId: string; OwnerNickname: string; OwnerEmail: string; Anonymous: boolean; Flags: string[] | null; Missing: boolean;
 };
 
-const TYPE_LABEL: Record<string, string> = { post: "글", comment: "댓글", product: "상품", user: "회원", chat: "채팅" };
-const STATUS_LABEL: Record<string, string> = { active: "공개", hidden: "숨김", deleted: "삭제됨", expired: "만료" };
 
 // A target that is gone (or already deleted) can only be closed.
 function actionsFor(item: QueueItem): string[] {
@@ -38,60 +38,64 @@ function actionsFor(item: QueueItem): string[] {
 // The queue groups reports by target, most reported first. Suspending
 // the owner is done from the member list (linked).
 export default async function AdminReportsPage({ searchParams }: { searchParams: SearchParams }) {
-	const L = await getLabels();
 	if (!(await isAdmin())) return null;
+	const L = await getLabels();
+	const t = await getTranslations("admin.reports");
+	const a = await getTranslations("admin");
+	const locale = (await getLocale()) as Locale;
+	const known = (key: string, fallback: string) => (t.has(key) ? t(key) : fallback);
 	const status = param(searchParams, "status") || "open";
 	const list = await adminGet<AdminPage<QueueItem>>(`/reports${apiQuery(searchParams, ["status", "type", "page"])}`);
 
 	return (
 		<Panel>
-			<h2>신고</h2>
-			<Note>같은 대상에 대한 신고를 묶어 보여줘요. 가입 7일 이상 회원의 신고 3건이 쌓이면 글·댓글은 자동으로 숨겨져요.</Note>
+			<h2>{t("title")}</h2>
+			<Note>{t("note")}</Note>
 			<AdminListFilters
 				selects={[
 					{
-						name: "status", label: "상태", value: status,
-						options: [{ value: "open", label: "처리 대기" }, { value: "resolved", label: "처리됨" }, { value: "dismissed", label: "기각" }],
+						name: "status", label: t("status"), value: status,
+						options: (["open", "resolved", "dismissed"] as const).map(s => ({ value: s, label: t(s) })),
 					},
 					{
-						name: "type", label: "대상", value: param(searchParams, "type"),
-						options: [{ value: "", label: "전체" }, { value: "post", label: "글" }, { value: "comment", label: "댓글" }, { value: "product", label: "상품" }, { value: "user", label: "회원" }, { value: "chat", label: "채팅" }],
+						name: "type", label: t("target"), value: param(searchParams, "type"),
+						options: [{ value: "", label: a("all") }, ...(["post", "comment", "product", "user", "chat"] as const).map(k => ({ value: k, label: t(`types.${k}`) }))],
 					},
 				]}
 			/>
 			<TableWrap>
 				<Table>
 					<thead>
-						<tr><th>대상</th><th>작성자</th><th>신고</th><th>상태</th><th>마지막 신고</th>{status === "open" && <th>처리</th>}</tr>
+						<tr><th>{t("colTarget")}</th><th>{t("colOwner")}</th><th>{t("colReports")}</th><th>{t("colStatus")}</th><th>{t("colLast")}</th>{status === "open" && <th>{t("colAction")}</th>}</tr>
 					</thead>
 					<tbody>
 						{list.Items.map(item => (
 							<tr key={`${item.TargetType}:${item.TargetId}`}>
 								<td style={{ maxWidth: 360 }}>
-									<RoleBadge>{TYPE_LABEL[item.TargetType] ?? item.TargetType}</RoleBadge>{" "}
-									{item.Missing ? <em>이미 사라진 대상</em> : <Link href={item.Link} target="_blank">{item.Title || "(제목 없음)"}</Link>}
+									<RoleBadge>{known(`types.${item.TargetType}`, item.TargetType)}</RoleBadge>{" "}
+									{item.Missing ? <em>{t("gone")}</em> : <Link href={item.Link} target="_blank">{item.TargetType === "comment" ? (item.Title ? t("commentOn", { title: item.Title }) : t("comment")) : item.Title || a("noTitle")}</Link>}
 									{item.Body && <div><small>{item.Body}</small></div>}
 									{item.Flags?.map(f => <div key={f}><small>⚠ {L.warning(f).title}</small></div>)}
 								</td>
-								<td data-label="작성자">
+								<td data-label={t("colOwner")}>
 									{item.OwnerId
-										? <Link href={`/admin/users?q=${encodeURIComponent(item.OwnerEmail || item.OwnerNickname)}`}>{item.OwnerNickname || "(탈퇴)"}</Link>
+										? <Link href={`/admin/users?q=${encodeURIComponent(item.OwnerEmail || item.OwnerNickname)}`}>{item.OwnerNickname || a("left")}</Link>
 										: "—"}
-									{item.Anonymous && <div><small>익명으로 작성</small></div>}
+									{item.Anonymous && <div><small>{t("anonymous")}</small></div>}
 								</td>
-								<td data-label="신고">
-									<strong>{item.Count}건</strong> <small>(집계 {item.Counted})</small>
-									{Object.entries(item.Reasons).map(([r, n]) => <div key={r}><small>{r} {n}</small></div>)}
+								<td data-label={t("colReports")}>
+									<strong>{t("count", { count: item.Count })}</strong> <small>{t("counted", { count: item.Counted })}</small>
+									{Object.entries(item.Reasons).map(([r, n]) => <div key={r}><small>{L.enum("reportReason", r)} {n}</small></div>)}
 									{item.Details?.map((d, i) => <div key={i}><small>“{d}”</small></div>)}
 								</td>
-								<td data-label="상태">{STATUS_LABEL[item.TargetStatus] ?? (item.TargetStatus || "—")}</td>
-								<td data-label="마지막 신고">{formatDateTime(item.LastAt)}</td>
+								<td data-label={t("colStatus")}>{item.TargetStatus ? known(`targetStatus.${item.TargetStatus}`, item.TargetStatus) : "—"}</td>
+								<td data-label={t("colLast")}>{formatDateTime(item.LastAt, locale)}</td>
 								{status === "open" && <td><ReportActions targetType={item.TargetType} targetId={item.TargetId} actions={actionsFor(item)} /></td>}
 							</tr>
 						))}
 					</tbody>
 				</Table>
-				{list.Items.length === 0 && <EmptyRow>{status === "open" ? "처리할 신고가 없어요." : "해당하는 신고가 없어요."}</EmptyRow>}
+				{list.Items.length === 0 && <EmptyRow>{status === "open" ? t("emptyOpen") : t("empty")}</EmptyRow>}
 			</TableWrap>
 			<AdminPagination pathname="/admin/reports" params={searchParams} page={list.Page} totalPages={list.TotalPages} total={list.Total} />
 		</Panel>

@@ -1,4 +1,6 @@
-import { Metadata } from "next";
+import { getLocale, getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
+import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import { AdminListFilters } from "@/components/admin/AdminListFilters";
 import { AdminPagination } from "@/components/admin/AdminPagination";
@@ -11,7 +13,7 @@ import { getLabels } from "@/libs/labels.server";
 import { EmptyRow, Panel, RoleBadge, Table, TableWrap } from "@/styles/styledAdmin";
 import type { Post } from "@/libs/types";
 
-export const metadata: Metadata = { title: "게시글" };
+export const generateMetadata = pageMetadata("admin.posts");
 
 type AdminPost = {
 	PostId: string; Type: Post["Type"]; Topic: string; Title: string; Status: string; Deal: string;
@@ -22,61 +24,63 @@ type AdminPost = {
 // Every board in one list. Anonymous posts show their real author here,
 // for acting on reports; the "익명" badge marks them.
 export default async function AdminPostsPage({ searchParams }: { searchParams: SearchParams }) {
-	const L = await getLabels();
 	if (!(await isAdmin())) return null;
+	const L = await getLabels();
+	const t = await getTranslations("admin");
+	const locale = (await getLocale()) as Locale;
 	const list = await adminGet<AdminPage<AdminPost>>(`/posts${apiQuery(searchParams, ["q", "type", "status", "flagged", "page"])}`);
 
 	return (
 		<Panel>
-			<h2>게시글</h2>
+			<h2>{t("posts.title")}</h2>
 			<AdminListFilters
 				search={param(searchParams, "q")}
-				placeholder="제목, 작성자 닉네임·이메일"
+				placeholder={t("posts.placeholder")}
 				selects={[
 					{
-						name: "type", label: "게시판", value: param(searchParams, "type"),
-						options: [{ value: "", label: "전체" }, { value: "qna", label: "생활 Q&A" }, { value: "free", label: "자유" }, { value: "housing", label: "집" }, { value: "job", label: "알바" }],
+						name: "type", label: t("posts.board"), value: param(searchParams, "type"),
+						options: [{ value: "", label: t("all") }, ...(["qna", "free", "housing", "job"] as const).map(b => ({ value: b, label: L.board(b) }))],
 					},
 					{
-						name: "status", label: "상태", value: param(searchParams, "status"),
-						options: [{ value: "", label: "전체" }, { value: "active", label: "공개" }, { value: "hidden", label: "숨김" }, { value: "expired", label: "만료" }, { value: "deleted", label: "삭제" }],
+						name: "status", label: t("posts.status"), value: param(searchParams, "status"),
+						options: [{ value: "", label: t("all") }, ...(["active", "hidden", "expired", "deleted"] as const).map(s => ({ value: s, label: t(`posts.${s}`) }))],
 					},
 					{
-						name: "flagged", label: "경고·신고", value: param(searchParams, "flagged"),
-						options: [{ value: "", label: "전체" }, { value: "1", label: "있는 글만" }],
+						name: "flagged", label: t("posts.flags"), value: param(searchParams, "flagged"),
+						options: [{ value: "", label: t("all") }, { value: "1", label: t("posts.flaggedOnly") }],
 					},
 				]}
 			/>
 			<TableWrap>
 				<Table>
 					<thead>
-						<tr><th>글</th><th>작성자</th><th>경고·신고</th><th>상태</th><th>작성일</th></tr>
+						<tr><th>{t("posts.colPost")}</th><th>{t("posts.colAuthor")}</th><th>{t("posts.colFlags")}</th><th>{t("posts.colStatus")}</th><th>{t("posts.colDate")}</th></tr>
 					</thead>
 					<tbody>
 						{list.Items.map(p => (
 							<tr key={p.PostId}>
 								<td style={{ maxWidth: 380 }}>
 									<RoleBadge>{L.board(p.Type)}</RoleBadge> <small>{L.enum(p.Type === "housing" ? "housingKind" : p.Type === "job" ? "jobSector" : "topic", p.Topic)}</small>{p.Deal && <small> · {L.deal(p.Deal)}</small>}
-									<div><Link href={postHref(p)} target="_blank">{p.Title}</Link> <small>댓글 {p.CommentCount}</small></div>
+									<div><Link href={postHref(p)} target="_blank">{p.Title}</Link> <small>{t("posts.comments", { count: p.CommentCount })}</small></div>
 								</td>
-								<td data-label="작성자">
+								<td data-label={t("posts.colAuthor")}>
 									{p.AuthorNickname
 										? <Link href={`/admin/users?q=${encodeURIComponent(p.AuthorEmail || p.AuthorNickname)}`}>{p.AuthorNickname}</Link>
-										: "(탈퇴)"}
-									{p.Anonymous && <> <RoleBadge>익명</RoleBadge></>}
+										: t("left")}
+									{p.Anonymous && <> <RoleBadge>{t("posts.anonymous")}</RoleBadge></>}
 								</td>
-								<td data-label="경고·신고">
+								<td data-label={t("posts.colFlags")}>
 									{p.Flags.map(f => <div key={f}><small>⚠ {L.warning(f).title}</small></div>)}
-									{p.ReportCount > 0 && <Link href="/admin/reports?type=post"><small>신고 {p.ReportCount}건</small></Link>}
+									{p.ReportCount > 0 && <Link href="/admin/reports?type=post"><small>{t("posts.reports", { count: p.ReportCount })}</small></Link>}
 									{p.Flags.length === 0 && !p.ReportCount && "—"}
 								</td>
-								<td data-label="상태"><PostStatusControl postId={p.PostId} status={p.Status} /></td>
-								<td data-label="작성일">{formatDate(p.CreatedAt)}</td>
+								<td data-label={t("posts.colStatus")}><PostStatusControl postId={p.PostId} status={p.Status} /></td>
+								<td data-label={t("posts.colDate")}>{formatDate(p.CreatedAt, locale)}</td>
 							</tr>
 						))}
 					</tbody>
 				</Table>
-				{list.Items.length === 0 && <EmptyRow>조건에 맞는 글이 없어요.</EmptyRow>}
+				{list.Items.length === 0 && <EmptyRow>{t("posts.empty")}</EmptyRow>}
 			</TableWrap>
 			<AdminPagination pathname="/admin/posts" params={searchParams} page={list.Page} totalPages={list.TotalPages} total={list.Total} />
 		</Panel>

@@ -1,6 +1,7 @@
 'use client';
 
 import { FilterForm } from "@/styles/styledAdmin";
+import { useTranslations } from "next-intl";
 
 type Select = { name: string; label: string; value: string; options: { value: string; label: string }[] };
 
@@ -12,11 +13,12 @@ export function AdminListFilters({ search, placeholder, selects = [] }: {
 	placeholder?: string;
 	selects?: Select[];
 }) {
+	const t = useTranslations("admin");
 	return (
 		<FilterForm method="get" role="search">
 			{search !== undefined && (
 				<label>
-					검색
+					{t("search")}
 					<input type="search" name="q" defaultValue={search} placeholder={placeholder} />
 				</label>
 			)}
@@ -28,7 +30,7 @@ export function AdminListFilters({ search, placeholder, selects = [] }: {
 					</select>
 				</label>
 			))}
-			<button type="submit">적용</button>
+			<button type="submit">{t("apply")}</button>
 		</FilterForm>
 	);
 }

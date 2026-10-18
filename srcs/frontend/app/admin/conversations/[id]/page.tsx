@@ -1,4 +1,6 @@
-import { Metadata } from "next";
+import { getLocale, getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
+import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { adminGet, isAdmin } from "@/libs/adminApi";
@@ -7,7 +9,7 @@ import { Note, Panel, Transcript } from "@/styles/styledAdmin";
 import { Breadcrumb } from "@/styles/styledDetail";
 import type { AdminRoom } from "../page";
 
-export const metadata: Metadata = { title: "채팅 기록" };
+export const generateMetadata = pageMetadata("admin.transcript");
 
 type Message = { MessageId: string; UserId: string; Nickname: string; Timestamp: number; Content: string };
 
@@ -22,28 +24,27 @@ export default async function AdminConversationPage({ params }: { params: { id: 
 		notFound();
 	}
 	const { Room: room, Messages: messages } = data;
+	const t = await getTranslations("admin");
+	const locale = (await getLocale()) as Locale;
 
 	return (
 		<Panel>
-			<Breadcrumb><Link href="/admin/conversations">← 채팅 목록</Link></Breadcrumb>
-			<h2>{room.SellerNickname || "(탈퇴)"} · {room.BuyerNickname || "(탈퇴)"}</h2>
+			<Breadcrumb><Link href="/admin/conversations">{t("chats.back")}</Link></Breadcrumb>
+			<h2>{room.SellerNickname || t("left")} · {room.BuyerNickname || t("left")}</h2>
 			<p>
-				상품: {room.ProductName
+				{t("chats.item")}{room.ProductName
 					? <Link href={`/product/${room.ProductId}`}>{room.ProductName}</Link>
-					: "(삭제된 상품)"}
+					: t("deletedItem")}
 				{" · "}{room.SellerEmail} / {room.BuyerEmail}
 			</p>
-			<Note>
-				신고 처리, 분쟁 조정, 법적 요청 대응을 위한 화면이에요. 회원의 대화이므로 필요한 경우에만 열람해주세요.
-				관리자는 이 대화에 메시지를 보낼 수 없어요.
-			</Note>
-			{messages.length === 0 ? <p>메시지가 없어요.</p> : (
+			<Note>{t("chats.notice")}</Note>
+			{messages.length === 0 ? <p>{t("chats.noMessages")}</p> : (
 				<Transcript>
 					{messages.map(m => (
 						<li key={m.MessageId} data-side={m.UserId === room.BuyerId ? "buyer" : "seller"}>
 							<header>
-								<strong>{m.Nickname || "(탈퇴)"} {m.UserId === room.SellerId ? "· 판매자" : "· 구매자"}</strong>
-								<time>{formatDateTime(m.Timestamp)}</time>
+								<strong>{m.Nickname || t("left")} {m.UserId === room.SellerId ? t("chats.seller") : t("chats.buyer")}</strong>
+								<time>{formatDateTime(m.Timestamp, locale)}</time>
 							</header>
 							<p>{m.Content}</p>
 						</li>
