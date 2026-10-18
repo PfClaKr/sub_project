@@ -41,7 +41,7 @@ func TestTranslate(t *testing.T) {
 	if got := Translate(French, "모르는 문장이에요."); got != "모르는 문장이에요." {
 		t.Errorf("unknown = %q", got)
 	}
-	if got := T(English, "%s님, 잇냥에서 알려드려요.\n\n", "Mina"); got != "Hi Mina, here's what's new on Itnyang.\n\n" {
+	if got := T(English, "%s님, 잇냥에서 알려드려요.", "Mina"); got != "Hi Mina, here's what's new on Itnyang." {
 		t.Errorf("T = %q", got)
 	}
 }
