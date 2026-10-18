@@ -29,6 +29,10 @@ const (
 	TableNotifications = "Notifications"
 	TablePushSubs      = "PushSubscriptions"
 	TableBlocks        = "Blocks"
+	// Site editing (apiserver sitehandler): text overrides and settings,
+	// and the log of every change.
+	TableSiteContent    = "SiteContent"
+	TableSiteContentLog = "SiteContentLog"
 )
 
 type Item = map[string]*dynamodb.AttributeValue

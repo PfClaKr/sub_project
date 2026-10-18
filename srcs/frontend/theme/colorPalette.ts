@@ -1,6 +1,10 @@
 // Single source of design tokens (the old AppTheme/next-themes layer
 // was removed). Muted text keeps >= 4.5:1 contrast on white.
-const palette = {
+// colors are the built-in values; palette refers to them through CSS
+// variables (--c-<token>) so admins can change the theme at runtime
+// (sitehandler ThemeTokens, ThemeStyle in the root layout). SVG
+// attributes cannot read CSS variables: use colors there.
+export const colors = {
 	primary: "#0048b4",
 	primaryHover: "#003a91",
 	primarySoft: "#e1eeff",
@@ -29,6 +33,16 @@ const palette = {
 	fur: "#ffd9b0",
 	furDark: "#f3b77c",
 };
+
+export type ColorToken = keyof typeof colors;
+
+export function cssVar(token: ColorToken): string {
+	return `--c-${token.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)}`;
+}
+
+const palette = Object.fromEntries(
+	(Object.keys(colors) as ColorToken[]).map(token => [token, `var(${cssVar(token)}, ${colors[token]})`]),
+) as Record<ColorToken, string>;
 
 export const radius = { sm: "6px", md: "10px", lg: "16px" };
 export const shadow = {

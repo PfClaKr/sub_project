@@ -29,7 +29,8 @@ const ITEMS: { Icon: LucideIcon; color: string; top: string; left: string; delay
 	{ Icon: Sofa, color: palette.pink, top: "80%", left: "66%", delay: 0.9, rot: -4, depth: 20, size: 56 },
 ];
 
-export function LandingHero() {
+// image: an admin-chosen picture (/admin/site) shown instead of the mascot.
+export function LandingHero({ image }: { image?: string }) {
 	const t = useTranslations("home.hero");
 	const words = splitWords(t("words"));
 	const [word, setWord] = useState(0);
@@ -86,14 +87,16 @@ export function LandingHero() {
 				{ITEMS.map(it => (
 					<Layer key={it.top + it.left} $depth={it.depth}>
 						<FloatingItem $top={it.top} $left={it.left} $delay={it.delay} $rot={it.rot} $size={it.size}>
-							<it.Icon color={it.color} strokeWidth={1.8} />
+							<it.Icon style={{ color: it.color }} strokeWidth={1.8} />
 							{it.price && <PriceTag>{it.price.startsWith("€") ? it.price : t(it.price as "perMonth" | "answers")}</PriceTag>}
 						</FloatingItem>
 					</Layer>
 				))}
 				<Layer $depth={-8}>
 					<div style={{ position: "absolute", inset: "14% 18% 0" }}>
-						<CatMascot />
+						{image
+							? <img src={image} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+							: <CatMascot />}
 					</div>
 				</Layer>
 			</Stage>

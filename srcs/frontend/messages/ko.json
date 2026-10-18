@@ -1213,7 +1213,8 @@
       "posts": "게시글",
       "users": "회원",
       "products": "상품",
-      "conversations": "채팅"
+      "conversations": "채팅",
+      "site": "사이트 편집"
     },
     "pages": "페이지",
     "pageInfo": "{page} / {total} 페이지 · 총 {count}건",
@@ -1412,6 +1413,87 @@
     },
     "transcript": {
       "title": "채팅 기록"
+    },
+    "site": {
+      "title": "사이트 편집",
+      "lead": "배포 없이 화면 문구, 공지, 홈 화면, 색상을 바꿀 수 있어요. 저장하면 바로 반영되고, 모든 변경은 기록에서 되돌릴 수 있어요.",
+      "tabs": "편집 항목",
+      "tab": {
+        "texts": "문구",
+        "notice": "공지 배너",
+        "home": "홈 화면",
+        "theme": "색상",
+        "log": "변경 기록"
+      },
+      "language": "언어",
+      "search": "검색",
+      "searchPlaceholder": "문구나 키로 찾기 (예: 히어로, home.hero)",
+      "onlyChanged": "바꾼 문구만",
+      "count": "{total}개 중 {shown}개 표시 — 검색으로 좁혀보세요",
+      "changed": "수정됨",
+      "builtIn": "기본값",
+      "reset": "기본값으로",
+      "save": "저장",
+      "saved": "저장됨",
+      "savedAll": "저장했어요. 사이트에 바로 반영돼요.",
+      "tokensChanged": "{tokens} 같은 자리표시자와 태그는 그대로 남겨주세요.",
+      "noticeLead": "모든 화면 위쪽에 보이는 공지예요. 방문자가 닫으면, 문구를 바꿀 때까지 다시 보이지 않아요.",
+      "noticeOn": "공지 보이기",
+      "tone": "종류",
+      "toneInfo": "안내",
+      "toneWarning": "주의",
+      "link": "링크 (선택)",
+      "required": "필수",
+      "sections": "홈 섹션",
+      "sectionsLead": "히어로 아래에 보일 섹션과 순서를 정해요.",
+      "section": {
+        "purposes": "목적 카드",
+        "checklist": "정착 체크리스트",
+        "feed": "이웃 소식",
+        "recent": "새로 올라온 물건",
+        "trust": "안심 안내·가입 (비로그인)"
+      },
+      "up": "위로",
+      "down": "아래로",
+      "hero": "히어로 이미지",
+      "heroLead": "홈 맨 위 고양이 대신 보일 이미지예요. 투명 배경 PNG를 추천해요.",
+      "uploading": "올리는 중...",
+      "chooseImage": "이미지 고르기",
+      "useMascot": "기본 고양이로",
+      "themeLead": "바꾼 색은 모든 화면에 바로 적용돼요. 글자와 배경의 대비가 충분한지 확인해주세요.",
+      "token": "항목",
+      "color": "색",
+      "tokens": {
+        "primary": "기본 색",
+        "primaryHover": "기본 색 (마우스 올림)",
+        "primarySoft": "기본 색 (연한 배경)",
+        "accent": "강조",
+        "heading": "제목 글자",
+        "text": "본문 글자",
+        "muted": "보조 글자",
+        "surface": "면 배경",
+        "border": "테두리",
+        "sky": "하늘색 장식",
+        "pink": "분홍 장식"
+      },
+      "noLog": "아직 변경 기록이 없어요.",
+      "when": "시각",
+      "who": "관리자",
+      "what": "대상",
+      "before": "이전",
+      "after": "이후",
+      "settingsTarget": "설정(공지·홈·색상)",
+      "revert": "되돌리기",
+      "revertTitle": "이 변경을 되돌릴까요?",
+      "revertBody": "바뀌기 전 값으로 돌아가요. 되돌린 것도 기록에 남아서 다시 되돌릴 수 있어요.",
+      "parts": {
+        "Notice": "공지",
+        "Home": "홈 섹션",
+        "Hero": "히어로 이미지",
+        "Theme": "색상"
+      },
+      "changedParts": "바뀐 항목: {parts}",
+      "nothing": "변경 없음"
     }
   },
   "names": {
@@ -1419,5 +1501,9 @@
     "anonymousAuthor": "익명(글쓴이)",
     "anonymousN": "익명{n}",
     "deleted": "탈퇴한 회원"
+  },
+  "notice": {
+    "close": "공지 닫기",
+    "more": "자세히 보기"
   }
 }

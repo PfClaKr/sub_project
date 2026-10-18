@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import styled, { keyframes } from "styled-components";
-import palette from "@/theme/colorPalette";
+import { colors as palette } from "@/theme/colorPalette";
 
 const wag = keyframes`
 	0%, 100% { transform: rotate(-6deg); }

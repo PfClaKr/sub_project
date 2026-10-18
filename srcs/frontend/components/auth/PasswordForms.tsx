@@ -52,7 +52,7 @@ export function ForgotForm() {
 	if (sentTo) {
 		return (
 			<div role="status">
-				<MailCheck size={36} color={palette.primary} aria-hidden />
+				<MailCheck size={36} style={{ color: palette.primary }} aria-hidden />
 				<p>{t.rich("forgotSent", { email: sentTo, strong: chunks => <strong>{chunks}</strong> })}</p>
 				<Muted as="p">{t("forgotSpam")}</Muted>
 				<FormFooter><Link href="/login">{t("backToLogin")}</Link></FormFooter>

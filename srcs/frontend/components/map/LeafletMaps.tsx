@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
 import { Circle, GeoJSON, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
-import palette from "@/theme/colorPalette";
+import { colors as palette } from "@/theme/colorPalette";
 import { PARIS, type Area, type LatLng } from "@/libs/geo";
 import { useTranslations } from "next-intl";
 

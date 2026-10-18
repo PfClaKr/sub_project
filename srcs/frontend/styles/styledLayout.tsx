@@ -115,3 +115,31 @@ export const LanguageSelect = styled.label`
 		background-position: right 10px center;
 	}
 `;
+
+// The site-wide notice under the header (NoticeBanner).
+export const NoticeBar = styled.div<{ $tone: "info" | "warning" }>`
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 16px;
+	font-size: 14px;
+	color: ${p => (p.$tone === "warning" ? palette.warning : palette.primary)};
+	background-color: ${p => (p.$tone === "warning" ? palette.warningSoft : palette.primarySoft)};
+
+	span {
+		flex: 1;
+		max-width: 1088px;
+		margin: 0 auto;
+	}
+	a {
+		color: inherit;
+		font-weight: 700;
+	}
+	button,
+	button:hover:not(:disabled) {
+		padding: 4px;
+		border: none;
+		background: none;
+		color: inherit;
+	}
+`;

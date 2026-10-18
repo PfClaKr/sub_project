@@ -1,6 +1,6 @@
 // The home's "프랑스에 막 왔다면" checklist can be dismissed for good.
-// The choice lives in localStorage (not a cookie: the privacy policy
-// promises a single, necessary cookie) and is applied before the first
+// The choice lives in localStorage (the server never needs it) and is
+// applied before the first
 // paint by ARRIVAL_PREPAINT, which marks <html data-arrival-hidden>;
 // globalStyles then hides every [data-arrival] element, so a member who
 // dismissed it never sees it flash.
