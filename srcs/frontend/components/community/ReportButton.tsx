@@ -2,6 +2,8 @@
 
 import { useEffect, useState, FormEvent } from "react";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
 import { Flag } from "lucide-react";
 import { REPORT_REASONS } from "@/libs/constants";
 import { gql } from "@/libs/graphql";
@@ -14,20 +16,21 @@ export type ReportTarget = { type: "post" | "comment" | "product" | "user" | "ch
 
 // ReportButton opens a small form (reason + optional detail) and files a
 // report for the admins. Visitors are sent to log in first.
-export function ReportButton({ target, label = "신고" }: { target: ReportTarget; label?: string }) {
+export function ReportButton({ target, label }: { target: ReportTarget; label?: string }) {
+	const t = useTranslations("report");
 	const { session } = useSession();
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
 	const [done, setDone] = useState(false);
 
-	if (done) return <TextButton disabled>신고됨</TextButton>;
+	if (done) return <TextButton disabled>{t("done")}</TextButton>;
 	return (
 		<>
 			<TextButton
 				type="button"
 				onClick={() => (session ? setOpen(true) : window.location.assign(`/login?next=${encodeURIComponent(pathname)}`))}
 			>
-				{label}
+				{label ?? t("button")}
 			</TextButton>
 			{open && <ReportDialog target={target} onClose={ok => { setOpen(false); if (ok) setDone(true); }} />}
 		</>
@@ -35,6 +38,9 @@ export function ReportButton({ target, label = "신고" }: { target: ReportTarge
 }
 
 export function ReportDialog({ target, onClose }: { target: ReportTarget; onClose: (ok: boolean) => void }) {
+	const t = useTranslations("report");
+	const c = useTranslations("common");
+	const L = useLabels();
 	const [reason, setReason] = useState("");
 	const [detail, setDetail] = useState("");
 	const [busy, setBusy] = useState(false);
@@ -54,7 +60,7 @@ export function ReportDialog({ target, onClose }: { target: ReportTarget; onClos
 	const submit = async (e: FormEvent) => {
 		e.preventDefault();
 		if (!reason) {
-			setError("신고 사유를 골라주세요.");
+			setError(t("chooseReason"));
 			return;
 		}
 		setBusy(true);
@@ -75,26 +81,26 @@ export function ReportDialog({ target, onClose }: { target: ReportTarget; onClos
 		<Backdrop onMouseDown={e => e.target === e.currentTarget && onClose(false)}>
 			<Dialog role="dialog" aria-modal="true" aria-labelledby="report-title" style={{ maxWidth: 440 }}>
 				<DialogIcon $danger aria-hidden><Flag size={20} /></DialogIcon>
-				<h2 id="report-title">신고하기</h2>
-				<p>운영진이 확인한 뒤 조치해요. 신고한 사람은 상대에게 알려지지 않아요.</p>
+				<h2 id="report-title">{t("title")}</h2>
+				<p>{t("lead")}</p>
 				<form onSubmit={submit}>
 					<ReportOptions>
-						<legend className="sr-only">신고 사유</legend>
+						<legend className="sr-only">{t("reason")}</legend>
 						{REPORT_REASONS.map(r => (
 							<label key={r}>
 								<input type="radio" name="reason" value={r} checked={reason === r} onChange={() => setReason(r)} />
-								{r}
+								{L.enum("reportReason", r)}
 							</label>
 						))}
 					</ReportOptions>
 					<DialogField>
-						<span>자세한 내용 (선택)</span>
-						<textarea value={detail} onChange={e => setDetail(e.target.value)} maxLength={500} rows={3} placeholder="예: 집을 보기 전에 보증금을 보내라고 해요." />
+						<span>{t("detail")}</span>
+						<textarea value={detail} onChange={e => setDetail(e.target.value)} maxLength={500} rows={3} placeholder={t("detailPlaceholder")} />
 					</DialogField>
 					{error && <ErrorText role="alert">{error}</ErrorText>}
 					<DialogActions>
-						<GhostButton type="button" onClick={() => onClose(false)}>취소</GhostButton>
-						<button type="submit" disabled={busy}>{busy ? "보내는 중..." : "신고하기"}</button>
+						<GhostButton type="button" onClick={() => onClose(false)}>{c("cancel")}</GhostButton>
+						<button type="submit" disabled={busy}>{busy ? t("sending") : t("submit")}</button>
 					</DialogActions>
 				</form>
 			</Dialog>

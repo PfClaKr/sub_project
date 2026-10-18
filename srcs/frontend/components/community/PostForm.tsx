@@ -3,6 +3,8 @@
 import { useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
 import { BOARDS, REGIONS, type BoardType } from "@/libs/constants";
 import { gql } from "@/libs/graphql";
 import { uploadImages } from "@/libs/upload";
@@ -20,18 +22,19 @@ const BODY_MAX = 5000;
 // SimilarQuestions shows earlier questions while a title is typed, so an
 // answer that already exists is found before asking again.
 function SimilarQuestions({ title }: { title: string }) {
+	const t = useTranslations("community.form");
 	const [items, setItems] = useState<Post[]>([]);
 
 	useEffect(() => {
-		const t = title.trim();
-		if (t.length < 4) {
+		const text = title.trim();
+		if (text.length < 4) {
 			setItems([]);
 			return;
 		}
 		const timer = window.setTimeout(async () => {
 			const { data } = await gql<{ similarQuestions: Post[] }>(
 				`query($t: String!) { similarQuestions(Title: $t) { PostId Title Solved CommentCount } }`,
-				{ t },
+				{ t: text },
 			);
 			setItems(data?.similarQuestions ?? []);
 		}, 400);
@@ -41,12 +44,12 @@ function SimilarQuestions({ title }: { title: string }) {
 	if (items.length === 0) return null;
 	return (
 		<SimilarBox aria-live="polite">
-			<strong>비슷한 질문이 이미 있어요</strong>
+			<strong>{t("similar")}</strong>
 			<ul>
 				{items.map(p => (
 					<li key={p.PostId}>
 						<Link href={`/community/${p.PostId}`} target="_blank">{p.Title}</Link>
-						{" "}<Hint>{p.Solved ? "· 해결됨" : `· 답변 ${p.CommentCount ?? 0}`}</Hint>
+						{" "}<Hint>{p.Solved ? t("similarSolved") : t("similarAnswers", { count: p.CommentCount ?? 0 })}</Hint>
 					</li>
 				))}
 			</ul>
@@ -57,6 +60,9 @@ function SimilarQuestions({ title }: { title: string }) {
 // PostForm writes a free or Q&A post, or edits one when `post` is given
 // (the board and anonymity are fixed after posting).
 export function PostForm({ post, board: initialBoard }: { post?: Post; board?: BoardType }) {
+	const t = useTranslations("community.form");
+	const c = useTranslations("common");
+	const L = useLabels();
 	const router = useRouter();
 	const { session } = useSession();
 	const { city } = useRegion();
@@ -83,7 +89,7 @@ export function PostForm({ post, board: initialBoard }: { post?: Post; board?: B
 		e.preventDefault();
 		setError("");
 		if (!topics.includes(topic)) {
-			setError("주제를 골라주세요.");
+			setError(t("chooseTopic"));
 			return;
 		}
 		setSubmitting(true);
@@ -102,13 +108,13 @@ export function PostForm({ post, board: initialBoard }: { post?: Post; board?: B
 					{ in: input },
 				).then(r => ({ id: r.data?.createPost?.PostId, error: r.error }));
 			if (!result.id) {
-				setError(result.error ?? "저장하지 못했어요. 다시 시도해주세요.");
+				setError(result.error ?? c("saveError"));
 				return;
 			}
 			router.push(`/community/${result.id}`);
 			router.refresh();
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "저장하지 못했어요.");
+			setError(err instanceof Error ? err.message : c("saveError"));
 		} finally {
 			setSubmitting(false);
 		}
@@ -117,33 +123,33 @@ export function PostForm({ post, board: initialBoard }: { post?: Post; board?: B
 	return (
 		<FormColumn onSubmit={submit} style={{ maxWidth: 720 }}>
 			<FormSection aria-labelledby="sec-board">
-				<header><h2 id="sec-board">어디에 올릴까요?</h2></header>
+				<header><h2 id="sec-board">{t("where")}</h2></header>
 				<TwoColumns>
-					<FieldLabel>게시판
+					<FieldLabel>{t("board")}
 						<select value={board} disabled={!!post} onChange={e => { setBoard(e.target.value as BoardType); setTopic(""); }}>
-							{(Object.keys(BOARDS) as BoardType[]).map(b => <option key={b} value={b}>{BOARDS[b].label}</option>)}
+							{(Object.keys(BOARDS) as BoardType[]).map(b => <option key={b} value={b}>{L.board(b)}</option>)}
 						</select>
 					</FieldLabel>
-					<FieldLabel>주제
+					<FieldLabel>{t("topic")}
 						<select value={topic} required onChange={e => setTopic(e.target.value)}>
-							<option value="" disabled>선택해주세요</option>
-							{topics.map(t => <option key={t} value={t}>{t}</option>)}
+							<option value="" disabled>{c("choose")}</option>
+							{topics.map(topic => <option key={topic} value={topic}>{L.enum("topic", topic)}</option>)}
 						</select>
 					</FieldLabel>
 				</TwoColumns>
-				<FieldLabel>지역 <Hint>지역 필터에 쓰여요</Hint>
+				<FieldLabel>{c("region")} <Hint>{c("regionHint")}</Hint>
 					<select value={region} onChange={e => setRegion(e.target.value)}>
-						{REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+						{REGIONS.map(r => <option key={r} value={r}>{L.enum("region", r)}</option>)}
 					</select>
 				</FieldLabel>
 			</FormSection>
 
 			<FormSection aria-labelledby="sec-content">
 				<header>
-					<h2 id="sec-content">{board === "qna" ? "질문" : "내용"}</h2>
-					{board === "qna" && <p>상황을 구체적으로 쓸수록 정확한 답을 받을 수 있어요. (체류 자격, 지역, 시기 등)</p>}
+					<h2 id="sec-content">{board === "qna" ? t("question") : t("content")}</h2>
+					{board === "qna" && <p>{t("questionTip")}</p>}
 				</header>
-				<FieldLabel>제목
+				<FieldLabel>{c("title")}
 					<input
 						type="text"
 						required
@@ -151,14 +157,14 @@ export function PostForm({ post, board: initialBoard }: { post?: Post; board?: B
 						maxLength={100}
 						value={title}
 						onChange={e => setTitle(e.target.value)}
-						placeholder={board === "qna" ? "예: 학생 체류증 갱신, 온라인 예약은 언제 열리나요?" : "제목을 입력해주세요"}
+						placeholder={board === "qna" ? t("titleQna") : t("titleFree")}
 					/>
 				</FieldLabel>
 				{board === "qna" && !post && <SimilarQuestions title={title} />}
 				<FieldLabel>
-					<span className="sr-only">본문</span>
+					<span className="sr-only">{c("body")}</span>
 					<textarea required rows={10} maxLength={BODY_MAX} value={body} onChange={e => setBody(e.target.value)}
-						placeholder={board === "qna" ? "궁금한 점을 자세히 적어주세요." : "자유롭게 이야기해주세요."} />
+						placeholder={board === "qna" ? t("bodyQna") : t("bodyFree")} />
 					<Counter>{body.length.toLocaleString()} / {BODY_MAX.toLocaleString()}</Counter>
 				</FieldLabel>
 				<ImageUploader photos={photos} onChange={setPhotos} uploading={submitting} />
@@ -166,8 +172,8 @@ export function PostForm({ post, board: initialBoard }: { post?: Post; board?: B
 					<label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14 }}>
 						<input type="checkbox" checked={anonymous} onChange={e => setAnonymous(e.target.checked)} style={{ width: "auto", marginTop: 3 }} />
 						<span>
-							<span style={{ display: "block", fontWeight: 600 }}>익명으로 쓰기</span>
-							<Hint>닉네임 대신 &lsquo;익명&rsquo;으로 보여요. 올린 뒤에는 바꿀 수 없어요.</Hint>
+							<span style={{ display: "block", fontWeight: 600 }}>{t("anonymous")}</span>
+							<Hint>{t("anonymousHint")}</Hint>
 						</span>
 					</label>
 				)}
@@ -175,7 +181,7 @@ export function PostForm({ post, board: initialBoard }: { post?: Post; board?: B
 
 			{error && <ErrorText role="alert">{error}</ErrorText>}
 			<SubmitButton type="submit" disabled={submitting}>
-				{submitting ? "저장 중..." : post ? "수정 완료" : board === "qna" ? "질문 올리기" : "글 올리기"}
+				{submitting ? c("saving") : post ? t("update") : board === "qna" ? t("postQna") : t("postFree")}
 			</SubmitButton>
 		</FormColumn>
 	);

@@ -10,8 +10,9 @@ import {
 import { gql, LISTING_CARD_FIELDS, POST_LIST_FIELDS } from "@/libs/graphql";
 import { useRegion } from "@/libs/region";
 import { useSession } from "@/libs/session";
-import { boardLabel, postHref } from "@/libs/community";
-import { LISTING_PATH, modeLabel, rentLabel, wageLabel } from "@/libs/listing";
+import { postHref } from "@/libs/community";
+import { LISTING_PATH } from "@/libs/listing";
+import { useLabels, type Labels } from "@/libs/labels";
 import { imageUrl } from "@/libs/format";
 import { RegionChip } from "@/components/community/RegionChip";
 import { ARRIVAL_PREPAINT, setArrivalHidden } from "@/libs/arrival";
@@ -183,19 +184,20 @@ const FEED_QUERY = `query HomeFeed($city: String) {
 
 type FeedData = { posts: PostPage; housing: PostPage; jobs: PostPage };
 
-function feedTone(post: Post, t: ReturnType<typeof useTranslations<"home.feed">>) {
+function feedTone(post: Post, t: ReturnType<typeof useTranslations<"home.feed">>, L: Labels) {
 	if (post.Type === "housing") return { ...TONES.housing, label: t("housing"), Icon: BedDouble };
 	if (post.Type === "job") return { ...TONES.job, label: t("job"), Icon: Briefcase };
-	return { ...TONES.community, label: boardLabel(post.Type), Icon: post.Type === "qna" ? MessageCircleQuestion : MessagesSquare };
+	return { ...TONES.community, label: L.board(post.Type), Icon: post.Type === "qna" ? MessageCircleQuestion : MessagesSquare };
 }
 
 function NeighborRow({ post }: { post: Post }) {
 	const t = useTranslations("home.feed");
-	const tone = feedTone(post, t);
+	const L = useLabels();
+	const tone = feedTone(post, t, L);
 	const listing = post.Type === "housing" || post.Type === "job";
 	const href = listing ? `${LISTING_PATH[post.Type as ListingType]}/${post.PostId}` : postHref(post);
 	const thumb = imageUrl(post.Images?.[0]);
-	const price = post.Housing ? rentLabel(post.Housing) : post.Job ? wageLabel(post.Job) : "";
+	const price = post.Housing ? L.rent(post.Housing) : post.Job ? L.wage(post.Job) : "";
 	return (
 		<FeedRow href={href}>
 			{thumb ? <img className="thumb" src={thumb} alt="" loading="lazy" /> : <span className="thumb" style={{ background: tone.tint, color: tone.ink }}><tone.Icon size={22} aria-hidden /></span>}
@@ -203,12 +205,12 @@ function NeighborRow({ post }: { post: Post }) {
 				<span className="title">{post.Title}</span>
 				<span className="meta">
 					<FeedBadge $tint={tone.tint} $ink={tone.ink}>
-						{listing ? `${tone.label} · ${modeLabel(post.Type as ListingType, post.Housing?.Mode ?? post.Job?.Mode)}` : tone.label}
+						{listing ? `${tone.label} · ${L.mode(post.Type as ListingType, post.Housing?.Mode ?? post.Job?.Mode)}` : tone.label}
 					</FeedBadge>
 					{price && <span className="price">{price}</span>}
 					{!listing && post.Type === "qna" && <span>{post.Solved ? t("solved") : t("answers", { count: post.CommentCount ?? 0 })}</span>}
 					{!listing && post.Type !== "qna" && <span>{t("comments", { count: post.CommentCount ?? 0 })}</span>}
-					<span>{post.AreaName || post.City}</span>
+					<span>{post.AreaName || L.enum("region", post.City)}</span>
 					<TimeAgo ts={Math.max(post.BumpedAt ?? 0, post.CreatedAt)} />
 				</span>
 			</span>

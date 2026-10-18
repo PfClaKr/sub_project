@@ -2,6 +2,8 @@
 
 import { useEffect, useState, FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
 import { Search, SquarePen } from "lucide-react";
 import { BOARDS, type BoardType } from "@/libs/constants";
 import { boardHref, parseBoardParams, type BoardParams } from "@/libs/community";
@@ -21,16 +23,15 @@ const QUERY = `query Board($type: String, $topic: String, $city: String, $q: Str
 	}
 }`;
 
-const BOARD_TABS: { key?: BoardType; label: string }[] = [
-	{ label: "전체" },
-	{ key: "qna", label: BOARDS.qna.label },
-	{ key: "free", label: BOARDS.free.label },
-];
+const BOARD_TABS: (BoardType | undefined)[] = [undefined, "qna", "free"];
 
 // CommunityBoard lists free and Q&A posts. Filters live in the URL so a
 // list can be shared and the back button works; the region comes from
 // the shared region chip.
 export function CommunityBoard() {
+	const t = useTranslations("community");
+	const c = useTranslations("common");
+	const L = useLabels();
 	const sp = useSearchParams();
 	const router = useRouter();
 	const { session } = useSession();
@@ -57,7 +58,7 @@ export function CommunityBoard() {
 			page: p.page ?? 1,
 		}).then(({ data, error }) => {
 			if (!alive) return;
-			if (error || !data) setError(error ?? "글을 불러오지 못했어요.");
+			if (error || !data) setError(error ?? t("loadError"));
 			else setData(data.posts);
 		});
 		return () => {
@@ -78,26 +79,26 @@ export function CommunityBoard() {
 	return (
 		<div>
 			<BoardHeader>
-				<h1>커뮤니티</h1>
+				<h1>{t("title")}</h1>
 				<LinkButton href={session ? writeHref : `/login?next=${encodeURIComponent(writeHref)}`}>
-					<SquarePen size={16} aria-hidden style={{ marginRight: 6, verticalAlign: -3 }} />글쓰기
+					<SquarePen size={16} aria-hidden style={{ marginRight: 6, verticalAlign: -3 }} />{t("write")}
 				</LinkButton>
 			</BoardHeader>
 
 			<BoardLayout>
 				<div>
-					<ChipRow aria-label="게시판" style={{ marginBottom: 12 }}>
-						{BOARD_TABS.map(t => (
-							<Chip key={t.label} href={boardHref(params, { board: t.key })} $active={params.board === t.key} aria-current={params.board === t.key ? "page" : undefined}>
-								{t.label}
+					<ChipRow aria-label={t("boardsLabel")} style={{ marginBottom: 12 }}>
+						{BOARD_TABS.map(b => (
+							<Chip key={b ?? "all"} href={boardHref(params, { board: b })} $active={params.board === b} aria-current={params.board === b ? "page" : undefined}>
+								{b ? L.board(b) : t("all")}
 							</Chip>
 						))}
 					</ChipRow>
 					{topics.length > 0 && (
-						<ChipRow aria-label="주제" style={{ marginBottom: 12 }}>
-							<Chip href={boardHref(params, { topic: undefined })} $active={!params.topic}>전체 주제</Chip>
-							{topics.map(t => (
-								<Chip key={t} href={boardHref(params, { topic: t })} $active={params.topic === t}>{t}</Chip>
+						<ChipRow aria-label={t("topicsLabel")} style={{ marginBottom: 12 }}>
+							<Chip href={boardHref(params, { topic: undefined })} $active={!params.topic}>{t("allTopics")}</Chip>
+							{topics.map(topic => (
+								<Chip key={topic} href={boardHref(params, { topic })} $active={params.topic === topic}>{L.enum("topic", topic)}</Chip>
 							))}
 						</ChipRow>
 					)}
@@ -109,46 +110,46 @@ export function CommunityBoard() {
 								type="search"
 								value={query}
 								onChange={e => setQuery(e.target.value)}
-								placeholder={params.board === "qna" ? "궁금한 걸 검색해보세요 (예: 체류증 갱신)" : "글 검색"}
-								aria-label="커뮤니티 검색"
+								placeholder={params.board === "qna" ? t("searchQna") : t("searchAll")}
+								aria-label={t("searchLabel")}
 								maxLength={100}
 							/>
-							<GhostButton type="submit" aria-label="검색"><Search size={16} /></GhostButton>
+							<GhostButton type="submit" aria-label={t("searchAll")}><Search size={16} /></GhostButton>
 						</form>
 						{params.board === "qna" && (
 							<select
-								aria-label="답변 상태"
+								aria-label={t("solvedLabel")}
 								value={params.solved ?? ""}
 								onChange={e => go({ solved: (e.target.value || undefined) as BoardParams["solved"] })}
 							>
-								<option value="">모든 질문</option>
-								<option value="open">답변 대기</option>
-								<option value="solved">해결됨</option>
+								<option value="">{t("allQuestions")}</option>
+								<option value="open">{t("openQuestions")}</option>
+								<option value="solved">{t("solvedQuestions")}</option>
 							</select>
 						)}
-						<select aria-label="정렬" value={params.sort ?? ""} onChange={e => go({ sort: (e.target.value || undefined) as BoardParams["sort"] })}>
-							<option value="">{params.q ? "관련순" : "최신순"}</option>
-							{params.q && <option value="newest">최신순</option>}
-							<option value="popular">인기순</option>
+						<select aria-label={t("sortLabel")} value={params.sort ?? ""} onChange={e => go({ sort: (e.target.value || undefined) as BoardParams["sort"] })}>
+							<option value="">{params.q ? t("relevance") : t("newest")}</option>
+							{params.q && <option value="newest">{t("newest")}</option>}
+							<option value="popular">{t("popular")}</option>
 						</select>
 					</Toolbar>
 
 					{error && <ErrorText role="alert">{error}</ErrorText>}
 					{!error && !data && <PostListSkeleton />}
-					{data?.Corrected && <Muted as="p">정확히 맞는 글이 없어 비슷한 글을 보여드려요.</Muted>}
+					{data?.Corrected && <Muted as="p">{t("corrected")}</Muted>}
 					{data && data.Items.length === 0 && (
 						<EmptyState>
-							<p>{params.q ? `"${params.q}"에 맞는 글이 없어요.` : "아직 글이 없어요. 첫 글을 남겨보세요."}</p>
-							<LinkButton href={writeHref}>{params.board === "qna" ? "질문하기" : "글쓰기"}</LinkButton>
+							<p>{params.q ? t("noMatch", { q: params.q }) : t("empty")}</p>
+							<LinkButton href={writeHref}>{params.board === "qna" ? t("ask") : t("write")}</LinkButton>
 						</EmptyState>
 					)}
 					{data && data.Items.length > 0 && <PostList posts={data.Items} showBoard={!params.board} />}
 
 					{data && data.TotalPages > 1 && (
-						<Pagination aria-label="페이지">
-							{data.Page > 1 && <LinkButton href={boardHref(params, { page: data.Page - 1 })} $ghost>← 이전</LinkButton>}
+						<Pagination aria-label={t("pages")}>
+							{data.Page > 1 && <LinkButton href={boardHref(params, { page: data.Page - 1 })} $ghost>{c("prev")}</LinkButton>}
 							<span>{data.Page} / {data.TotalPages}</span>
-							{data.Page < data.TotalPages && <LinkButton href={boardHref(params, { page: data.Page + 1 })} $ghost>다음 →</LinkButton>}
+							{data.Page < data.TotalPages && <LinkButton href={boardHref(params, { page: data.Page + 1 })} $ghost>{c("next")}</LinkButton>}
 						</Pagination>
 					)}
 				</div>

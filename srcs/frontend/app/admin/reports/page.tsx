@@ -6,7 +6,7 @@ import { ReportActions } from "@/components/admin/Controls";
 import { adminGet, isAdmin, type AdminPage } from "@/libs/adminApi";
 import { apiQuery, param, type SearchParams } from "@/libs/adminParams";
 import { formatDateTime } from "@/libs/format";
-import { warningText } from "@/libs/listing";
+import { getLabels } from "@/libs/labels.server";
 import { EmptyRow, Note, Panel, RoleBadge, Table, TableWrap } from "@/styles/styledAdmin";
 
 export const metadata: Metadata = { title: "신고" };
@@ -38,6 +38,7 @@ function actionsFor(item: QueueItem): string[] {
 // The queue groups reports by target, most reported first. Suspending
 // the owner is done from the member list (linked).
 export default async function AdminReportsPage({ searchParams }: { searchParams: SearchParams }) {
+	const L = await getLabels();
 	if (!(await isAdmin())) return null;
 	const status = param(searchParams, "status") || "open";
 	const list = await adminGet<AdminPage<QueueItem>>(`/reports${apiQuery(searchParams, ["status", "type", "page"])}`);
@@ -70,7 +71,7 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
 									<RoleBadge>{TYPE_LABEL[item.TargetType] ?? item.TargetType}</RoleBadge>{" "}
 									{item.Missing ? <em>이미 사라진 대상</em> : <Link href={item.Link} target="_blank">{item.Title || "(제목 없음)"}</Link>}
 									{item.Body && <div><small>{item.Body}</small></div>}
-									{item.Flags?.map(f => <div key={f}><small>⚠ {warningText(f).title}</small></div>)}
+									{item.Flags?.map(f => <div key={f}><small>⚠ {L.warning(f).title}</small></div>)}
 								</td>
 								<td data-label="작성자">
 									{item.OwnerId

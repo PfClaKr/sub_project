@@ -172,5 +172,646 @@
     "title": "Page not found",
     "body": "It may have been deleted, or the address is wrong.",
     "home": "Back to home"
+  },
+  "enums": {
+    "category": {
+      "전자기기": "Electronics",
+      "가구": "Furniture",
+      "의류": "Clothing",
+      "도서": "Books",
+      "식품": "Food",
+      "기타": "Other"
+    },
+    "region": {
+      "파리": "Paris",
+      "일드프랑스": "Île-de-France",
+      "리옹": "Lyon",
+      "마르세유": "Marseille",
+      "툴루즈": "Toulouse",
+      "스트라스부르": "Strasbourg",
+      "니스": "Nice",
+      "프랑스 기타": "Elsewhere in France",
+      "기타 유럽": "Elsewhere in Europe"
+    },
+    "status": {
+      "판매중": "For sale",
+      "예약중": "Reserved",
+      "판매완료": "Sold"
+    },
+    "topic": {
+      "일상": "Daily life",
+      "정보": "Tips",
+      "맛집·장보기": "Food & groceries",
+      "행사·모임": "Events & meetups",
+      "고민": "Advice",
+      "체류증·비자": "Residence permit & visa",
+      "행정·CAF·세금": "Paperwork, CAF & tax",
+      "은행·통신": "Bank & phone",
+      "학교·어학": "School & languages",
+      "의료": "Health",
+      "집·이사": "Housing & moving",
+      "일·취업": "Work",
+      "기타": "Other"
+    },
+    "board": {
+      "free": "Open board",
+      "qna": "Everyday Q&A",
+      "housing": "Housing",
+      "job": "Jobs"
+    },
+    "reportReason": {
+      "사기 의심": "Suspected scam",
+      "스팸·광고": "Spam or ads",
+      "욕설·혐오": "Abuse or hate",
+      "개인정보 노출": "Personal data exposed",
+      "불법 행위": "Illegal activity",
+      "기타": "Other"
+    },
+    "housingKind": {
+      "쉐어": "Flatshare",
+      "스튜디오·원룸": "Studio",
+      "아파트 전체": "Whole flat",
+      "서블렛": "Sublet",
+      "단기·민박": "Short stay"
+    },
+    "jobSector": {
+      "식당·카페": "Restaurant & café",
+      "판매·매장": "Retail",
+      "사무": "Office",
+      "과외·강사": "Tutoring & teaching",
+      "베이비시터": "Babysitting",
+      "가이드·통역": "Guiding & interpreting",
+      "기타": "Other"
+    },
+    "employment": {
+      "알바": "Part-time",
+      "정규직": "Permanent",
+      "인턴": "Internship",
+      "프리랜서": "Freelance"
+    },
+    "jobLanguage": {
+      "한국어": "Korean",
+      "프랑스어": "French",
+      "영어": "English"
+    },
+    "mode": {
+      "housing": {
+        "offer": "Offering",
+        "seek": "Looking"
+      },
+      "job": {
+        "hiring": "Hiring",
+        "seeking": "Looking for work"
+      }
+    },
+    "deal": {
+      "open": "Open",
+      "reserved": "Reserved",
+      "closed": "Closed"
+    }
+  },
+  "listing": {
+    "labels": {
+      "rent": "{price}/mo",
+      "rentMax": "up to {price}/mo",
+      "charges": "{base} · bills included",
+      "negotiable": "Pay negotiable",
+      "hourly": "{price}/h",
+      "monthly": "{price}/mo",
+      "now": "Available now",
+      "from": "From {date}",
+      "thisAreaOnly": "This area only"
+    },
+    "warnings": {
+      "contact": {
+        "title": "The text contains contact details or a messenger ID",
+        "text": "Moving to KakaoTalk or Telegram is how most scams start. Itnyang messages keep a record you can report if something goes wrong."
+      },
+      "prepay": {
+        "title": "The text asks for payment in advance",
+        "text": "Asking for a deposit before a viewing or a meeting is very often a scam. Moderators check these posts first."
+      },
+      "low_wage": {
+        "title": "The hourly pay is below the minimum wage (SMIC)",
+        "text": "Paying below the French minimum wage is illegal. Please check the amount."
+      },
+      "unknown": {
+        "title": "Something needs checking",
+        "text": "Please check your post again."
+      }
+    },
+    "board": {
+      "housing": {
+        "title": "Housing",
+        "search": "Area, station, keyword (e.g. flatshare 15th)",
+        "write": "Post a room",
+        "empty": "No rooms match.",
+        "allKinds": "All types",
+        "kindsLabel": "Type",
+        "safety": "Don't send a deposit or rent before you've seen the place and signed a lease."
+      },
+      "job": {
+        "title": "Jobs",
+        "search": "Sector, area (e.g. café weekend)",
+        "write": "Post a job",
+        "empty": "No posts match.",
+        "allKinds": "All sectors",
+        "kindsLabel": "Sector",
+        "safety": "Asking for ID, bank details or money before you start is a scam."
+      },
+      "modesLabel": "Post type",
+      "all": "All",
+      "newest": "Newest",
+      "rentAsc": "Lowest rent",
+      "available": "Earliest move-in",
+      "wageDesc": "Highest pay",
+      "distance": "Nearest",
+      "filters": "Filters",
+      "place": "Place",
+      "chosenPlace": "Chosen place",
+      "sort": "Sort",
+      "view": "View",
+      "list": "List",
+      "map": "Map",
+      "guide": "Safety guide",
+      "corrected": "No exact match, so here are similar posts.",
+      "loadError": "Couldn't load the posts.",
+      "pages": "Pages",
+      "maxRent": "Max rent",
+      "moveInBy": "Move in by",
+      "noLimit": "No limit",
+      "furnished": "Furnished",
+      "caf": "CAF accepted",
+      "pets": "Pets OK",
+      "employment": "Contract",
+      "minWage": "Min. hourly pay",
+      "permitFree": "No permit required",
+      "reset": "Reset",
+      "apply": "Apply"
+    },
+    "row": {
+      "furnished": "Furnished",
+      "permit": "Permit required"
+    },
+    "detail": {
+      "furnished": "Furnished",
+      "caf": "CAF accepted",
+      "pets": "Pets allowed",
+      "budget": "Budget",
+      "rent": "Rent",
+      "deposit": "Deposit",
+      "moveIn": "Move-in",
+      "minStay": "Minimum stay",
+      "months": "{count, plural, one {# month} other {# months}}",
+      "size": "Size",
+      "rooms": "{count, plural, one {# room} other {# rooms}}",
+      "options": "Options",
+      "pay": "Pay",
+      "employment": "Contract",
+      "schedule": "Hours",
+      "languages": "Languages",
+      "permit": "Permit",
+      "permitRequired": "Work-eligible permit required",
+      "permitNone": "No requirement",
+      "showContact": "Show contact",
+      "location": "Location",
+      "exactInChat": "{area} · ask for the exact address in chat",
+      "deleteTitle": "Delete this post?",
+      "deleteBody": "This can't be undone.",
+      "manage": "Manage my post",
+      "expired": "Expired. Extend it to show it again.",
+      "expiresIn": "Expires in {days} days",
+      "status": "Status",
+      "bump": "Bump",
+      "extend": "Extend 30 days",
+      "missing": "Post not found. It may have been deleted or expired.",
+      "backToList": "Back to the list",
+      "expiredTag": "Expired",
+      "hidden": "Hidden after reports · only you can see it",
+      "expiredPost": "Post expired",
+      "closedPost": "No longer available",
+      "askChat": "Ask by message",
+      "applyChat": "Apply by message",
+      "chat": "Message",
+      "saved": "Saved",
+      "save": "Save",
+      "safetyHousing": "Don't send a deposit or rent before the viewing and lease. Be wary of requests to move to another messenger.",
+      "safetyJob": "Asking for money before you start, or for ID or bank details up front, is a scam.",
+      "guide": "Safety guide",
+      "about": "Description"
+    },
+    "form": {
+      "chooseKind": "Choose the type of place.",
+      "chooseSector": "Choose the sector.",
+      "choosePlace": "Pick a place on the map.",
+      "needPhoto": "Add at least one photo of the room.",
+      "needPledge": "Please accept the safety pledge.",
+      "checkTitle": "Check before posting",
+      "checkFooter": "If you post anyway, moderators may review it first.",
+      "postAnyway": "Post anyway",
+      "fix": "Edit",
+      "whatKind": "What kind of post?",
+      "modes": "Post type",
+      "kind": "Type of place",
+      "sector": "Sector",
+      "terms": "Details",
+      "seekTip": "Describe what you're looking for. The rent is your maximum budget.",
+      "rent": "Rent",
+      "maxRent": "Max rent",
+      "deposit": "Deposit",
+      "optional": "Optional",
+      "moveIn": "Available from",
+      "endDate": "End date",
+      "endSublet": "Required for a sublet",
+      "minStay": "Minimum stay",
+      "minStayHint": "months, optional",
+      "sizeRooms": "Size and rooms",
+      "size": "Size",
+      "rooms": "Rooms",
+      "charges": "Bills included",
+      "furnished": "Furnished",
+      "caf": "CAF (APL) accepted",
+      "pets": "Pets allowed",
+      "jobTerms": "Job details",
+      "employment": "Contract",
+      "pay": "Pay",
+      "payType": "Pay type",
+      "hourly": "Hourly",
+      "monthly": "Monthly",
+      "negotiable": "Negotiable",
+      "amount": "Amount",
+      "schedule": "Days and hours",
+      "schedulePlaceholder": "E.g. weekends 11:00–16:00, twice a week",
+      "languages": "Languages",
+      "permit": "Work-eligible permit required",
+      "discrimination": "No conditions on gender, age or nationality (French anti-discrimination law). Job skills like “speaks Korean” are fine.",
+      "phone": "Phone",
+      "phoneHint": "Optional · only logged-in members see it",
+      "email": "Email",
+      "about": "Description",
+      "titleHousing": "E.g. bright flatshare room in the 15th, 6 min from the metro",
+      "titleJob": "E.g. Korean restaurant in the 11th needs weekend waiting staff",
+      "content": "Content",
+      "bodyHousing": "Condition, flatmates, neighbourhood, who you're looking for…",
+      "bodyJob": "Tasks, workplace, who you're looking for (or your experience)…",
+      "photoTip": "At least one photo is required. Real photos build trust.",
+      "place": "Location",
+      "shopPin": "The shop's location shows as a pin.",
+      "pledge": "I won't take a deposit or rent before showing the place.",
+      "update": "Save changes",
+      "post": "Post"
+    }
+  },
+  "common": {
+    "region": "Region",
+    "allRegions": "All regions",
+    "search": "Search",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "prev": "← Previous",
+    "next": "Next →",
+    "breadcrumb": "Breadcrumb",
+    "photo": "Attached photo",
+    "edited": " · edited",
+    "solved": "Solved",
+    "waiting": "Unanswered",
+    "choose": "Choose",
+    "regionHint": "Used by the region filter",
+    "saving": "Saving…",
+    "saveError": "Couldn't save. Please try again.",
+    "title": "Title",
+    "body": "Text",
+    "profilePhoto": "{name}'s profile photo",
+    "member": "Member"
+  },
+  "community": {
+    "title": "Community",
+    "write": "Write",
+    "ask": "Ask",
+    "all": "All",
+    "allTopics": "All topics",
+    "boardsLabel": "Boards",
+    "topicsLabel": "Topics",
+    "searchLabel": "Search the community",
+    "searchQna": "Search a question (e.g. permit renewal)",
+    "searchAll": "Search posts",
+    "solvedLabel": "Answer status",
+    "allQuestions": "All questions",
+    "openQuestions": "Unanswered",
+    "solvedQuestions": "Solved",
+    "sortLabel": "Sort",
+    "relevance": "Relevance",
+    "newest": "Newest",
+    "popular": "Popular",
+    "corrected": "No exact match, so here are similar posts.",
+    "noMatch": "No posts match “{q}”.",
+    "empty": "No posts yet. Write the first one.",
+    "pages": "Pages",
+    "commentsCount": "{count, plural, one {# comment} other {# comments}}",
+    "likesCount": "{count, plural, one {# like} other {# likes}}",
+    "side": {
+      "label": "Shortcuts",
+      "topics": "Q&A topics",
+      "waiting": "Waiting for an answer",
+      "answers": "{count, plural, one {# answer} other {# answers}}",
+      "firstAnswer": "Be the first to answer",
+      "all": "See all",
+      "safetyTitle": "Before a deal or contract",
+      "safetyBody": "Paying before seeing, or moving to another messenger, can be signs of a scam.",
+      "safetyLink": "Read the safety guide"
+    },
+    "post": {
+      "deleteTitle": "Delete this post?",
+      "deleteBody": "This can't be undone.",
+      "missing": "Post not found. It may have been deleted or hidden.",
+      "back": "Back to the community",
+      "hidden": "Hidden after reports · only you can see it",
+      "like": "Like {count}",
+      "bookmark": "Save",
+      "bookmarked": "Saved",
+      "onlyMine": "You can only edit your own posts.",
+      "backToPost": "Back to the post"
+    },
+    "loadError": "Couldn't load the posts.",
+    "form": {
+      "similar": "Similar questions already exist",
+      "similarSolved": "· solved",
+      "similarAnswers": "· {count, plural, one {# answer} other {# answers}}",
+      "chooseTopic": "Choose a topic.",
+      "where": "Where to post?",
+      "board": "Board",
+      "topic": "Topic",
+      "question": "Question",
+      "content": "Content",
+      "questionTip": "The more specific you are, the better the answers (status, region, dates…).",
+      "titleQna": "E.g. student permit renewal: when do online slots open?",
+      "titleFree": "Enter a title",
+      "bodyQna": "Describe your question in detail.",
+      "bodyFree": "Say what's on your mind.",
+      "anonymous": "Post anonymously",
+      "anonymousHint": "Shown as “Anonymous” instead of your nickname. This can't be changed later.",
+      "update": "Save changes",
+      "postQna": "Post question",
+      "postFree": "Post"
+    },
+    "comments": {
+      "acceptTitle": "Accept this answer?",
+      "acceptBody": "You can accept only one answer; it gets pinned to the top.",
+      "accept": "Accept",
+      "deleteTitle": "Delete this comment?",
+      "hidden": "Comment hidden after reports.",
+      "deleted": "Comment deleted.",
+      "accepted": "Accepted answer",
+      "author": "Author",
+      "reply": "Reply",
+      "answers": "{count, plural, one {# answer} other {# answers}}",
+      "comments": "{count, plural, one {# comment} other {# comments}}",
+      "loginAnswer": "Log in to answer",
+      "loginComment": "Log in to comment",
+      "replyPlaceholder": "Write a reply",
+      "answerPlaceholder": "Share what you know; your experience helps too.",
+      "commentPlaceholder": "Write a comment",
+      "replyLabel": "Reply",
+      "commentLabel": "Comment",
+      "authorAnon": "Your comments show as “Anonymous (author)”.",
+      "anonymous": "Anonymous",
+      "posting": "Posting…",
+      "post": "Post"
+    },
+    "activity": {
+      "label": "My activity",
+      "mine": "My posts",
+      "listings": "My listings",
+      "bookmarks": "Saved",
+      "noBookmarks": "Nothing saved yet. Tap “Save” on a post to keep it here.",
+      "noPosts": "You haven't posted anything yet.",
+      "ask": "Ask a question",
+      "postRoom": "Post a room"
+    }
+  },
+  "report": {
+    "button": "Report",
+    "done": "Reported",
+    "chooseReason": "Choose a reason.",
+    "title": "Report",
+    "lead": "Moderators review it and act. The other person isn't told who reported them.",
+    "reason": "Reason",
+    "detail": "Details (optional)",
+    "detailPlaceholder": "E.g. they want the deposit before the viewing.",
+    "sending": "Sending…",
+    "submit": "Report"
+  },
+  "pages": {
+    "community": {
+      "title": "Community",
+      "description": "Koreans in France help each other: residence permits, CAF, banks, school, health, plus an open board."
+    },
+    "housing": {
+      "title": "Housing",
+      "description": "Flatshares, studios and sublets in Paris and across France, by filters or on the map."
+    },
+    "jobs": {
+      "title": "Jobs",
+      "description": "Part-time work in Korean shops, tutoring, babysitting: offers and requests."
+    },
+    "notFound": {
+      "title": "Post not found"
+    },
+    "editPost": {
+      "title": "Edit post"
+    },
+    "writePost": {
+      "title": "Write"
+    },
+    "askQuestion": {
+      "title": "Ask a question"
+    },
+    "writeHousing": {
+      "title": "Post a room"
+    },
+    "writeJob": {
+      "title": "Post a job"
+    }
+  },
+  "writeTips": {
+    "label": "Writing tips",
+    "guide": "Safety guide",
+    "product": {
+      "title": "Sell faster",
+      "item1": "Take photos in good light from several angles. The first one shows in the list.",
+      "item2": "Put the brand and model in the title so people find it.",
+      "item3": "Check similar items before setting the price.",
+      "item4": "Be honest about scratches and faults.",
+      "safety": "Meet and check the item before paying. Never ask for or accept payment in advance."
+    },
+    "qna": {
+      "title": "Get good answers",
+      "item1": "Sum up your question in one sentence in the title.",
+      "item2": "Mention your status, city and dates.",
+      "item3": "Search for similar questions first.",
+      "item4": "Accept the answer that helped; it helps others too.",
+      "safety": "Don't post passport or permit numbers, or your address."
+    },
+    "free": {
+      "title": "A shared space",
+      "item1": "Be respectful.",
+      "item2": "Ads and promotions may be hidden.",
+      "item3": "Keep other people's faces and personal data out of photos.",
+      "safety": "See something wrong? Tap “Report” and moderators will check."
+    },
+    "housing": {
+      "title": "A listing that gets replies",
+      "item1": "Show real photos; offers must have at least one.",
+      "item2": "State the rent, bills and deposit clearly.",
+      "item3": "Give the move-in date and minimum stay.",
+      "safety": "No money before the viewing. Sign a lease (bail)."
+    },
+    "job": {
+      "title": "A job post that gets applicants",
+      "item1": "Give the hourly pay and hours. Pay must be at least the minimum wage (SMIC).",
+      "item2": "List the languages and permit needed.",
+      "item3": "Mention a contract and payslips; it builds trust.",
+      "safety": "Never ask applicants for money, ID or bank details up front."
+    }
+  },
+  "location": {
+    "noArea": "Couldn't find the area for this spot. Pick another one or show the exact location.",
+    "checkError": "Couldn't check this location.",
+    "gpsError": "Couldn't get your location.",
+    "modeLabel": "How to show the location",
+    "areaOnly": "Area only",
+    "exact": "Exact spot",
+    "exactHint": "A pin shows the exact spot. A station or public place is best.",
+    "areaHintChat": "Only the area outline shows (the arrondissement in Paris). Share the exact address in chat.",
+    "areaHintBuyer": "Buyers only see the area outline (the arrondissement in Paris), never the address.",
+    "searchPlaceholder": "Address, station, area (e.g. Porte de Versailles)",
+    "searchLabel": "Search a place",
+    "myPosition": "My location",
+    "results": "Places found",
+    "checking": "Checking the location…",
+    "pinShown": "{area} · the pin shows as is",
+    "areaShown": "{area} · this area will be shown",
+    "pickHint": "Tap the map or search for a place.",
+    "label": "Location name shown",
+    "labelHint": "Shown in lists and on the post",
+    "labelPlaceholder": "E.g. Paris 15e · Vaugirard"
+  },
+  "uploader": {
+    "rejected": "{count, plural, one {# photo was skipped: not jpg, png, gif or webp, or over 5 MB.} other {# photos were skipped: not jpg, png, gif or webp, or over 5 MB.}}",
+    "max": "Up to {max} photos.",
+    "add": "Add photos",
+    "drop": "Drop photos here or tap to add",
+    "limits": "Up to {max} · jpg, png, gif, webp · 5 MB each",
+    "list": "Photos to post",
+    "photo": "Photo {n}",
+    "cover": "Cover",
+    "uploading": "Uploading",
+    "makeCover": "Make cover photo",
+    "remove": "Remove photo",
+    "removeShort": "Remove",
+    "tip": "Drag to reorder; ★ picks the cover photo."
+  },
+  "confirm": {
+    "typeToConfirm": "Type to confirm",
+    "ok": "OK"
+  },
+  "auth": {
+    "required": {
+      "title": "You need to log in to see this page.",
+      "login": "Log in"
+    }
+  },
+  "chatButton": {
+    "sold": "Sold",
+    "chat": "Message",
+    "opening": "Opening…",
+    "error": "Couldn't open the chat."
+  },
+  "safety": {
+    "title": "Safety guide",
+    "description": "Common scams in housing, jobs and second-hand deals, how to avoid them and where to report them.",
+    "lead": "Abroad, losses are much harder to recover. These few rules avoid most scams.",
+    "housing": {
+      "title": "Housing",
+      "items": {
+        "1": {
+          "title": "Don't send money before a viewing",
+          "body": "A deposit, booking fee or “key delivery fee” asked up front is almost always a scam. Visit (or have someone you trust visit) and pay after signing the lease (bail)."
+        },
+        "2": {
+          "title": "Too cheap, too urgent",
+          "body": "Rent far below market, “I'm abroad so I can't show it”, “you must decide today”: classic tricks."
+        },
+        "3": {
+          "title": "Requests to move to another messenger",
+          "body": "On KakaoTalk, Telegram or WhatsApp nothing is kept and reporting is hard. Keep talking in Itnyang chat."
+        },
+        "4": {
+          "title": "Only the documents needed",
+          "body": "Watermark passport or permit copies (“for rental application only”). Never give access to your bank account."
+        }
+      }
+    },
+    "jobs": {
+      "title": "Jobs",
+      "items": {
+        "1": {
+          "title": "Avoid anyone charging you before you work",
+          "body": "Training, uniform or registration fees up front mean a scam."
+        },
+        "2": {
+          "title": "ID and bank details through an online form?",
+          "body": "Some collect ID and bank details before any interview. Check that the business exists, with its address and contact, first."
+        },
+        "3": {
+          "title": "Contract and payslip",
+          "body": "In France, declared work (contract, payslip) is the rule. Pay below the minimum wage (SMIC) or cash only: think twice."
+        }
+      }
+    },
+    "market": {
+      "title": "Second-hand",
+      "items": {
+        "1": {
+          "title": "In person, in a public place",
+          "body": "Check the item and pay somewhere busy, like a station or a café."
+        },
+        "2": {
+          "title": "Prepayment “before I leave the country”",
+          "body": "Many take a transfer (often to a Korean account) and vanish. Be extra careful with parcel deals."
+        }
+      }
+    },
+    "help": {
+      "title": "If you've been scammed",
+      "items": {
+        "1": {
+          "title": "Report on Itnyang",
+          "body": "Use the “Report” button on a post, comment or chat. Moderators check and restrict the author. Keep your messages and payment records."
+        },
+        "2": {
+          "title": "French police and online reporting",
+          "body": "For online fraud, 17Cyber, the official police and gendarmerie site, assesses your case and explains how to report it. Report fraudulent or illegal content on PHAROS (internet-signalement.gouv.fr). If you lost money, file a complaint (plainte) at a police station (commissariat)."
+        },
+        "3": {
+          "title": "Emergency numbers",
+          "body": "Police 17, European emergency number 112. If you can't speak, text 114."
+        },
+        "4": {
+          "title": "Consular help from the embassy",
+          "body": "Consular section of the Korean embassy in France: office hours (9:30–18:00) +33 1 47 53 01 01, after-hours emergencies +33 6 80 28 53 96. Consular call centre (Seoul, 24/7) +82 2 3210 0404. Scammers pose as the embassy, so call these numbers yourself to check."
+        }
+      }
+    },
+    "embassy": "Korean embassy in France",
+    "ask": "Ask the community"
+  },
+  "gallery": {
+    "none": "No photo",
+    "alt": "{name}, photo {n}/{total}",
+    "show": "Show photo {n}"
   }
 }

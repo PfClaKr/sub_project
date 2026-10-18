@@ -5,9 +5,9 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 import { PostStatusControl } from "@/components/admin/Controls";
 import { adminGet, isAdmin, type AdminPage } from "@/libs/adminApi";
 import { apiQuery, param, type SearchParams } from "@/libs/adminParams";
-import { boardLabel, postHref } from "@/libs/community";
+import { postHref } from "@/libs/community";
 import { formatDate } from "@/libs/format";
-import { dealLabel, warningText } from "@/libs/listing";
+import { getLabels } from "@/libs/labels.server";
 import { EmptyRow, Panel, RoleBadge, Table, TableWrap } from "@/styles/styledAdmin";
 import type { Post } from "@/libs/types";
 
@@ -22,6 +22,7 @@ type AdminPost = {
 // Every board in one list. Anonymous posts show their real author here,
 // for acting on reports; the "익명" badge marks them.
 export default async function AdminPostsPage({ searchParams }: { searchParams: SearchParams }) {
+	const L = await getLabels();
 	if (!(await isAdmin())) return null;
 	const list = await adminGet<AdminPage<AdminPost>>(`/posts${apiQuery(searchParams, ["q", "type", "status", "flagged", "page"])}`);
 
@@ -55,7 +56,7 @@ export default async function AdminPostsPage({ searchParams }: { searchParams: S
 						{list.Items.map(p => (
 							<tr key={p.PostId}>
 								<td style={{ maxWidth: 380 }}>
-									<RoleBadge>{boardLabel(p.Type)}</RoleBadge> <small>{p.Topic}</small>{p.Deal && <small> · {dealLabel(p.Deal)}</small>}
+									<RoleBadge>{L.board(p.Type)}</RoleBadge> <small>{L.enum(p.Type === "housing" ? "housingKind" : p.Type === "job" ? "jobSector" : "topic", p.Topic)}</small>{p.Deal && <small> · {L.deal(p.Deal)}</small>}
 									<div><Link href={postHref(p)} target="_blank">{p.Title}</Link> <small>댓글 {p.CommentCount}</small></div>
 								</td>
 								<td data-label="작성자">
@@ -65,7 +66,7 @@ export default async function AdminPostsPage({ searchParams }: { searchParams: S
 									{p.Anonymous && <> <RoleBadge>익명</RoleBadge></>}
 								</td>
 								<td data-label="경고·신고">
-									{p.Flags.map(f => <div key={f}><small>⚠ {warningText(f).title}</small></div>)}
+									{p.Flags.map(f => <div key={f}><small>⚠ {L.warning(f).title}</small></div>)}
 									{p.ReportCount > 0 && <Link href="/admin/reports?type=post"><small>신고 {p.ReportCount}건</small></Link>}
 									{p.Flags.length === 0 && !p.ReportCount && "—"}
 								</td>

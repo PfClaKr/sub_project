@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { gql, POST_LIST_FIELDS } from "@/libs/graphql";
 import { Chip, ChipRow, EmptyState, ErrorText, LinkButton } from "@/styles/styledUi";
 import { PostList, PostListSkeleton } from "./PostList";
@@ -8,15 +9,12 @@ import type { Post } from "@/libs/types";
 
 type Tab = "mine" | "listings" | "bookmarks";
 
-const TABS: { key: Tab; label: string }[] = [
-	{ key: "mine", label: "내가 쓴 글" },
-	{ key: "listings", label: "내 집·알바 글" },
-	{ key: "bookmarks", label: "저장한 글" },
-];
+const TABS: Tab[] = ["mine", "listings", "bookmarks"];
 
 // MyActivity lists the member's own community posts (anonymous ones too,
 // only they see them here) and the posts they saved.
 export function MyActivity() {
+	const t = useTranslations("community.activity");
 	const [tab, setTab] = useState<Tab>("mine");
 	const [posts, setPosts] = useState<Post[] | null>(null);
 	const [error, setError] = useState("");
@@ -34,10 +32,10 @@ export function MyActivity() {
 
 	return (
 		<div>
-			<ChipRow aria-label="내 활동" style={{ marginBottom: 12 }}>
-				{TABS.map(t => (
-					<Chip key={t.key} href="#activity" $active={tab === t.key} onClick={e => { e.preventDefault(); setTab(t.key); }} aria-pressed={tab === t.key}>
-						{t.label}
+			<ChipRow aria-label={t("label")} style={{ marginBottom: 12 }}>
+				{TABS.map(key => (
+					<Chip key={key} href="#activity" $active={tab === key} onClick={e => { e.preventDefault(); setTab(key); }} aria-pressed={tab === key}>
+						{t(key)}
 					</Chip>
 				))}
 			</ChipRow>
@@ -45,9 +43,9 @@ export function MyActivity() {
 			{posts === null && <PostListSkeleton count={3} />}
 			{posts?.length === 0 && (
 				<EmptyState>
-					<p>{tab === "bookmarks" ? "저장한 글이 없어요. 글에서 '저장'을 누르면 여기에 모여요." : "아직 쓴 글이 없어요."}</p>
-					{tab === "mine" && <LinkButton href="/community/write">질문하기</LinkButton>}
-					{tab === "listings" && <LinkButton href="/housing/write">방 올리기</LinkButton>}
+					<p>{tab === "bookmarks" ? t("noBookmarks") : t("noPosts")}</p>
+					{tab === "mine" && <LinkButton href="/community/write">{t("ask")}</LinkButton>}
+					{tab === "listings" && <LinkButton href="/housing/write">{t("postRoom")}</LinkButton>}
 				</EmptyState>
 			)}
 			{posts && posts.length > 0 && <PostList posts={posts} />}

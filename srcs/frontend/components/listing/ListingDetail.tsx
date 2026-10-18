@@ -3,12 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
+import type { Locale } from "@/i18n/config";
 import { Bookmark, Eye, Map as MapIcon, MapPin, Phone, ShieldAlert } from "lucide-react";
 import { DEALS, type ListingType } from "@/libs/constants";
 import { gql, LISTING_DETAIL_FIELDS } from "@/libs/graphql";
 import { formatDate, formatPrice } from "@/libs/format";
 import { fetchArea, type Area } from "@/libs/geo";
-import { dealLabel, expiryInfo, LISTING_LABEL, LISTING_PATH, modeLabel, moveInLabel, rentLabel, wageLabel } from "@/libs/listing";
+import { expiryInfo, LISTING_PATH } from "@/libs/listing";
 import { useSession } from "@/libs/session";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { Avatar } from "@/components/ui/Avatar";
@@ -28,29 +31,34 @@ import { TimeAgo } from "@/components/ui/TimeAgo";
 const QUERY = `query Listing($id: String!) { listing(PostId: $id) { ${LISTING_DETAIL_FIELDS} } }`;
 
 function HousingFacts({ post }: { post: Post }) {
+	const t = useTranslations("listing.detail");
+	const L = useLabels();
+	const locale = useLocale() as Locale;
 	const h = post.Housing!;
-	const options = [h.Furnished && "가구 포함", h.Caf && "CAF 가능", h.Pets && "반려동물 가능"].filter(Boolean).join(" · ");
+	const options = [h.Furnished && t("furnished"), h.Caf && t("caf"), h.Pets && t("pets")].filter(Boolean).join(" · ");
 	return (
 		<Facts>
-			<dt>{h.Mode === "seek" ? "예산" : "월세"}</dt><dd>{rentLabel(h)}</dd>
-			{h.Deposit != null && <><dt>보증금</dt><dd>{formatPrice(h.Deposit)}</dd></>}
-			<dt>입주</dt><dd>{moveInLabel(h.AvailableFrom)}{h.EndDate ? ` ~ ${formatDate(Date.parse(h.EndDate))}` : ""}</dd>
-			{h.MinMonths ? <><dt>최소 기간</dt><dd>{h.MinMonths}개월</dd></> : null}
-			{(h.Size || h.Rooms) ? <><dt>크기</dt><dd>{[h.Size && `${h.Size}m²`, h.Rooms && `방 ${h.Rooms}개`].filter(Boolean).join(" · ")}</dd></> : null}
-			{options && <><dt>옵션</dt><dd>{options}</dd></>}
+			<dt>{h.Mode === "seek" ? t("budget") : t("rent")}</dt><dd>{L.rent(h)}</dd>
+			{h.Deposit != null && <><dt>{t("deposit")}</dt><dd>{formatPrice(h.Deposit, locale)}</dd></>}
+			<dt>{t("moveIn")}</dt><dd>{L.moveIn(h.AvailableFrom)}{h.EndDate ? ` ~ ${formatDate(Date.parse(h.EndDate), locale)}` : ""}</dd>
+			{h.MinMonths ? <><dt>{t("minStay")}</dt><dd>{t("months", { count: h.MinMonths })}</dd></> : null}
+			{(h.Size || h.Rooms) ? <><dt>{t("size")}</dt><dd>{[h.Size && `${h.Size}m²`, h.Rooms && t("rooms", { count: h.Rooms })].filter(Boolean).join(" · ")}</dd></> : null}
+			{options && <><dt>{t("options")}</dt><dd>{options}</dd></>}
 		</Facts>
 	);
 }
 
 function JobFacts({ post }: { post: Post }) {
+	const t = useTranslations("listing.detail");
+	const L = useLabels();
 	const j = post.Job!;
 	return (
 		<Facts>
-			<dt>급여</dt><dd>{wageLabel(j)}</dd>
-			<dt>고용 형태</dt><dd>{j.Employment}</dd>
-			{j.Schedule && <><dt>근무</dt><dd>{j.Schedule}</dd></>}
-			{j.Languages && j.Languages.length > 0 && <><dt>언어</dt><dd>{j.Languages.join(", ")}</dd></>}
-			<dt>체류증</dt><dd>{j.PermitRequired ? "근로 가능한 체류증 필요" : "조건 없음"}</dd>
+			<dt>{t("pay")}</dt><dd>{L.wage(j)}</dd>
+			<dt>{t("employment")}</dt><dd>{L.enum("employment", j.Employment)}</dd>
+			{j.Schedule && <><dt>{t("schedule")}</dt><dd>{j.Schedule}</dd></>}
+			{j.Languages && j.Languages.length > 0 && <><dt>{t("languages")}</dt><dd>{j.Languages.map(l => L.enum("jobLanguage", l)).join(", ")}</dd></>}
+			<dt>{t("permit")}</dt><dd>{j.PermitRequired ? t("permitRequired") : t("permitNone")}</dd>
 		</Facts>
 	);
 }
@@ -58,6 +66,7 @@ function JobFacts({ post }: { post: Post }) {
 // ContactReveal shows an employer's phone/email on demand (counted on the
 // server) instead of printing it in the page for scrapers.
 function ContactReveal({ postId }: { postId: string }) {
+	const t = useTranslations("listing.detail");
 	const { session } = useSession();
 	const router = useRouter();
 	const pathname = usePathname();
@@ -87,13 +96,15 @@ function ContactReveal({ postId }: { postId: string }) {
 	}
 	return (
 		<>
-			<GhostButton type="button" onClick={reveal}><Phone size={15} aria-hidden style={{ verticalAlign: -2, marginRight: 6 }} />연락처 보기</GhostButton>
+			<GhostButton type="button" onClick={reveal}><Phone size={15} aria-hidden style={{ verticalAlign: -2, marginRight: 6 }} />{t("showContact")}</GhostButton>
 			{error && <ErrorText>{error}</ErrorText>}
 		</>
 	);
 }
 
 function ListingLocation({ post }: { post: Post }) {
+	const t = useTranslations("listing.detail");
+	const L = useLabels();
 	const [area, setArea] = useState<Area | null>(null);
 	const exact = !!post.ExactLocation;
 	useEffect(() => {
@@ -102,20 +113,23 @@ function ListingLocation({ post }: { post: Post }) {
 	if (!post.Latitude || !post.Longitude) return null;
 	const point = { lat: post.Latitude, lng: post.Longitude };
 	return (
-		<Description aria-label="위치">
-			<h2>위치</h2>
+		<Description aria-label={t("location")}>
+			<h2>{t("location")}</h2>
 			<MapBox $h={260}>
 				<PreviewMap pin={exact || !post.AreaId ? point : null} area={area} />
 			</MapBox>
 			<LocationSummary>
 				{exact ? <MapPin size={16} aria-hidden /> : <MapIcon size={16} aria-hidden />}
-				<span>{exact ? post.AreaName : `${post.AreaName ?? post.City} · 정확한 위치는 채팅으로 확인하세요`}</span>
+				<span>{exact ? post.AreaName : t("exactInChat", { area: post.AreaName ?? L.enum("region", post.City) })}</span>
 			</LocationSummary>
 		</Description>
 	);
 }
 
 function Owner({ post, onChange }: { post: Post; onChange: (p: Post) => void }) {
+	const t = useTranslations("listing.detail");
+	const c = useTranslations("common");
+	const L = useLabels();
 	const router = useRouter();
 	const confirm = useConfirm();
 	const [error, setError] = useState("");
@@ -130,7 +144,7 @@ function Owner({ post, onChange }: { post: Post; onChange: (p: Post) => void }) 
 	};
 
 	const remove = async () => {
-		if (!(await confirm({ title: "글을 삭제할까요?", message: "삭제한 글은 되돌릴 수 없어요.", danger: true, confirmLabel: "삭제" }))) return;
+		if (!(await confirm({ title: t("deleteTitle"), message: t("deleteBody"), danger: true, confirmLabel: c("delete") }))) return;
 		const { error } = await gql(`mutation($id: String!) { deletePost(PostId: $id) }`, { id: post.PostId });
 		if (error) return setError(error);
 		router.push(LISTING_PATH[type]);
@@ -138,25 +152,25 @@ function Owner({ post, onChange }: { post: Post; onChange: (p: Post) => void }) 
 	};
 
 	return (
-		<OwnerPanel aria-label="내 글 관리">
+		<OwnerPanel aria-label={t("manage")}>
 			<div>
-				<strong>내 글 관리</strong>
-				<Muted>{exp.expired ? "만료됐어요. 연장하면 다시 목록에 보여요." : `${exp.daysLeft}일 뒤 만료`}</Muted>
+				<strong>{t("manage")}</strong>
+				<Muted>{exp.expired ? t("expired") : t("expiresIn", { days: exp.daysLeft })}</Muted>
 			</div>
 			<div>
-				<label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>상태
+				<label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>{t("status")}
 					<select value={post.Deal} onChange={e => run(`mutation($id: String!, $d: String!) { setListingDeal(PostId: $id, Deal: $d) { Deal } }`, { d: e.target.value })}>
-						{DEALS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+						{DEALS.map(d => <option key={d.value} value={d.value}>{L.deal(d.value)}</option>)}
 					</select>
 				</label>
 				{!exp.expired && post.Deal !== "closed" && (
-					<GhostButton type="button" onClick={() => run(`mutation($id: String!) { bumpListing(PostId: $id) { BumpedAt } }`)}>끌어올리기</GhostButton>
+					<GhostButton type="button" onClick={() => run(`mutation($id: String!) { bumpListing(PostId: $id) { BumpedAt } }`)}>{t("bump")}</GhostButton>
 				)}
 				{exp.extendable && (
-					<GhostButton type="button" onClick={() => run(`mutation($id: String!) { extendListing(PostId: $id) { ExpiresAt Status } }`)}>30일 연장</GhostButton>
+					<GhostButton type="button" onClick={() => run(`mutation($id: String!) { extendListing(PostId: $id) { ExpiresAt Status } }`)}>{t("extend")}</GhostButton>
 				)}
-				<LinkButton href={`${LISTING_PATH[type]}/${post.PostId}/edit`} $ghost>수정</LinkButton>
-				<TextButton type="button" $danger onClick={remove}>삭제</TextButton>
+				<LinkButton href={`${LISTING_PATH[type]}/${post.PostId}/edit`} $ghost>{c("edit")}</LinkButton>
+				<TextButton type="button" $danger onClick={remove}>{c("delete")}</TextButton>
 			</div>
 			{error && <ErrorText role="alert">{error}</ErrorText>}
 		</OwnerPanel>
@@ -166,6 +180,9 @@ function Owner({ post, onChange }: { post: Post; onChange: (p: Post) => void }) 
 // ListingDetail renders a housing or job post. Like the community page,
 // the server passes the public version and it is re-read with the cookie.
 export function ListingDetail({ type, postId, initial }: { type: ListingType; postId: string; initial: Post | null }) {
+	const t = useTranslations("listing.detail");
+	const c = useTranslations("common");
+	const L = useLabels();
 	const { session } = useSession();
 	const router = useRouter();
 	const pathname = usePathname();
@@ -195,8 +212,8 @@ export function ListingDetail({ type, postId, initial }: { type: ListingType; po
 	if (missing) {
 		return (
 			<EmptyState>
-				<p>글을 찾을 수 없어요. 삭제됐거나 기간이 끝난 글일 수 있어요.</p>
-				<LinkButton href={LISTING_PATH[type]}>목록으로</LinkButton>
+				<p>{t("missing")}</p>
+				<LinkButton href={LISTING_PATH[type]}>{t("backToList")}</LinkButton>
 			</EmptyState>
 		);
 	}
@@ -212,13 +229,14 @@ export function ListingDetail({ type, postId, initial }: { type: ListingType; po
 
 	const h = post.Housing;
 	const j = post.Job;
+	const kindGroup = type === "housing" ? "housingKind" : "jobSector";
 	const closed = post.Deal === "closed" || post.Status === "expired";
 
 	return (
 		<div>
-			<Breadcrumb aria-label="위치">
-				<Link href={LISTING_PATH[type]}>{LISTING_LABEL[type]}</Link>
-				{post.Topic && <> › <Link href={`${LISTING_PATH[type]}?kind=${encodeURIComponent(post.Topic)}`}>{post.Topic}</Link></>}
+			<Breadcrumb aria-label={c("breadcrumb")}>
+				<Link href={LISTING_PATH[type]}>{L.board(type)}</Link>
+				{post.Topic && <> › <Link href={`${LISTING_PATH[type]}?kind=${encodeURIComponent(post.Topic)}`}>{L.enum(kindGroup, post.Topic)}</Link></>}
 			</Breadcrumb>
 			<DetailLayout>
 				{post.Images && post.Images.length > 0
@@ -226,14 +244,14 @@ export function ListingDetail({ type, postId, initial }: { type: ListingType; po
 					: <SideSlot $afterOnMobile><ListingLocation post={post} /></SideSlot>}
 				<InfoPanel>
 					<Meta>
-						<Link href={`${LISTING_PATH[type]}?mode=${h?.Mode ?? j?.Mode}`}><Tag>{modeLabel(type, h?.Mode ?? j?.Mode)}</Tag></Link>
-						<span>{post.Topic}</span>
-						{post.Deal !== "open" && <Tag $tone={post.Deal === "closed" ? "done" : "warning"}>{dealLabel(post.Deal)}</Tag>}
-						{post.Status === "expired" && <Tag $tone="warning">기간 만료</Tag>}
-						{post.Status === "hidden" && <Tag $tone="warning">신고로 숨겨진 글 · 나에게만 보여요</Tag>}
+						<Link href={`${LISTING_PATH[type]}?mode=${h?.Mode ?? j?.Mode}`}><Tag>{L.mode(type, h?.Mode ?? j?.Mode)}</Tag></Link>
+						<span>{L.enum(kindGroup, post.Topic)}</span>
+						{post.Deal !== "open" && <Tag $tone={post.Deal === "closed" ? "done" : "warning"}>{L.deal(post.Deal)}</Tag>}
+						{post.Status === "expired" && <Tag $tone="warning">{t("expiredTag")}</Tag>}
+						{post.Status === "hidden" && <Tag $tone="warning">{t("hidden")}</Tag>}
 					</Meta>
 					<h1>{post.Title}</h1>
-					<BigPrice>{h ? rentLabel(h) : j ? wageLabel(j) : ""}</BigPrice>
+					<BigPrice>{h ? L.rent(h) : j ? L.wage(j) : ""}</BigPrice>
 					{h ? <HousingFacts post={post} /> : j ? <JobFacts post={post} /> : null}
 					<div style={{ display: "flex", alignItems: "center", gap: 10 }}>
 						<Avatar src={post.AuthorImage} name={post.AuthorNickname} size={36} />
@@ -254,12 +272,12 @@ export function ListingDetail({ type, postId, initial }: { type: ListingType; po
 							<ChatButton
 								subject={{ type, id: post.PostId }}
 								disabled={closed}
-								disabledLabel={post.Status === "expired" ? "기간이 끝난 글" : "모집이 끝났어요"}
-								label={type === "housing" ? "채팅으로 문의하기" : j?.Mode === "hiring" ? "채팅으로 지원하기" : "채팅하기"}
+								disabledLabel={post.Status === "expired" ? t("expiredPost") : t("closedPost")}
+								label={type === "housing" ? t("askChat") : j?.Mode === "hiring" ? t("applyChat") : t("chat")}
 							/>
 							<div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
 								<ToggleButton type="button" $on={post.Bookmarked} aria-pressed={!!post.Bookmarked} onClick={toggleBookmark}>
-									<Bookmark size={16} fill={post.Bookmarked ? "currentColor" : "none"} aria-hidden /> {post.Bookmarked ? "저장됨" : "저장"}
+									<Bookmark size={16} fill={post.Bookmarked ? "currentColor" : "none"} aria-hidden /> {post.Bookmarked ? t("saved") : t("save")}
 								</ToggleButton>
 								{post.HasContact && <ContactReveal postId={post.PostId} />}
 							</div>
@@ -270,17 +288,15 @@ export function ListingDetail({ type, postId, initial }: { type: ListingType; po
 					<SafetyBanner>
 						<ShieldAlert size={18} aria-hidden />
 						<span>
-							{type === "housing"
-								? "집을 직접 보고 계약서를 쓰기 전에는 보증금·월세를 보내지 마세요. 외부 메신저로 옮기자는 요청도 주의하세요."
-								: "일을 시작하기 전에 돈을 요구하거나, 신분증·계좌 사진을 먼저 달라고 하면 사기예요."}
-							{" "}<Link href="/safety">안전 가이드</Link>
+							{t(type === "housing" ? "safetyHousing" : "safetyJob")}
+							{" "}<Link href="/safety">{t("guide")}</Link>
 						</span>
 					</SafetyBanner>
 				</InfoPanel>
 			</DetailLayout>
 
-			<Description aria-label="소개">
-				<h2>소개</h2>
+			<Description aria-label={t("about")}>
+				<h2>{t("about")}</h2>
 				<p><LinkedText text={post.Body ?? ""} /></p>
 			</Description>
 			{post.Images && post.Images.length > 0 && <ListingLocation post={post} />}

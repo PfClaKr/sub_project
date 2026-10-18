@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Bookmark, CheckCircle2, Eye, Heart, MessageSquare } from "lucide-react";
-import { boardLabel } from "@/libs/community";
+import { useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
 import { gql, POST_DETAIL_FIELDS } from "@/libs/graphql";
 import { imageUrl } from "@/libs/format";
 import { useSession } from "@/libs/session";
@@ -24,6 +25,9 @@ const QUERY = `query Post($id: String!) { post(PostId: $id) { ${POST_DETAIL_FIEL
 // passes the public version for a fast first paint; it is re-read with
 // the session cookie for the viewer's own state (liked, bookmarked, mine).
 export function PostDetail({ postId, initial }: { postId: string; initial: Post | null }) {
+	const t = useTranslations("community");
+	const c = useTranslations("common");
+	const L = useLabels();
 	const { session } = useSession();
 	const confirm = useConfirm();
 	const router = useRouter();
@@ -77,7 +81,7 @@ export function PostDetail({ postId, initial }: { postId: string; initial: Post 
 
 	const remove = async () => {
 		if (!post) return;
-		if (!(await confirm({ title: "글을 삭제할까요?", message: "삭제한 글은 되돌릴 수 없어요.", danger: true, confirmLabel: "삭제" }))) return;
+		if (!(await confirm({ title: t("post.deleteTitle"), message: t("post.deleteBody"), danger: true, confirmLabel: c("delete") }))) return;
 		const { error } = await gql(`mutation($id: String!) { deletePost(PostId: $id) }`, { id: post.PostId });
 		if (error) {
 			setError(error);
@@ -90,8 +94,8 @@ export function PostDetail({ postId, initial }: { postId: string; initial: Post 
 	if (missing) {
 		return (
 			<EmptyState>
-				<p>글을 찾을 수 없어요. 삭제됐거나 비공개로 바뀐 글일 수 있어요.</p>
-				<LinkButton href="/community">커뮤니티로</LinkButton>
+				<p>{t("post.missing")}</p>
+				<LinkButton href="/community">{t("post.back")}</LinkButton>
 			</EmptyState>
 		);
 	}
@@ -101,16 +105,16 @@ export function PostDetail({ postId, initial }: { postId: string; initial: Post 
 
 	return (
 		<Article>
-			<Breadcrumb aria-label="위치">
-				<Link href="/community">커뮤니티</Link> › <Link href={`/community?board=${post.Type}`}>{boardLabel(post.Type)}</Link>
+			<Breadcrumb aria-label={c("breadcrumb")}>
+				<Link href="/community">{t("title")}</Link> › <Link href={`/community?board=${post.Type}`}>{L.board(post.Type)}</Link>
 			</Breadcrumb>
 			<Meta>
-				<Link href={`/community?board=${post.Type}`}><Tag>{boardLabel(post.Type)}</Tag></Link>
-				<Link href={`/community?board=${post.Type}&topic=${encodeURIComponent(post.Topic)}`}>{post.Topic}</Link>
+				<Link href={`/community?board=${post.Type}`}><Tag>{L.board(post.Type)}</Tag></Link>
+				<Link href={`/community?board=${post.Type}&topic=${encodeURIComponent(post.Topic)}`}>{L.enum("topic", post.Topic)}</Link>
 				{post.Type === "qna" && (post.Solved
-					? <Tag $tone="done"><CheckCircle2 size={12} aria-hidden /> 해결</Tag>
-					: <Tag $tone="warning">답변 대기</Tag>)}
-				{post.Status === "hidden" && <Tag $tone="warning">신고로 숨겨진 글 · 나에게만 보여요</Tag>}
+					? <Tag $tone="done"><CheckCircle2 size={12} aria-hidden /> {c("solved")}</Tag>
+					: <Tag $tone="warning">{c("waiting")}</Tag>)}
+				{post.Status === "hidden" && <Tag $tone="warning">{t("post.hidden")}</Tag>}
 			</Meta>
 			<h1>{post.Title}</h1>
 			<AuthorLine>
@@ -120,15 +124,15 @@ export function PostDetail({ postId, initial }: { postId: string; initial: Post 
 						? <Link href={`/user/${post.AuthorId}`}><strong>{post.AuthorNickname}</strong></Link>
 						: <strong>{post.AuthorNickname}</strong>}
 					<Meta>
-						<span><TimeAgo ts={post.CreatedAt} />{edited ? " · 수정됨" : ""}</span>
-						{post.City && <span>{post.City}</span>}
+						<span><TimeAgo ts={post.CreatedAt} />{edited ? c("edited") : ""}</span>
+						{post.City && <span>{L.enum("region", post.City)}</span>}
 						<span><Eye size={13} aria-hidden /> {post.ViewCount ?? 0}</span>
 					</Meta>
 				</div>
 				{post.IsMine ? (
 					<div>
-						<LinkButton href={`/community/${post.PostId}/edit`} $ghost style={{ padding: "6px 12px" }}>수정</LinkButton>
-						<TextButton type="button" $danger onClick={remove}>삭제</TextButton>
+						<LinkButton href={`/community/${post.PostId}/edit`} $ghost style={{ padding: "6px 12px" }}>{c("edit")}</LinkButton>
+						<TextButton type="button" $danger onClick={remove}>{c("delete")}</TextButton>
 					</div>
 				) : (
 					<ReportButton target={{ type: "post", id: post.PostId }} />
@@ -140,17 +144,17 @@ export function PostDetail({ postId, initial }: { postId: string; initial: Post 
 				<Photos>
 					{post.Images.map(src => {
 						const url = imageUrl(src);
-						return url ? <a key={src} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt="첨부 사진" loading="lazy" /></a> : null;
+						return url ? <a key={src} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={c("photo")} loading="lazy" /></a> : null;
 					})}
 				</Photos>
 			)}
 
 			<ActionBar>
 				<ToggleButton type="button" $on={post.Liked} aria-pressed={!!post.Liked} onClick={toggleLike}>
-					<Heart size={16} fill={post.Liked ? "currentColor" : "none"} aria-hidden /> 공감 {post.LikeCount ?? 0}
+					<Heart size={16} fill={post.Liked ? "currentColor" : "none"} aria-hidden /> {t("post.like", { count: post.LikeCount ?? 0 })}
 				</ToggleButton>
 				<ToggleButton type="button" $on={post.Bookmarked} aria-pressed={!!post.Bookmarked} onClick={toggleBookmark}>
-					<Bookmark size={16} fill={post.Bookmarked ? "currentColor" : "none"} aria-hidden /> {post.Bookmarked ? "저장됨" : "저장"}
+					<Bookmark size={16} fill={post.Bookmarked ? "currentColor" : "none"} aria-hidden /> {post.Bookmarked ? t("post.bookmarked") : t("post.bookmark")}
 				</ToggleButton>
 				<Muted style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4 }}>
 					<MessageSquare size={14} aria-hidden /> {post.CommentCount ?? 0}

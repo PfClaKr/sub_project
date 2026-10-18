@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, DragEvent } from "react";
 import { ImagePlus, Plus, Star, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { MAX_IMAGES, MAX_IMAGE_BYTES } from "@/libs/constants";
 import {
 	AddTile, CoverBadge, DropIcon, DropZone, PhotoTile, TileButton, TileGrid, Uploading, UploaderFoot,
@@ -22,6 +23,7 @@ export function ImageUploader({ photos, onChange, uploading }: {
 	onChange: (next: Photo[]) => void;
 	uploading?: boolean;
 }) {
+	const t = useTranslations("uploader");
 	const input = useRef<HTMLInputElement>(null);
 	const [dropActive, setDropActive] = useState(false);
 	const [dragId, setDragId] = useState<string | null>(null);
@@ -40,8 +42,8 @@ export function ImageUploader({ photos, onChange, uploading }: {
 		const accepted = list.filter(f => !rejected.includes(f)).slice(0, room);
 
 		const notes = [];
-		if (rejected.length) notes.push(`${rejected.length}장은 jpg·png·gif·webp가 아니거나 5MB를 넘어서 뺐어요.`);
-		if (list.length - rejected.length > room) notes.push(`사진은 최대 ${MAX_IMAGES}장까지예요.`);
+		if (rejected.length) notes.push(t("rejected", { count: rejected.length }));
+		if (list.length - rejected.length > room) notes.push(t("max", { max: MAX_IMAGES }));
 		setWarning(notes.join(" "));
 
 		if (accepted.length) {
@@ -93,7 +95,7 @@ export function ImageUploader({ photos, onChange, uploading }: {
 					tabIndex={0}
 					$active={dropActive}
 					$compact={false}
-					aria-label="사진 추가"
+					aria-label={t("add")}
 					onClick={() => input.current?.click()}
 					onKeyDown={e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), input.current?.click())}
 					onDragOver={e => {
@@ -104,8 +106,8 @@ export function ImageUploader({ photos, onChange, uploading }: {
 					onDrop={onZoneDrop}
 				>
 					<DropIcon aria-hidden><ImagePlus size={26} /></DropIcon>
-					<strong>사진을 끌어다 놓거나 눌러서 추가하세요</strong>
-					<small>최대 {MAX_IMAGES}장 · jpg, png, gif, webp · 한 장에 5MB 이하</small>
+					<strong>{t("drop")}</strong>
+					<small>{t("limits", { max: MAX_IMAGES })}</small>
 				</DropZone>
 				{picker}
 				{warning && <UploaderFoot $warn role="alert">{warning}</UploaderFoot>}
@@ -122,7 +124,7 @@ export function ImageUploader({ photos, onChange, uploading }: {
 				if (e.dataTransfer.files.length) onZoneDrop(e);
 			}}
 		>
-			<TileGrid aria-label="등록할 사진">
+			<TileGrid aria-label={t("list")}>
 				{photos.map((p, i) => (
 					<PhotoTile
 						key={p.id}
@@ -151,15 +153,15 @@ export function ImageUploader({ photos, onChange, uploading }: {
 							setOverId(null);
 						}}
 					>
-						<img src={p.url} alt={`사진 ${i + 1}`} />
-						{i === 0 && <CoverBadge>대표</CoverBadge>}
-						{uploading && p.file && <Uploading aria-label="업로드 중" />}
+						<img src={p.url} alt={t("photo", { n: i + 1 })} />
+						{i === 0 && <CoverBadge>{t("cover")}</CoverBadge>}
+						{uploading && p.file && <Uploading aria-label={t("uploading")} />}
 						{!uploading && (
 							<div className="actions">
 								{i > 0
-									? <TileButton type="button" aria-label="대표 사진으로" title="대표 사진으로" onClick={() => move(p.id, 0)}><Star size={15} /></TileButton>
+									? <TileButton type="button" aria-label={t("makeCover")} title={t("makeCover")} onClick={() => move(p.id, 0)}><Star size={15} /></TileButton>
 									: <span />}
-								<TileButton type="button" aria-label="사진 삭제" title="삭제" onClick={() => remove(p.id)}><X size={16} /></TileButton>
+								<TileButton type="button" aria-label={t("remove")} title={t("removeShort")} onClick={() => remove(p.id)}><X size={16} /></TileButton>
 							</div>
 						)}
 					</PhotoTile>
@@ -168,14 +170,14 @@ export function ImageUploader({ photos, onChange, uploading }: {
 					<AddTile>
 						<button type="button" onClick={() => input.current?.click()} disabled={uploading}>
 							<Plus size={22} />
-							사진 추가
+							{t("add")}
 						</button>
 					</AddTile>
 				)}
 			</TileGrid>
 			{picker}
 			<UploaderFoot $warn={!!warning} role={warning ? "alert" : undefined}>
-				<span>{warning || "끌어서 순서를 바꾸고, ★로 대표 사진을 정할 수 있어요."}</span>
+				<span>{warning || t("tip")}</span>
 				<span>{photos.length}/{MAX_IMAGES}</span>
 			</UploaderFoot>
 		</div>
