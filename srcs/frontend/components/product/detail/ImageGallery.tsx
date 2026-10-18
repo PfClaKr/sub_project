@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Gallery, MainImage, Thumbs } from "@/styles/styledDetail";
 import { NoImage } from "@/styles/styledProductCard";
 import { imageUrl } from "@/libs/format";
+import { ThumbImg } from "@/components/ui/ThumbImg";
 
 export function ImageGallery({ images, name }: { images: string[]; name: string }) {
 	const t = useTranslations("gallery");
@@ -29,7 +30,7 @@ export function ImageGallery({ images, name }: { images: string[]; name: string 
 							aria-current={i === current}
 							onClick={() => setCurrent(i)}
 						>
-							<img src={url} alt="" />
+							<ThumbImg src={url} alt="" />
 						</button>
 					))}
 				</Thumbs>

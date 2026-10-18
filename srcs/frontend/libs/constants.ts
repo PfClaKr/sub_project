@@ -9,7 +9,12 @@ export const STATUSES = ["판매중", "예약중", "판매완료"] as const;
 export const STATUS_SELLING = "판매중";
 
 export const MAX_IMAGES = 5;
+// What the server accepts per photo, after libs/resizeImage.ts shrank it.
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+// What the picker takes before shrinking (a big phone or camera photo).
+export const MAX_SOURCE_BYTES = 30 * 1024 * 1024;
+// Long edge of uploaded photos (apiserver uploadhandler.MaxSide).
+export const MAX_IMAGE_SIDE = 1600;
 
 export const PAGE_SIZE = 12;
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatDateTime, formatPrice, formatRelative, formatTime, imageUrl, toMs } from "./format";
+import { formatDate, formatDateTime, formatPrice, formatRelative, formatTime, imageUrl, thumbUrl, toMs } from "./format";
 
 describe("formatPrice", () => {
 	it("formats euros without useless decimals", () => {
@@ -48,6 +48,22 @@ describe("imageUrl", () => {
 		expect(imageUrl("default_profile_image.png")).toBeNull();
 		expect(imageUrl("javascript:alert(1)")).toBeNull();
 		expect(imageUrl(undefined)).toBeNull();
+	});
+});
+
+describe("thumbUrl", () => {
+	const id = "0f8fad5b-d9cb-469f-a165-70867728950e";
+	it("points uploaded photos at their thumbnail", () => {
+		expect(thumbUrl(`https://b.s3.eu-west-3.amazonaws.com/${id}.jpg`)).toBe(`https://b.s3.eu-west-3.amazonaws.com/${id}_t.jpg`);
+		expect(thumbUrl(`https://x/media/product-images/${id}.webp`)).toBe(`https://x/media/product-images/${id}_t.jpg`);
+		expect(thumbUrl(`https://x/${id}.png`)).toBe(`https://x/${id}_t.png`);
+		expect(thumbUrl(`https://x/${id}.GIF`)).toBe(`https://x/${id}_t.png`);
+	});
+	it("leaves other images alone", () => {
+		expect(thumbUrl("https://lh3.googleusercontent.com/a/photo.jpg")).toBeNull();
+		expect(thumbUrl(`https://x/${id}_t.jpg`)).toBeNull();
+		expect(thumbUrl("default_profile_image.png")).toBeNull();
+		expect(thumbUrl(null)).toBeNull();
 	});
 });
 

@@ -18,6 +18,7 @@ import { TimeAgo } from "@/components/ui/TimeAgo";
 import { useLocale, useTranslations } from "next-intl";
 import { useLabels } from "@/libs/labels";
 import type { Locale } from "@/i18n/config";
+import { ThumbImg } from "@/components/ui/ThumbImg";
 
 export default function ProductCard({ product, showSeller = true }: { product: Product; showSeller?: boolean }) {
 	const t = useTranslations("product");
@@ -30,7 +31,7 @@ export default function ProductCard({ product, showSeller = true }: { product: P
 		<Card $dimmed={status === "판매완료"}>
 			<ThumbContainer>
 				{thumb
-					? <img src={thumb} alt={product.ProductName} loading="lazy" />
+					? <ThumbImg src={thumb} alt={product.ProductName} loading="lazy" />
 					: <NoImage>{t("noPhoto")}</NoImage>}
 				{status !== STATUS_SELLING && (
 					<BadgeSlot><StatusBadge $status={status}>{L.enum("status", status)}</StatusBadge></BadgeSlot>

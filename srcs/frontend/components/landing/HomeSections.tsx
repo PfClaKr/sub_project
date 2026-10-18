@@ -26,6 +26,7 @@ import {
 import { Muted, Skeleton } from "@/styles/styledUi";
 import type { ListingType } from "@/libs/constants";
 import type { Post, PostPage } from "@/libs/types";
+import { ThumbImg } from "@/components/ui/ThumbImg";
 
 // One colour pair per section (tinted background, text/icon ink), each
 // ink keeping >= 4.5:1 contrast on its tint.
@@ -200,7 +201,7 @@ function NeighborRow({ post }: { post: Post }) {
 	const price = post.Housing ? L.rent(post.Housing) : post.Job ? L.wage(post.Job) : "";
 	return (
 		<FeedRow href={href}>
-			{thumb ? <img className="thumb" src={thumb} alt="" loading="lazy" /> : <span className="thumb" style={{ background: tone.tint, color: tone.ink }}><tone.Icon size={22} aria-hidden /></span>}
+			{thumb ? <ThumbImg className="thumb" src={thumb} alt="" loading="lazy" /> : <span className="thumb" style={{ background: tone.tint, color: tone.ink }}><tone.Icon size={22} aria-hidden /></span>}
 			<span className="body">
 				<span className="title">{post.Title}</span>
 				<span className="meta">

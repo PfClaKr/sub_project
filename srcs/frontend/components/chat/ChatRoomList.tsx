@@ -12,6 +12,7 @@ import type { Room, Session } from "@/libs/types";
 import { TimeAgo } from "@/components/ui/TimeAgo";
 import { useTranslations } from "next-intl";
 import { useLabels } from "@/libs/labels";
+import { ThumbImg } from "@/components/ui/ThumbImg";
 
 function Rooms({ session }: { session: Session }) {
 	const t = useTranslations("chat");
@@ -50,7 +51,7 @@ function Rooms({ session }: { session: Session }) {
 				return (
 					<li key={room.ChatId}>
 						<StyledLink href={`/chat/${room.ChatId}`}>
-							{thumb ? <img src={thumb} alt="" /> : <div className="thumb" />}
+							{thumb ? <ThumbImg src={thumb} alt="" /> : <div className="thumb" />}
 							<div style={{ minWidth: 0 }}>
 								<strong>{partner || t("unknown")}</strong>
 								<small>

@@ -743,11 +743,11 @@
     "labelPlaceholder": "E.g. Paris 15e · Vaugirard"
   },
   "uploader": {
-    "rejected": "{count, plural, one {# photo was skipped: not jpg, png, gif or webp, or over 5 MB.} other {# photos were skipped: not jpg, png, gif or webp, or over 5 MB.}}",
+    "rejected": "{count, plural, one {# photo was skipped: not jpg, png, gif or webp, or over 30 MB.} other {# photos were skipped: not jpg, png, gif or webp, or over 30 MB.}}",
     "max": "Up to {max} photos.",
     "add": "Add photos",
     "drop": "Drop photos here or tap to add",
-    "limits": "Up to {max} · jpg, png, gif, webp · 5 MB each",
+    "limits": "Up to {max} · jpg, png, gif, webp · large photos are shrunk automatically",
     "list": "Photos to post",
     "photo": "Photo {n}",
     "cover": "Cover",
