@@ -91,6 +91,16 @@ func main() {
 
 	// make demo (after /main demo-account in the loginserver); needs the
 	// running stack's tables and indexes.
+	// Thumbnails (and with --shrink smaller originals) for photos stored
+	// before uploads were processed.
+	if len(os.Args) >= 2 && os.Args[1] == "image-backfill" {
+		thumbs, shrunk, err := uploadhandler.Backfill(len(os.Args) == 3 && os.Args[2] == "--shrink")
+		if err != nil {
+			log.Fatalf("image backfill: %v", err)
+		}
+		fmt.Printf("%d thumbnails made, %d photos shrunk\n", thumbs, shrunk)
+		return
+	}
 	if len(os.Args) == 5 && os.Args[1] == "demo-seed" {
 		eshandler.InitElasticsearch()
 		if err := demoSeed(os.Args[2], os.Args[3], os.Args[4]); err != nil {

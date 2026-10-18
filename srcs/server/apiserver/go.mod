@@ -24,6 +24,7 @@ require (
 )
 
 require (
+	golang.org/x/image v0.20.0
 	local.com/account v0.0.0
 	local.com/cors v0.0.0
 	local.com/dynamo v0.0.0
