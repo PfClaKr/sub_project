@@ -1,29 +1,27 @@
 'use client';
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, Bike, Shirt, Smartphone, Sofa, Soup, type LucideIcon } from "lucide-react";
-import { SearchInput } from "@/components/SearchInput";
+import { BedDouble, Briefcase, MessageCircleQuestion, ShoppingBag, Sofa, Soup, type LucideIcon } from "lucide-react";
 import { CatMascot } from "./CatMascot";
 import { Paw } from "./Paw";
 import {
 	Blob, Eyebrow, FloatingItem, Headline, HeroSection, HeroText, Layer, Lead,
-	PawPrint, PawTrail, PriceTag, QuickLinks, RotatingWord, Stage,
+	PawPrint, PawTrail, PriceTag, RotatingWord, Stage,
 } from "@/styles/styledLanding";
 import palette from "@/theme/colorPalette";
 
-const WORDS = ["사고", "팔고", "나누고"];
-const QUICK = ["전기밥솥", "이케아", "아이폰", "한국 책", "자전거"];
+// "프랑스 생활, 지금 ___ 필요하냥?" — one word per section.
+const WORDS = ["물건이", "집이", "일자리가", "답이"];
 
-// Listings floating around the mascot. SVG icons rather than emoji so
-// they look the same on every device.
+// What the sections hold, floating around the mascot. SVG icons rather
+// than emoji so they look the same on every device.
 const ITEMS: { Icon: LucideIcon; color: string; top: string; left: string; delay: number; rot: number; depth: number; size?: number; price?: string }[] = [
-	{ Icon: Smartphone, color: palette.primary, top: "6%", left: "8%", delay: 0, rot: -6, depth: 18, price: "€390" },
-	{ Icon: Sofa, color: palette.pink, top: "4%", left: "70%", delay: 1.2, rot: 5, depth: 26, size: 72 },
-	{ Icon: Soup, color: palette.furDark, top: "44%", left: "-2%", delay: 0.6, rot: 8, depth: 30, price: "€45" },
-	{ Icon: Shirt, color: palette.accent, top: "52%", left: "80%", delay: 1.8, rot: -8, depth: 22 },
-	{ Icon: BookOpen, color: palette.heading, top: "78%", left: "14%", delay: 2.4, rot: 6, depth: 14, size: 56 },
-	{ Icon: Bike, color: palette.primary, top: "80%", left: "66%", delay: 0.9, rot: -4, depth: 20, size: 56, price: "€120" },
+	{ Icon: ShoppingBag, color: palette.primary, top: "6%", left: "8%", delay: 0, rot: -6, depth: 18, price: "€230" },
+	{ Icon: BedDouble, color: "#0a5c8a", top: "4%", left: "70%", delay: 1.2, rot: 5, depth: 26, size: 72, price: "€690/월" },
+	{ Icon: MessageCircleQuestion, color: "#b0306a", top: "44%", left: "-2%", delay: 0.6, rot: 8, depth: 30, price: "답변 4" },
+	{ Icon: Briefcase, color: "#8a4b00", top: "52%", left: "80%", delay: 1.8, rot: -8, depth: 22, price: "€12.8/h" },
+	{ Icon: Soup, color: palette.furDark, top: "78%", left: "14%", delay: 2.4, rot: 6, depth: 14, size: 56 },
+	{ Icon: Sofa, color: palette.pink, top: "80%", left: "66%", delay: 0.9, rot: -4, depth: 20, size: 56 },
 ];
 
 export function LandingHero() {
@@ -61,17 +59,12 @@ export function LandingHero() {
 			<Blob $color={palette.pink} $size={280} $top="55%" $left="70%" $delay={-6} />
 
 			<HeroText>
-				<Eyebrow><Paw /> 파리 한인 중고마켓</Eyebrow>
+				<Eyebrow><Paw /> 프랑스 한인 생활 커뮤니티</Eyebrow>
 				<Headline>
-					파리 한인끼리<br />
-					<RotatingWord key={word}>{WORDS[word]}</RotatingWord> 싶냥?
+					프랑스 생활,<br />
+					지금 <RotatingWord key={word}>{WORDS[word]}</RotatingWord> 필요하냥?
 				</Headline>
-				<Lead>안 쓰는 물건은 이웃에게, 필요한 물건은 가까운 곳에서. 채팅으로 약속하고 동네에서 직거래해요.</Lead>
-				<SearchInput />
-				<QuickLinks>
-					<span>인기 검색</span>
-					{QUICK.map(q => <Link key={q} href={`/search/${encodeURIComponent(q)}`}>{q}</Link>)}
-				</QuickLinks>
+				<Lead>중고거래부터 집·알바 구하기, 체류증 같은 생활 질문까지. 먼저 와 있는 한인 이웃들이 도와줘요.</Lead>
 			</HeroText>
 
 			<Stage ref={stage} aria-hidden="true">

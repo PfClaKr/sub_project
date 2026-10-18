@@ -333,53 +333,6 @@ export const SimilarBox = styled.aside`
 	}
 `;
 
-// Two by two on wide screens (four cards never leave one alone on a row),
-// one column on phones with three entries per card to keep the page short.
-export const HubGrid = styled.div`
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 16px;
-	margin: 8px 0 40px;
-
-	@media (max-width: ${breakpoint.md}) {
-		grid-template-columns: 1fr;
-	}
-	@media (max-width: ${breakpoint.sm}) {
-		ul > li:nth-child(n + 4) {
-			display: none;
-		}
-	}
-`;
-
-export const HubCard = styled.section`
-	padding: 18px 18px 8px;
-	border: 1px solid ${palette.border};
-	border-radius: ${radius.lg};
-	box-shadow: ${shadow.card};
-
-	header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin-bottom: 4px;
-	}
-	h2 {
-		margin: 0;
-		font-size: 17px;
-	}
-	header a {
-		font-size: 13px;
-		color: ${palette.primary};
-		text-decoration: none;
-	}
-	ul {
-		border-top: 0;
-	}
-	li:last-child {
-		border-bottom: 0;
-	}
-`;
-
 export const ReportOptions = styled.fieldset`
 	margin: 12px 0;
 	padding: 0;

@@ -1,72 +1,68 @@
 import ProductGrid from "@/components/product/ProductGrid";
-import { CategoryChips } from "@/components/product/CategoryChips";
 import { LandingHero } from "@/components/landing/LandingHero";
-import { CallToAction, CategoryTiles, HowItWorks, MarketStats } from "@/components/landing/LandingSections";
+import { NeighborFeed, NewcomerChecklist, PurposeCards, TrustAndJoin, type HomeCounts } from "@/components/landing/HomeSections";
 import { Reveal } from "@/components/landing/Reveal";
-import { HubCommunity } from "@/components/community/HubCommunity";
 import { SectionHead } from "@/styles/styledLanding";
-import { EmptyState, ErrorText, LinkButton, Pagination } from "@/styles/styledUi";
+import { EmptyState, ErrorText, LinkButton } from "@/styles/styledUi";
 import { gql, PRODUCT_CARD_FIELDS } from "@/libs/graphql";
-import { CATEGORIES, PAGE_SIZE } from "@/libs/constants";
 import type { Product } from "@/libs/types";
 
-type Props = { searchParams: { category?: string } };
-type Stats = { Products: number; Selling: number; Users: number };
+type HomeData = {
+	recentProducts: Product[];
+	marketStats: { Selling: number } | null;
+	rooms: { Total: number } | null;
+	jobs: { Total: number } | null;
+	open: { Total: number } | null;
+};
 
-// The landing page is also the app's home: hero and search on top, then
-// the live listings, then the "how it works" pitch for newcomers.
-export default async function HomePage({ searchParams }: Props) {
-	const category = CATEGORIES.find(c => c === searchParams.category);
-
-	// Ask for one extra item to know whether a next page exists.
-	const { data, error } = await gql<{ recentProducts: Product[]; marketStats: Stats | null }>(
-		`query Home($limit: Float, $offset: Float, $category: String) {
-			recentProducts(Limit: $limit, Offset: $offset, Category: $category) { ${PRODUCT_CARD_FIELDS} }
-			marketStats { Products Selling Users }
+// The home answers "what do you need right now?": the four sections as
+// purpose cards with live counts, a checklist for newcomers tied to the
+// Q&A, then what neighbours just posted and the newest items.
+export default async function HomePage() {
+	const { data, error } = await gql<HomeData>(
+		`query Home {
+			recentProducts(Limit: 8) { ${PRODUCT_CARD_FIELDS} }
+			marketStats { Selling }
+			rooms: listings(Type: "housing", Size: 1) { Total }
+			jobs: listings(Type: "job", Size: 1) { Total }
+			open: posts(Type: "qna", Solved: false, Size: 1) { Total }
 		}`,
-		{ limit: PAGE_SIZE + 1, offset: 0, category },
 	);
-	const all = data?.recentProducts ?? [];
-	const products = all.slice(0, PAGE_SIZE);
-	const hasNext = all.length > PAGE_SIZE;
+	const counts: HomeCounts = {
+		selling: data?.marketStats?.Selling ?? null,
+		rooms: data?.rooms?.Total ?? null,
+		jobs: data?.jobs?.Total ?? null,
+		openQuestions: data?.open?.Total ?? null,
+	};
+	const products = data?.recentProducts ?? [];
 
 	return (
 		<div>
 			<LandingHero />
-			<MarketStats stats={data?.marketStats ?? null} />
-			<HubCommunity />
+			<PurposeCards counts={counts} />
+			<NewcomerChecklist />
+			<NeighborFeed />
 
-			<section id="recent" aria-labelledby="recent-title" style={{ scrollMarginTop: 80 }}>
+			<section aria-labelledby="recent">
 				<SectionHead>
 					<div>
-						<h2 id="recent-title">{category ? `${category} 최신 상품` : "최근에 올라온거 뭐있냥?"}</h2>
-						<p>방금 올라온 물건부터 보여드려요.</p>
+						<h2 id="recent">새로 올라온 물건</h2>
+						<p>귀국 정리, 이사 짐. 방금 올라온 물건부터 보여드려요.</p>
 					</div>
+					<LinkButton href="/search" $ghost>더 보기</LinkButton>
 				</SectionHead>
-				<CategoryChips active={category} />
-
 				{error && <ErrorText role="alert">{error}</ErrorText>}
 				{!error && products.length === 0 ? (
 					<EmptyState>
-						<p>{category ? `아직 ${category} 상품이 없어요.` : "아직 올라온 물건이 없어요."}</p>
-						<LinkButton href="/sell">첫 상품 올리기</LinkButton>
+						<p>아직 올라온 물건이 없어요.</p>
+						<LinkButton href="/sell">첫 물건 올리기</LinkButton>
 					</EmptyState>
 				) : (
 					<Reveal><ProductGrid products={products} /></Reveal>
 				)}
-
-				{hasNext && (
-					<Pagination>
-						<LinkButton href={category ? `/search?category=${encodeURIComponent(category)}` : "/search"} $ghost>
-							{category ?? "중고"} 물건 더 보기 →
-						</LinkButton>
-					</Pagination>
-				)}
 			</section>
 
-			<CategoryTiles active={category} />
-			<HowItWorks />
-			<CallToAction />
+			<TrustAndJoin />
 		</div>
 	);
 }
