@@ -16,6 +16,7 @@ import (
 	"loginserver/verifyhandler"
 
 	"local.com/dynamo"
+	"local.com/i18n"
 	"local.com/jsonresponse"
 	"local.com/jwt"
 
@@ -35,6 +36,9 @@ type SignupRequest struct {
 	// Agree: the member accepted the terms and the privacy policy and
 	// confirmed being at least 15 (required).
 	Agree bool `json:"agree"`
+	// Locale: the interface language at signup (from the request, not the
+	// body), for the member's mails and push messages.
+	Locale string `json:"-"`
 }
 
 // TermsVersion is the date of the terms and privacy policy in force
@@ -124,6 +128,7 @@ func createAccount(req SignupRequest) (string, error) {
 					"CreatedAt":         {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
 					"TermsVersion":      {S: aws.String(TermsVersion)},
 					"TermsAcceptedAt":   {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
+					"Locale":            {S: aws.String(localeOr(req.Locale))},
 				},
 				ConditionExpression: aws.String("attribute_not_exists(UserId)"),
 			}},
@@ -138,12 +143,21 @@ func createAccount(req SignupRequest) (string, error) {
 // SignupHandler creates the account. With email verification required
 // (the default) it mails the activation link and the user logs in after
 // verifying; otherwise the new user is logged in right away.
+// localeOr keeps a valid language, else Korean.
+func localeOr(lang string) string {
+	if i18n.Valid(lang) {
+		return lang
+	}
+	return i18n.Korean
+}
+
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	var req SignupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		jsonresponse.Error(w, http.StatusBadRequest, "잘못된 요청이에요.")
 		return
 	}
+	req.Locale = i18n.LangOf(r.Context())
 	if msg := req.Validate(); msg != "" {
 		jsonresponse.Error(w, http.StatusBadRequest, msg)
 		return
@@ -163,7 +177,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if verifyhandler.Required() {
 		// Mail delivery failure must not roll back the account; the user
 		// can ask for a new link from the login page.
-		if err := verifyhandler.Issue(req.Email); err != nil {
+		if err := verifyhandler.Issue(req.Email, req.Locale); err != nil {
 			log.Printf("signup: verification mail to %s failed: %v", req.Email, err)
 			resp["mail"] = "failed"
 		}

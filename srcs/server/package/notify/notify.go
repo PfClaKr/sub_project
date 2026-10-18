@@ -179,7 +179,7 @@ func (n *Notifier) Publish(ev Event) error {
 		return err
 	}
 	if prefs.PushOn(ev.Type) && PushConfigured() {
-		go n.deliverPush(ev.UserId, notif)
+		go n.deliverPush(ev.UserId, dynamo.S(user, "Locale"), notif)
 	}
 	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"local.com/dynamo"
+	"local.com/i18n"
 	"local.com/jwt"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
@@ -55,6 +56,7 @@ var resolvers = map[string]resolver{
 	"Mutation.updateProfile":         updateProfileResolver,
 	"Mutation.markNotificationsRead": markNotificationsReadResolver,
 	"Mutation.updateNotifySettings":  updateNotifySettingsResolver,
+	"Mutation.setLocale":             setLocaleResolver,
 	"Mutation.createPost":            createPostResolver,
 	"Mutation.updatePost":            updatePostResolver,
 	"Mutation.deletePost":            deletePostResolver,
@@ -221,6 +223,11 @@ func GraphqlHandler(w http.ResponseWriter, r *http.Request) {
 		Context:        r.Context(),
 	})
 
+	// Resolvers write Korean; errors leave in the request's language.
+	lang := i18n.LangOf(r.Context())
+	for i := range result.Errors {
+		result.Errors[i].Message = i18n.Translate(lang, result.Errors[i].Message)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 }

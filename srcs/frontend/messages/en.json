@@ -1413,5 +1413,11 @@
     "transcript": {
       "title": "Chat transcript"
     }
+  },
+  "names": {
+    "anonymous": "Anonymous",
+    "anonymousAuthor": "Anonymous (author)",
+    "anonymousN": "Anonymous {n}",
+    "deleted": "Former member"
   }
 }

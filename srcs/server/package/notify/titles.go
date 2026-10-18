@@ -1,7 +1,10 @@
 package notify
 
-// Titles are the headlines used in emails and push messages; the site
-// has the same texts in srcs/frontend/libs/notificationText.ts.
+import "local.com/i18n"
+
+// Titles are the headlines used in emails and push messages, in Korean;
+// TitleIn gives them in a member's language (package i18n). The site has
+// the same texts in its messages (notifications.types).
 var Titles = map[string]string{
 	TypeComment:  "내 글에 새 댓글이 달렸어요",
 	TypeReply:    "내 댓글에 답글이 달렸어요",
@@ -18,6 +21,11 @@ func Title(typ string) string {
 		return t
 	}
 	return "새 알림"
+}
+
+// TitleIn is Title in lang.
+func TitleIn(lang, typ string) string {
+	return i18n.T(lang, Title(typ))
 }
 
 // SettingLabels name each type on the settings screen.

@@ -38,6 +38,10 @@ describe("labels", () => {
 		expect(labels("en").enum("region", "서울")).toBe("서울");
 		expect(labels("fr").board("qna")).toBe("Questions pratiques");
 		expect(labels("en").mode("job", "hiring")).toBe("Hiring");
+		expect(labels("fr").name("익명3")).toBe("Anonyme 3");
+		expect(labels("en").name("익명(글쓴이)")).toBe("Anonymous (author)");
+		expect(labels("en").name("탈퇴한 회원")).toBe("Former member");
+		expect(labels("fr").name("파리지앵냥")).toBe("파리지앵냥");
 		expect(labels("fr").wage({ Mode: "hiring", Sector: "", Employment: "", WageType: "hourly", Wage: 12.5 })).toMatch(/^12,5\s€\/h$/);
 	});
 });

@@ -51,6 +51,7 @@ type Mutation {
   # Email per type: immediate, digest or off. EmailEnabled is the master
   # switch (the unsubscribe link turns it off).
   updateNotifySettings(EmailEnabled: Boolean, Items: [NotifySettingInput!]): NotifySettings
+  setLocale(Locale: String!): Boolean
   createPost(Input: PostInput!): Post
   # Type and Anonymous cannot change after posting.
   updatePost(PostId: String!, Input: PostInput!): Post

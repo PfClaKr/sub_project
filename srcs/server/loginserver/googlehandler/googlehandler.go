@@ -16,6 +16,7 @@ import (
 	"loginserver/signuphandler"
 
 	"local.com/dynamo"
+	"local.com/i18n"
 	"local.com/jwt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -150,7 +151,7 @@ func fetchUser(accessToken string) (*googleUser, error) {
 
 // findOrCreateUser returns the UserId for a Google account, creating
 // the profile and credential rows on first sign-in.
-func findOrCreateUser(user *googleUser) (string, error) {
+func findOrCreateUser(user *googleUser, lang string) (string, error) {
 	existing, err := svc.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String("UsersCredential"),
 		Key: map[string]*dynamodb.AttributeValue{
@@ -201,12 +202,13 @@ func findOrCreateUser(user *googleUser) (string, error) {
 					// The Google button says that continuing accepts the terms.
 					"TermsVersion":    {S: aws.String(signuphandler.TermsVersion)},
 					"TermsAcceptedAt": {N: aws.String(fmt.Sprintf("%d", time.Now().Unix()))},
+					"Locale":          {S: aws.String(lang)},
 				},
 			}},
 		},
 	})
 	if aerr, ok := err.(awserr.Error); ok && aerr.Code() == dynamodb.ErrCodeTransactionCanceledException {
-		return findOrCreateUser(user) // created meanwhile: sign into it
+		return findOrCreateUser(user, lang) // created meanwhile: sign into it
 	}
 	if err != nil {
 		return "", err
@@ -243,7 +245,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := findOrCreateUser(user)
+	userId, err := findOrCreateUser(user, i18n.LangOf(r.Context()))
 	if err != nil {
 		http.Redirect(w, r, appURL+"/login?error=oauth_account", http.StatusFound)
 		return

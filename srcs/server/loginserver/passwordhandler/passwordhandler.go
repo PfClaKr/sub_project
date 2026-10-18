@@ -22,6 +22,7 @@ import (
 	"loginserver/signuphandler"
 
 	"local.com/dynamo"
+	"local.com/i18n"
 	"local.com/jsonresponse"
 	"local.com/jwt"
 	"local.com/mailer"
@@ -87,8 +88,9 @@ func ForgotHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !perEmail.Blocked(email) {
 		perEmail.Fail(email)
+		lang := i18n.LangOf(r.Context())
 		go func() {
-			if err := issue(email); err != nil {
+			if err := issue(email, lang); err != nil {
 				log.Printf("password reset for %s: %v", email, err)
 			}
 		}()
@@ -98,7 +100,7 @@ func ForgotHandler(w http.ResponseWriter, r *http.Request) {
 
 // issue stores the hash of a new token on the credential row (only if
 // the account exists) and mails the link.
-func issue(email string) error {
+func issue(email, lang string) error {
 	token, err := newToken()
 	if err != nil {
 		return err
@@ -120,11 +122,11 @@ func issue(email string) error {
 		return err
 	}
 	link := fmt.Sprintf("%s/account/reset?email=%s&token=%s", mailer.AppURL(), url.QueryEscape(email), token)
-	body := fmt.Sprintf(
+	body := i18n.T(lang,
 		"잇냥 비밀번호 재설정을 요청하셨어요.\n\n아래 링크에서 새 비밀번호를 정해주세요. 링크는 1시간 동안 한 번만 쓸 수 있어요.\n\n%s\n\n본인이 요청하지 않았다면 이 메일을 무시하세요. 비밀번호는 바뀌지 않아요.\n",
 		link,
 	)
-	return mailer.Send(email, "[잇냥] 비밀번호 재설정", body)
+	return mailer.Send(email, i18n.T(lang, "[잇냥] 비밀번호 재설정"), body)
 }
 
 var errBadLink = "링크가 만료되었거나 이미 사용되었어요. 비밀번호 찾기를 다시 요청해주세요."
@@ -168,7 +170,7 @@ func ResetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if stored == "" || req.Token == "" || subtle.ConstantTimeCompare([]byte(stored), []byte(hashToken(req.Token))) != 1 || time.Now().Unix() > expires {
 		perIP.Fail(ip)
-		jsonresponse.Error(w, http.StatusBadRequest, errBadLink)
+		jsonresponse.New(w, http.StatusBadRequest, map[string]string{"error": errBadLink, "code": "TOKEN_EXPIRED"})
 		return
 	}
 
@@ -191,7 +193,7 @@ func ResetHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 	if isConditionFailed(err) {
-		jsonresponse.Error(w, http.StatusBadRequest, errBadLink)
+		jsonresponse.New(w, http.StatusBadRequest, map[string]string{"error": errBadLink, "code": "TOKEN_EXPIRED"})
 		return
 	}
 	if err != nil {

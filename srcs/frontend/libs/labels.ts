@@ -50,6 +50,17 @@ export function makeLabels(t: T, locale: Locale = DEFAULT_LOCALE) {
 		},
 		// Place filter radius: "이 지역만" for the area itself, else "+5km".
 		distance: (km: number) => (km === 0 ? t("listing.labels.thisAreaOnly") : `+${km}km`),
+		// Author labels the server writes in Korean (graphqlhandler
+		// AnonymousName, DeletedMemberName, numbered anonymous commenters)
+		// shown in the page's language; real nicknames pass through.
+		name: (nickname: string | undefined) => {
+			if (!nickname) return "";
+			if (nickname === "익명") return t("names.anonymous");
+			if (nickname === "익명(글쓴이)") return t("names.anonymousAuthor");
+			if (nickname === "탈퇴한 회원") return t("names.deleted");
+			const n = /^익명(\d+)$/.exec(nickname);
+			return n ? t("names.anonymousN", { n: Number(n[1]) }) : nickname;
+		},
 		// Explanations for the warning codes returned by createListing.
 		warning: (code: string) => {
 			const key = t.has(`listing.warnings.${code}.title`) ? code : "unknown";

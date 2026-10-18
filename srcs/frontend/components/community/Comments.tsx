@@ -14,6 +14,7 @@ import { ErrorText, LinkButton, Muted, Skeleton } from "@/styles/styledUi";
 import { ReportButton } from "./ReportButton";
 import type { Post, PostComment } from "@/libs/types";
 import { TimeAgo } from "@/components/ui/TimeAgo";
+import { useLabels } from "@/libs/labels";
 
 const FIELDS = `CommentId ParentId Body DisplayName AuthorId AuthorImage Anonymous IsMine IsPostAuthor Deleted Hidden Accepted CreatedAt`;
 
@@ -40,6 +41,7 @@ type Props = {
 export function Comments({ post, onPostChange }: Props) {
 	const t = useTranslations("community.comments");
 	const common = useTranslations("common");
+	const L = useLabels();
 	const { session } = useSession();
 	const confirm = useConfirm();
 	const [comments, setComments] = useState<PostComment[] | null>(null);
@@ -102,7 +104,7 @@ export function Comments({ post, onPostChange }: Props) {
 					<header>
 						{pinned && <Tag $tone="done"><CheckCircle2 size={12} aria-hidden /> {t("accepted")}</Tag>}
 						<Avatar src={c.AuthorImage} name={c.DisplayName} size={24} />
-						<strong>{c.DisplayName}</strong>
+						<strong>{L.name(c.DisplayName)}</strong>
 						{c.IsPostAuthor && !c.Anonymous && <Tag>{t("author")}</Tag>}
 						<Muted><TimeAgo ts={c.CreatedAt} /></Muted>
 					</header>

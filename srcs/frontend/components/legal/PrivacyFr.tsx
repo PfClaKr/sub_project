@@ -21,7 +21,7 @@ export function PrivacyFr() {
 						<tr><th>Contexte</th><th>Données</th><th>Finalité</th><th>Base légale</th></tr>
 					</thead>
 					<tbody>
-						<tr><td>Inscription et connexion (obligatoire)</td><td>E-mail, mot de passe (stocké sous forme hachée), pseudonyme, ville de résidence</td><td>Création et gestion du compte, authentification, prévention des abus</td><td>Exécution du contrat</td></tr>
+						<tr><td>Inscription et connexion (obligatoire)</td><td>E-mail, mot de passe (stocké sous forme hachée), pseudonyme, ville de résidence, langue de l&apos;interface (pour envoyer e-mails et notifications dans la même langue)</td><td>Création et gestion du compte, authentification, prévention des abus</td><td>Exécution du contrat</td></tr>
 						<tr><td>Profil (facultatif)</td><td>Précision de lieu, photo de profil</td><td>Affichage du profil</td><td>Exécution du contrat</td></tr>
 						<tr><td>Connexion avec Google (facultatif)</td><td>E-mail, nom (utilisé comme pseudonyme) et adresse de la photo du compte Google</td><td>Inscription et connexion</td><td>Exécution du contrat</td></tr>
 						<tr><td>Utilisation du Service</td><td>Annonces, publications, commentaires et photos, lieu de transaction (quartier, ou point précis si le membre le choisit), messages, favoris, « j&apos;aime », enregistrements, signalements, blocages, notifications et préférences</td><td>Fourniture du Service</td><td>Exécution du contrat</td></tr>
@@ -44,7 +44,7 @@ export function PrivacyFr() {
 				<li><strong>Compte</strong> : jusqu&apos;à sa suppression.</li>
 				<li><strong>Supprimés immédiatement avec le compte</strong> : compte et identifiants, photo de profil, annonces d&apos;objets et leurs photos, favoris, « j&apos;aime », enregistrements, notifications, appareils push, blocages effectués par le membre.</li>
 				<li><strong>Annonces de logement et d&apos;emploi</strong> : retirées dès la suppression du compte ou de l&apos;annonce, photos effacées immédiatement ; le texte est conservé {keep} pour le traitement des signalements et des litiges, puis supprimé.</li>
-				<li><strong>Publications et commentaires de l&apos;espace communautaire</strong> : restent visibles sans indication de l&apos;auteur (affiché « 탈퇴한 회원 ») ; le membre peut les supprimer avant de partir. Une publication supprimée est effacée définitivement après {keep}.</li>
+				<li><strong>Publications et commentaires de l&apos;espace communautaire</strong> : restent visibles sans indication de l&apos;auteur (affiché « Membre parti ») ; le membre peut les supprimer avant de partir. Une publication supprimée est effacée définitivement après {keep}.</li>
 				<li><strong>Conversations et signalements</strong> : les conversations d&apos;un membre parti et les signalements qu&apos;il a faits ou reçus sont conservés {keep} après la suppression du compte (litiges, fraudes), puis supprimés automatiquement ; l&apos;autre membre garde accès à la conversation pendant cette durée.</li>
 				<li><strong>Notifications</strong> : supprimées automatiquement après {NOTIFICATION_RETENTION.fr}.</li>
 				<li><strong>Lien de réinitialisation du mot de passe</strong> : valable une heure, à usage unique.</li>

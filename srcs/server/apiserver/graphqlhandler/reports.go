@@ -35,7 +35,7 @@ const ReportOpen = "open"
 
 var (
 	errReportTarget   = errors.New("신고할 대상을 찾을 수 없어요.")
-	errReportedTwice  = errors.New("이미 신고했어요. 운영진이 확인하고 있어요.")
+	errReportedTwice  = codedError{"이미 신고했어요. 운영진이 확인하고 있어요.", "ALREADY_REPORTED"}
 	errTooManyReports = errors.New("신고를 너무 많이 보냈어요. 잠시 후 다시 시도해주세요.")
 )
 

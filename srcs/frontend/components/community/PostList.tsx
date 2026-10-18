@@ -26,7 +26,7 @@ export function PostRow({ post, showBoard = true }: { post: Post; showBoard?: bo
 			<h3>{post.Title}</h3>
 			{post.BodyPreview && <p>{post.BodyPreview}</p>}
 			<Meta style={{ marginTop: 6 }}>
-				<span>{post.AuthorNickname}</span>
+				<span>{L.name(post.AuthorNickname)}</span>
 				<span><TimeAgo ts={post.CreatedAt} /></span>
 				{post.City && <span>{L.enum("region", post.City)}</span>}
 				<span aria-label={t("commentsCount", { count: post.CommentCount ?? 0 })}><MessageSquare size={13} aria-hidden /> {post.CommentCount ?? 0}</span>

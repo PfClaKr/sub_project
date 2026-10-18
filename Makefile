@@ -63,7 +63,7 @@ unseed:
 demo:
 	@./scripts/demo.sh
 
-GO_MODULES = apiserver loginserver chatserver package/cors package/jwt package/jsonresponse package/dynamo package/mailer package/account package/notify
+GO_MODULES = apiserver loginserver chatserver package/cors package/jwt package/jsonresponse package/dynamo package/mailer package/account package/notify package/i18n
 
 ## Grant the admin role to an existing account: make admin email=you@example.com
 admin:

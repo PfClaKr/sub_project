@@ -57,6 +57,15 @@ var errSuspended = errors.New(account.SuspendedMessage)
 
 // requireUser is for mutations: it needs a login and refuses suspended
 // members. Reads only need jwt.UserID.
+// codedError adds a machine-readable code (errors[].extensions.code) for
+// messages the site reacts to, since the text depends on the language.
+type codedError struct{ msg, code string }
+
+func (e codedError) Error() string { return e.msg }
+func (e codedError) Extensions() map[string]interface{} {
+	return map[string]interface{}{"code": e.code}
+}
+
 func requireUser(p graphql.ResolveParams) (string, error) {
 	id := jwt.UserID(p.Context)
 	if id == "" {

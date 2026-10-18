@@ -1413,5 +1413,11 @@
     "transcript": {
       "title": "Historique de conversation"
     }
+  },
+  "names": {
+    "anonymous": "Anonyme",
+    "anonymousAuthor": "Anonyme (auteur)",
+    "anonymousN": "Anonyme {n}",
+    "deleted": "Membre parti"
   }
 }

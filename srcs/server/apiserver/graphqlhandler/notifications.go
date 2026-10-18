@@ -1,9 +1,15 @@
 package graphqlhandler
 
 import (
+	"errors"
+
+	"local.com/dynamo"
+	"local.com/i18n"
 	"local.com/jwt"
 	"local.com/notify"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/graphql-go/graphql"
 )
 
@@ -127,4 +133,32 @@ func updateNotifySettingsResolver(p graphql.ResolveParams) (interface{}, error) 
 		return nil, internal(err)
 	}
 	return resolveNotifySettings(p)
+}
+
+// setLocaleResolver saves the member's interface language (the site's
+// language menu calls it), used for their mails and push messages.
+// Allowed while suspended, like the notification settings.
+func setLocaleResolver(p graphql.ResolveParams) (interface{}, error) {
+	userId := jwt.UserID(p.Context)
+	if userId == "" {
+		return nil, errLogin
+	}
+	lang, _ := p.Args["Locale"].(string)
+	if !i18n.Valid(lang) {
+		return nil, errors.New("알 수 없는 언어예요.")
+	}
+	_, err := svc.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName:                 aws.String(dynamo.TableUsers),
+		Key:                       dynamo.Item{"UserId": {S: aws.String(userId)}},
+		UpdateExpression:          aws.String("SET Locale = :l"),
+		ConditionExpression:       aws.String("attribute_exists(UserId)"),
+		ExpressionAttributeValues: dynamo.Item{":l": {S: aws.String(lang)}},
+	})
+	if isConditionFailed(err) {
+		return nil, errors.New("사용자를 찾을 수 없어요.")
+	}
+	if err != nil {
+		return nil, internal(err)
+	}
+	return true, nil
 }

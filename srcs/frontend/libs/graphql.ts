@@ -1,7 +1,9 @@
 import { GRAPHQL_URL } from "@/libs/config";
 import { libText } from "@/libs/libText";
 
-export type GqlResult<T> = { data?: T; error?: string };
+// code: errors[0].extensions.code, for errors the page reacts to (the
+// message itself is in the visitor's language).
+export type GqlResult<T> = { data?: T; error?: string; code?: string };
 
 // gql posts a GraphQL operation. The session cookie is always sent so
 // mutations run as the logged-in user (server components have no
@@ -22,7 +24,7 @@ export async function gql<T>(
 		});
 		if (!res.ok) return { error: libText("server") };
 		const json = await res.json();
-		if (json.errors?.length) return { data: json.data, error: json.errors[0].message };
+		if (json.errors?.length) return { data: json.data, error: json.errors[0].message, code: json.errors[0].extensions?.code };
 		return { data: json.data };
 	} catch {
 		return { error: libText("server") };

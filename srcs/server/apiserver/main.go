@@ -20,6 +20,7 @@ import (
 	"local.com/account"
 	"local.com/cors"
 	"local.com/dynamo"
+	"local.com/i18n"
 	"local.com/jwt"
 	"local.com/notify"
 
@@ -142,5 +143,5 @@ func main() {
 	}
 
 	fmt.Println("Starting api server on :" + port)
-	log.Fatal(http.ListenAndServe(":"+port, cors.Middleware(r)))
+	log.Fatal(http.ListenAndServe(":"+port, cors.Middleware(i18n.Middleware(r))))
 }

@@ -121,8 +121,8 @@ export function PostDetail({ postId, initial }: { postId: string; initial: Post 
 				<Avatar src={post.AuthorImage} name={post.AuthorNickname} size={36} />
 				<div style={{ flex: 1, minWidth: 0 }}>
 					{post.AuthorId
-						? <Link href={`/user/${post.AuthorId}`}><strong>{post.AuthorNickname}</strong></Link>
-						: <strong>{post.AuthorNickname}</strong>}
+						? <Link href={`/user/${post.AuthorId}`}><strong>{L.name(post.AuthorNickname)}</strong></Link>
+						: <strong>{L.name(post.AuthorNickname)}</strong>}
 					<Meta>
 						<span><TimeAgo ts={post.CreatedAt} />{edited ? c("edited") : ""}</span>
 						{post.City && <span>{L.enum("region", post.City)}</span>}

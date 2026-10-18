@@ -5,6 +5,7 @@ go 1.22
 require (
 	github.com/aws/aws-sdk-go v1.54.20
 	local.com/dynamo v0.0.0
+	local.com/i18n v0.0.0
 	local.com/jsonresponse v0.0.0
 	local.com/jwt v0.0.0
 )
@@ -19,3 +20,5 @@ replace local.com/dynamo => ../dynamo
 replace local.com/jsonresponse => ../jsonresponse
 
 replace local.com/jwt => ../jwt
+
+replace local.com/i18n => ../i18n

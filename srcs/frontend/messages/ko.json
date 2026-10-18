@@ -1413,5 +1413,11 @@
     "transcript": {
       "title": "채팅 기록"
     }
+  },
+  "names": {
+    "anonymous": "익명",
+    "anonymousAuthor": "익명(글쓴이)",
+    "anonymousN": "익명{n}",
+    "deleted": "탈퇴한 회원"
   }
 }
