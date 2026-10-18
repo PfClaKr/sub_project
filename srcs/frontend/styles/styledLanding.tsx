@@ -419,6 +419,29 @@ export const Checklist = styled.section`
 		margin: 4px 0 0;
 		color: ${palette.muted};
 	}
+	header {
+		position: relative;
+		padding-right: 128px;
+	}
+	.dismiss {
+		position: absolute;
+		top: -6px;
+		right: -6px;
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 6px 10px;
+		border: none;
+		border-radius: 999px;
+		background: none;
+		color: ${palette.muted};
+		font-size: 13px;
+		font-weight: 600;
+	}
+	.dismiss:hover:not(:disabled) {
+		background: ${palette.surface};
+		color: ${palette.text};
+	}
 	.progress {
 		min-width: 160px;
 		font-size: 13px;
@@ -456,10 +479,44 @@ export const Checklist = styled.section`
 	@media (max-width: ${breakpoint.sm}) {
 		padding: 18px 14px;
 
+		header {
+			padding-right: 0;
+			padding-top: 26px;
+		}
+		.dismiss {
+			top: -12px;
+		}
 		ul {
 			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 			gap: 8px;
 		}
+	}
+`;
+
+// Shown for the rest of the visit after dismissing the checklist.
+export const DismissedNote = styled.p`
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 12px;
+	margin: 32px 0 0;
+	padding: 12px 16px;
+	border-radius: ${radius.md};
+	background: ${palette.surface};
+	color: ${palette.muted};
+	font-size: 14px;
+
+	button {
+		padding: 0;
+		border: none;
+		background: none;
+		color: ${palette.primary};
+		font-size: 14px;
+		font-weight: 700;
+	}
+	button:hover:not(:disabled) {
+		background: none;
+		text-decoration: underline;
 	}
 `;
 

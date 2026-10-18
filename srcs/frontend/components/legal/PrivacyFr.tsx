@@ -103,7 +103,7 @@ export function PrivacyFr() {
 			<h2 id="8">8. Cookies et stockage local</h2>
 			<p>
 				Le Service n&apos;utilise qu&apos;un cookie, strictement nécessaire au maintien de la connexion (token, 24 heures), dispensé de consentement. Le filtre de région
-				choisi est enregistré dans le stockage local du navigateur (localStorage) pour être retrouvé à la visite suivante. Aucun cookie publicitaire ou de mesure d&apos;audience n&apos;est utilisé.
+				choisi et la liste d&apos;installation de l&apos;accueil (étapes cochées, liste masquée) sont enregistrés dans le stockage local du navigateur (localStorage), sans être envoyés au serveur, pour être retrouvés à la visite suivante. Aucun cookie publicitaire ou de mesure d&apos;audience n&apos;est utilisé.
 			</p>
 
 			<h2 id="9">9. Contact et modifications</h2>

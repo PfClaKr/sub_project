@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
 	BedDouble, Briefcase, Bus, Check, CreditCard, FileCheck2, HeartPulse, Home, MessageCircleQuestion,
-	MessagesSquare, ShieldCheck, ShoppingBag, Smartphone, UserCheck, type LucideIcon,
+	MessagesSquare, ShieldCheck, ShoppingBag, Smartphone, UserCheck, X, type LucideIcon,
 } from "lucide-react";
 import { gql, LISTING_CARD_FIELDS, POST_LIST_FIELDS } from "@/libs/graphql";
 import { useRegion } from "@/libs/region";
@@ -13,11 +13,12 @@ import { boardLabel, postHref } from "@/libs/community";
 import { LISTING_PATH, modeLabel, rentLabel, wageLabel } from "@/libs/listing";
 import { imageUrl } from "@/libs/format";
 import { RegionChip } from "@/components/community/RegionChip";
+import { ARRIVAL_PREPAINT, setArrivalHidden } from "@/libs/arrival";
 import { TimeAgo } from "@/components/ui/TimeAgo";
 import { Reveal } from "./Reveal";
 import { Paw } from "./Paw";
 import {
-	Checklist, ChecklistItem, CtaBand, CtaButton, FeedBadge, FeedList, FeedRow, PurposeCard, PurposeGrid,
+	Checklist, ChecklistItem, CtaBand, CtaButton, DismissedNote, FeedBadge, FeedList, FeedRow, PurposeCard, PurposeGrid,
 	SectionHead, TrustGrid,
 } from "@/styles/styledLanding";
 import { Muted, Skeleton } from "@/styles/styledUi";
@@ -116,7 +117,14 @@ function readDone(): string[] {
 
 export function NewcomerChecklist() {
 	const [done, setDone] = useState<string[]>([]);
+	// Dismissed during this visit: a one-line note with an undo replaces it.
+	const [dismissed, setDismissed] = useState(false);
 	useEffect(() => setDone(readDone()), []);
+
+	const dismiss = (hidden: boolean) => {
+		setArrivalHidden(hidden);
+		setDismissed(hidden);
+	};
 
 	const toggle = (id: string) => {
 		const next = done.includes(id) ? done.filter(d => d !== id) : [...done, id];
@@ -130,16 +138,27 @@ export function NewcomerChecklist() {
 	const ratio = done.length / STEPS.length;
 
 	return (
-		<Checklist aria-labelledby="arrival">
+		<>
+			<script dangerouslySetInnerHTML={{ __html: ARRIVAL_PREPAINT }} />
+			{dismissed && (
+				<DismissedNote role="status">
+					정착 체크리스트를 숨겼어요. 마이페이지의 &lsquo;계정&rsquo;에서 다시 볼 수 있어요.
+					<button type="button" onClick={() => dismiss(false)}>되돌리기</button>
+				</DismissedNote>
+			)}
+		<Checklist aria-labelledby="arrival" data-arrival="">
 			<header>
 				<div>
 					<h2 id="arrival">프랑스에 막 왔다면 ✈︎</h2>
 					<p>처음 몇 주 동안 챙길 것들이에요. 막히면 먼저 겪어본 이웃에게 물어보세요.</p>
 				</div>
 				<div className="progress" aria-live="polite">
-					{done.length} / {STEPS.length} 완료
+					{done.length === STEPS.length ? "모두 챙겼어요" : `${done.length} / ${STEPS.length} 완료`}
 					<div className="bar" aria-hidden="true"><span style={{ width: `${ratio * 100}%` }} /></div>
 				</div>
+				<button type="button" className="dismiss" onClick={() => dismiss(true)}>
+					<X size={14} aria-hidden /> 다시 보지 않기
+				</button>
 			</header>
 			<ul>
 				{STEPS.map(s => {
@@ -159,6 +178,7 @@ export function NewcomerChecklist() {
 				})}
 			</ul>
 		</Checklist>
+		</>
 	);
 }
 
