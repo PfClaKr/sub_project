@@ -45,8 +45,8 @@ export const VerifyResult = ({ token }: { token?: string }) => {
 	return (
 		<AuthCard>
 			{state === "ok"
-				? <CheckCircle2 size={40} color={palette.primary} aria-hidden />
-				: <XCircle size={40} color={palette.danger} aria-hidden />}
+				? <CheckCircle2 size={40} style={{ color: palette.primary }} aria-hidden />
+				: <XCircle size={40} style={{ color: palette.danger }} aria-hidden />}
 			<h1>{state === "ok" ? t("verified") : t("verifyError")}</h1>
 			<p>{state === "ok" ? t("verifiedBody") : message}</p>
 			<LinkButton href="/login" style={{ display: "block" }}>{t("goLogin")}</LinkButton>

@@ -13,7 +13,7 @@ export default async function VerifySentPage({ searchParams }: { searchParams: {
 	const t = await getTranslations("auth");
 	return (
 		<AuthCard>
-			<MailCheck size={40} color={palette.primary} aria-hidden />
+			<MailCheck size={40} style={{ color: palette.primary }} aria-hidden />
 			<h1>{t("checkMail")}</h1>
 			<p>
 				{email ? t.rich("sentTo", { email, strong: chunks => <strong>{chunks}</strong> }) : t("sentToAny")}
