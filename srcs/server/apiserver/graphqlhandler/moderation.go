@@ -201,8 +201,13 @@ func DescribeReportTarget(targetType, targetId string) (*ReportTarget, error) {
 		if err != nil || c == nil {
 			return nil, err
 		}
+		// The post's title tells the admin where the comment was left.
+		title := "댓글"
+		if post, err := getPost(postId); err == nil && post != nil {
+			title = "“" + dynamo.S(post, "Title") + "”의 댓글"
+		}
 		return &ReportTarget{
-			Title: "댓글", Body: preview(dynamo.S(c, "Body")), Status: dynamo.S(c, "Status"),
+			Title: title, Body: preview(dynamo.S(c, "Body")), Status: dynamo.S(c, "Status"),
 			Link: postLink(postId, commentId), OwnerId: dynamo.S(c, "AuthorId"),
 			ReportCount: int(num(c, "ReportCount")), Anonymous: boolOf(c, "Anonymous"),
 		}, nil

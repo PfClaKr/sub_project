@@ -159,3 +159,16 @@ func TestResolveRejectsUnknownActions(t *testing.T) {
 		t.Errorf("unknown post status = %d, want 400", rr.Code)
 	}
 }
+
+// Closing reports as handled leaves the target alone for every type, so it
+// also works for a post or comment its author already deleted.
+func TestResolveNeverTouchesTheTarget(t *testing.T) {
+	for _, typ := range []string{"post", "comment", "product", "user", "chat"} {
+		if err := applyAction(typ, "gone#c1", ActionResolve); err != nil {
+			t.Errorf("resolve on %s: %v", typ, err)
+		}
+	}
+	if err := applyAction("user", "u1", ActionHide); err == nil {
+		t.Error("hide on a member should be refused")
+	}
+}

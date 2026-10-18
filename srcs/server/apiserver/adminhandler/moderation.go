@@ -149,6 +149,10 @@ var errNoTarget = errors.New("대상을 찾을 수 없어요.")
 func applyAction(targetType, targetId, action string) error {
 	postId, commentId, _ := strings.Cut(targetId, "#")
 	switch {
+	// Closing as handled never touches the target, whatever it is (also
+	// posts or comments their author already deleted).
+	case action == ActionResolve:
+		return nil
 	case targetType == graphqlhandler.ReportPost:
 		status := map[string]string{ActionDismiss: graphqlhandler.PostActive, ActionHide: graphqlhandler.PostHidden, ActionDelete: graphqlhandler.PostDeleted}[action]
 		item, err := graphqlhandler.DescribeReportTarget(targetType, targetId)
@@ -176,7 +180,7 @@ func applyAction(targetType, targetId, action string) error {
 			return err
 		}
 		return graphqlhandler.RemoveProduct(targetId, owner)
-	case action == ActionDismiss, action == ActionResolve:
+	case action == ActionDismiss:
 		return nil
 	}
 	return errors.New("이 대상에는 할 수 없는 처리예요.")
