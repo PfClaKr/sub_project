@@ -64,14 +64,14 @@ export function ReportDialog({ target, onClose }: { target: ReportTarget; onClos
 			return;
 		}
 		setBusy(true);
-		const { error } = await gql(
+		const { error, code } = await gql(
 			`mutation Report($t: String!, $id: String!, $r: String!, $d: String) { report(TargetType: $t, TargetId: $id, Reason: $r, Detail: $d) }`,
 			{ t: target.type, id: target.id, r: reason, d: detail.trim() || null },
 		);
 		setBusy(false);
 		if (error) {
 			setError(error);
-			if (error.startsWith("이미 신고")) setTimeout(() => onClose(true), 1200);
+			if (code === "ALREADY_REPORTED") setTimeout(() => onClose(true), 1200);
 			return;
 		}
 		onClose(true);

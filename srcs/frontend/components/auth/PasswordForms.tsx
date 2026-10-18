@@ -13,8 +13,8 @@ import palette from "@/theme/colorPalette";
 import { useTranslations } from "next-intl";
 
 // post sends JSON to the loginserver from the browser (so its Set-Cookie
-// applies) and returns the error message, or "" on success.
-async function post(path: string, body: unknown, t: (key: "requestError" | "serverError") => string): Promise<string> {
+// applies) and returns the error message ("" on success) and its code.
+async function post(path: string, body: unknown, t: (key: "requestError" | "serverError") => string): Promise<{ message: string; code?: string }> {
 	try {
 		const res = await fetch(`${LOGIN_URL}${path}`, {
 			method: "POST",
@@ -22,11 +22,11 @@ async function post(path: string, body: unknown, t: (key: "requestError" | "serv
 			body: JSON.stringify(body),
 			credentials: "include",
 		});
-		if (res.ok) return "";
+		if (res.ok) return { message: "" };
 		const json = await res.json().catch(() => null);
-		return json?.error ?? t("requestError");
+		return { message: json?.error ?? t("requestError"), code: json?.code };
 	} catch {
-		return t("serverError");
+		return { message: t("serverError") };
 	}
 }
 
@@ -43,7 +43,7 @@ export function ForgotForm() {
 		const email = String(new FormData(e.currentTarget).get("email") ?? "").trim();
 		setBusy(true);
 		setError("");
-		const err = await post("/password/forgot", { email }, t);
+		const { message: err } = await post("/password/forgot", { email }, t);
 		setBusy(false);
 		if (err) setError(err);
 		else setSentTo(email);
@@ -76,6 +76,7 @@ export function ResetForm({ email, token }: { email: string; token: string }) {
 	const router = useRouter();
 	const { refresh } = useSession();
 	const [error, setError] = useState("");
+	const [expired, setExpired] = useState(false);
 	const [busy, setBusy] = useState(false);
 
 	if (!email || !token) {
@@ -97,10 +98,11 @@ export function ResetForm({ email, token }: { email: string; token: string }) {
 		}
 		setBusy(true);
 		setError("");
-		const err = await post("/password/reset", { email, token, password }, t);
+		const { message: err, code } = await post("/password/reset", { email, token, password }, t);
 		setBusy(false);
 		if (err) {
 			setError(err);
+			setExpired(code === "TOKEN_EXPIRED");
 			return;
 		}
 		await refresh();
@@ -120,7 +122,7 @@ export function ResetForm({ email, token }: { email: string; token: string }) {
 			{error && (
 				<ErrorText role="alert">
 					{error}{" "}
-					{error.includes("만료") && <Link href="/account/forgot">{t("again")}</Link>}
+					{expired && <Link href="/account/forgot">{t("again")}</Link>}
 				</ErrorText>
 			)}
 			<button type="submit" disabled={busy}>{busy ? t("changing") : t("setPassword")}</button>
@@ -145,7 +147,7 @@ export function ChangePasswordForm({ onDone }: { onDone: () => void }) {
 		}
 		setBusy(true);
 		setError("");
-		const err = await post("/password/change", { current: form.get("current"), password }, t);
+		const { message: err } = await post("/password/change", { current: form.get("current"), password }, t);
 		setBusy(false);
 		if (err) {
 			setError(err);

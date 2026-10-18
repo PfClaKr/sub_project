@@ -256,7 +256,7 @@ export function ListingDetail({ type, postId, initial }: { type: ListingType; po
 					<div style={{ display: "flex", alignItems: "center", gap: 10 }}>
 						<Avatar src={post.AuthorImage} name={post.AuthorNickname} size={36} />
 						<div style={{ flex: 1 }}>
-							{post.AuthorId ? <Link href={`/user/${post.AuthorId}`}><strong>{post.AuthorNickname}</strong></Link> : <strong>{post.AuthorNickname}</strong>}
+							{post.AuthorId ? <Link href={`/user/${post.AuthorId}`}><strong>{L.name(post.AuthorNickname)}</strong></Link> : <strong>{L.name(post.AuthorNickname)}</strong>}
 							<Meta>
 								<span><TimeAgo ts={Math.max(post.BumpedAt ?? 0, post.CreatedAt)} /></span>
 								<span><Eye size={13} aria-hidden /> {post.ViewCount ?? 0}</span>
