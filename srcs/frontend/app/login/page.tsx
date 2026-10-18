@@ -1,34 +1,30 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
 import Link from "next/link";
 import { SignInForm } from "@/components/form/SignInForm";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { AuthCard, FormFooter } from "@/styles/styledForm";
 import { ErrorText } from "@/styles/styledUi";
 
-export const metadata: Metadata = {
-	title: "로그인",
-};
+export const generateMetadata = pageMetadata("pages.login");
 
-const OAUTH_ERRORS: Record<string, string> = {
-	oauth_user: "Google 계정의 이메일을 확인하지 못했어요. 인증된 이메일이 있는 계정으로 시도해주세요.",
-};
-
-export default function LoginPage({ searchParams }: { searchParams: { next?: string; error?: string } }) {
+export default async function LoginPage({ searchParams }: { searchParams: { next?: string; error?: string } }) {
+	const t = await getTranslations("auth");
 	const oauthError = searchParams.error?.startsWith("oauth_")
-		? OAUTH_ERRORS[searchParams.error] ?? "Google 로그인에 실패했어요. 다시 시도해주세요."
+		? t(searchParams.error === "oauth_user" ? "oauthUser" : "oauthFailed")
 		: "";
 	return (
 		<AuthCard>
-			<h1>로그인</h1>
-			<p>다시 만나서 반갑냥!</p>
+			<h1>{t("loginTitle")}</h1>
+			<p>{t("welcomeBack")}</p>
 			{oauthError && <ErrorText role="alert" style={{ marginBottom: 12 }}>{oauthError}</ErrorText>}
-			<GoogleButton label="Google로 로그인" />
+			<GoogleButton label={t("google")} />
 			<SignInForm next={searchParams.next} />
 			<FormFooter style={{ marginTop: 12 }}>
-				<Link href="/account/forgot">비밀번호를 잊으셨나요?</Link>
+				<Link href="/account/forgot">{t("forgot")}</Link>
 			</FormFooter>
 			<FormFooter style={{ marginTop: 8 }}>
-				아직 계정이 없나요? <Link href="/account/sign-up">회원가입</Link>
+				{t("noAccount")} <Link href="/account/sign-up">{t("signup")}</Link>
 			</FormFooter>
 		</AuthCard>
 	);

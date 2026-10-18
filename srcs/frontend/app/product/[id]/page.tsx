@@ -1,4 +1,7 @@
 import { Metadata } from "next";
+import { getLocale, getTranslations } from "next-intl/server";
+import { getLabels } from "@/libs/labels.server";
+import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ImageGallery } from "@/components/product/detail/ImageGallery";
@@ -55,9 +58,10 @@ async function getUser(userId: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const { data } = await getProduct(params.id);
 	const p = data?.product;
+	const locale = (await getLocale()) as Locale;
 	return p
-		? { title: p.ProductName, description: `${formatPrice(p.ProductPrice)} · ${p.PreferedLocation ?? ""}` }
-		: { title: "상품을 찾을 수 없어요" };
+		? { title: p.ProductName, description: `${formatPrice(p.ProductPrice, locale)} · ${p.PreferedLocation ?? ""}` }
+		: { title: (await getTranslations("product"))("notFound") };
 }
 
 export default async function ProductDetailPage({ params }: Props) {
@@ -68,26 +72,30 @@ export default async function ProductDetailPage({ params }: Props) {
 
 	const seller = product.UserId ? await getUser(product.UserId) : null;
 	const status = product.ProductStatus ?? STATUS_SELLING;
+	const t = await getTranslations("product");
+	const c = await getTranslations("common");
+	const L = await getLabels();
+	const locale = (await getLocale()) as Locale;
 
 	return (
 		<article>
-			<Breadcrumb aria-label="위치">
-				<Link href="/search">중고거래</Link>
+			<Breadcrumb aria-label={c("breadcrumb")}>
+				<Link href="/search">{(await getTranslations("market"))("title")}</Link>
 				{product.ProductCategory && (
-					<> › <Link href={`/search?category=${encodeURIComponent(product.ProductCategory)}`}>{product.ProductCategory}</Link></>
+					<> › <Link href={`/search?category=${encodeURIComponent(product.ProductCategory)}`}>{L.enum("category", product.ProductCategory)}</Link></>
 				)}
 			</Breadcrumb>
 			<DetailLayout>
 				<ImageGallery images={product.ProductImage ?? []} name={product.ProductName} />
 				<InfoPanel>
 					<h1>{product.ProductName}</h1>
-					<BigPrice>{formatPrice(product.ProductPrice)}</BigPrice>
+					<BigPrice>{formatPrice(product.ProductPrice, locale)}</BigPrice>
 					<Facts>
-						<dt>카테고리</dt><dd>{product.ProductCategory ?? "-"}</dd>
-						<dt>지역</dt><dd>{product.ProductRegion ?? "-"}</dd>
-						<dt>거래 장소</dt><dd>{product.PreferedLocation ?? "-"}</dd>
-						<dt>판매 상태</dt><dd>{status}</dd>
-						<dt>게시일</dt>
+						<dt>{t("category")}</dt><dd>{L.enum("category", product.ProductCategory) || "-"}</dd>
+						<dt>{t("region")}</dt><dd>{L.enum("region", product.ProductRegion) || "-"}</dd>
+						<dt>{t("place")}</dt><dd>{product.PreferedLocation ?? "-"}</dd>
+						<dt>{t("status")}</dt><dd>{L.enum("status", status)}</dd>
+						<dt>{t("posted")}</dt>
 						<dd><TimeAgo ts={product.ProductCreatedAt} /></dd>
 					</Facts>
 					<ProductActions productId={product.ProductId} ownerId={product.UserId} status={status} price={product.ProductPrice} />
@@ -95,8 +103,8 @@ export default async function ProductDetailPage({ params }: Props) {
 				</InfoPanel>
 			</DetailLayout>
 			<Description>
-				<h2>상품 설명</h2>
-				<p>{product.ProductDescription || "설명이 없어요."}</p>
+				<h2>{t("description")}</h2>
+				<p>{product.ProductDescription || t("noDescription")}</p>
 			</Description>
 			{product.Latitude != null && product.Longitude != null && (
 				<LocationPreview

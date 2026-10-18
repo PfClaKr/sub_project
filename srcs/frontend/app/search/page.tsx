@@ -1,21 +1,20 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
 import { SearchInput } from "@/components/SearchInput";
 import { ProductResults, type ProductSearchParams } from "@/components/search/ProductResults";
 import { PageHeader } from "@/styles/styledLayout";
 
-export const metadata: Metadata = {
-	title: "중고거래",
-	description: "파리 한인들이 올린 중고 물건을 카테고리, 동네, 가격으로 찾아보세요.",
-};
+export const generateMetadata = pageMetadata("market");
 
 // The 중고 tab: every product, newest first, with the same filters as a
 // keyword search.
-export default function SearchPage({ searchParams }: { searchParams: ProductSearchParams }) {
+export default async function SearchPage({ searchParams }: { searchParams: ProductSearchParams }) {
+	const t = await getTranslations("market");
 	return (
 		<div>
 			<PageHeader>
-				<h1>중고거래</h1>
-				<p>이웃이 올린 물건을 둘러보거나 찾는 물건을 검색해보세요.</p>
+				<h1>{t("title")}</h1>
+				<p>{t("lead")}</p>
 			</PageHeader>
 			<SearchInput />
 			<ProductResults q="" searchParams={searchParams} />

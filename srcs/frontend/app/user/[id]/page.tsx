@@ -1,4 +1,7 @@
 import { Metadata } from "next";
+import { getLocale, getTranslations } from "next-intl/server";
+import { getLabels } from "@/libs/labels.server";
+import type { Locale } from "@/i18n/config";
 import { notFound } from "next/navigation";
 import ProductGrid from "@/components/product/ProductGrid";
 import { Avatar } from "@/components/ui/Avatar";
@@ -22,7 +25,7 @@ async function getProfile(userId: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const { data } = await getProfile(params.id);
-	return { title: data?.user?.UserNickname ?? "판매자" };
+	return { title: data?.user?.UserNickname ?? (await getTranslations("profile"))("seller") };
 }
 
 export default async function UserPage({ params }: Props) {
@@ -31,6 +34,9 @@ export default async function UserPage({ params }: Props) {
 	const user = data?.user;
 	if (!user) notFound();
 	const products = data?.userProducts ?? [];
+	const t = await getTranslations("profile");
+	const L = await getLabels();
+	const locale = (await getLocale()) as Locale;
 
 	return (
 		<div>
@@ -39,14 +45,14 @@ export default async function UserPage({ params }: Props) {
 					<Avatar src={user.ProfileImage} name={user.UserNickname} size={64} />
 					<div>
 						<h1>{user.UserNickname}</h1>
-						<p>{[user.Residence, user.CreatedAt ? `${formatDate(user.CreatedAt)} 가입` : ""].filter(Boolean).join(" · ")}</p>
+						<p>{[L.enum("region", user.Residence), user.CreatedAt ? t("joined", { date: formatDate(user.CreatedAt, locale) }) : ""].filter(Boolean).join(" · ")}</p>
 					</div>
 				</Row>
 			</PageHeader>
 			<Section>
-				<SectionTitle>판매 상품 {products.length}개</SectionTitle>
+				<SectionTitle>{t("items", { count: products.length })}</SectionTitle>
 				{products.length === 0
-					? <EmptyState><p>아직 올린 상품이 없어요.</p></EmptyState>
+					? <EmptyState><p>{t("noItems")}</p></EmptyState>
 					: <ProductGrid products={products} showSeller={false} />}
 			</Section>
 		</div>

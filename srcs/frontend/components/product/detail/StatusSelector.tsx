@@ -5,6 +5,8 @@ import { gql } from "@/libs/graphql";
 import { STATUSES } from "@/libs/constants";
 import { FieldLabel } from "@/styles/styledForm";
 import { ErrorText } from "@/styles/styledUi";
+import { useLocale, useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
 
 // Owner-only control; the server checks ownership again.
 export const StatusSelector = ({ productId, initial, onChange }: {
@@ -12,6 +14,8 @@ export const StatusSelector = ({ productId, initial, onChange }: {
 	initial: string;
 	onChange?: (status: string) => void;
 }) => {
+	const t = useTranslations("product");
+	const L = useLabels();
 	const [status, setStatus] = useState(initial);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState("");
@@ -27,7 +31,7 @@ export const StatusSelector = ({ productId, initial, onChange }: {
 		);
 		setBusy(false);
 		if (error || !data?.updateProductStatus) {
-			setError(error ?? "상태를 바꾸지 못했어요.");
+			setError(error ?? t("statusError"));
 			return;
 		}
 		setStatus(data.updateProductStatus.ProductStatus);
@@ -36,9 +40,9 @@ export const StatusSelector = ({ productId, initial, onChange }: {
 
 	return (
 		<FieldLabel>
-			판매 상태
+			{t("status")}
 			<select value={status} disabled={busy} onChange={e => handleChange(e.target.value)}>
-				{STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+				{STATUSES.map(s => <option key={s} value={s}>{L.enum("status", s)}</option>)}
 			</select>
 			{error && <ErrorText>{error}</ErrorText>}
 		</FieldLabel>

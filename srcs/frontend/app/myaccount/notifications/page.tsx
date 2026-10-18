@@ -1,15 +1,16 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
 import { NotificationSettings } from "@/components/notification/NotificationSettings";
 import { PageHeader } from "@/styles/styledLayout";
 
-export const metadata: Metadata = { title: "알림 설정" };
+export const generateMetadata = pageMetadata("pages.notifySettings");
 
-export default function Page() {
+export default async function Page() {
 	return (
 		<div>
 			<PageHeader>
-				<h1>알림 설정</h1>
-				<p>어떤 알림을 이메일과 푸시로 받을지 골라주세요.</p>
+				<h1>{(await getTranslations("pages.notifySettings"))("title")}</h1>
+				<p>{(await getTranslations("notifications"))("settingsLead")}</p>
 			</PageHeader>
 			<NotificationSettings />
 		</div>

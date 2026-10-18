@@ -1,9 +1,10 @@
+import { getTranslations } from "next-intl/server";
 import ProductGrid from "@/components/product/ProductGrid";
+import { getLabels } from "@/libs/labels.server";
 import { SearchControls } from "@/components/search/SearchControls";
 import { Section } from "@/styles/styledLayout";
 import { Chip, ChipRow, EmptyState, ErrorText, LinkButton, Muted, Pagination } from "@/styles/styledUi";
 import { gql, PRODUCT_CARD_FIELDS } from "@/libs/graphql";
-import { distanceLabel } from "@/libs/geo";
 import { CATEGORIES, REGIONS } from "@/libs/constants";
 import type { Product } from "@/libs/types";
 
@@ -18,6 +19,9 @@ const SORT_VALUES = ["newest", "price_asc", "price_desc", "distance"];
 // search (/search/<q>), without one the 중고 tab's browsable list (/search),
 // newest first and paged. Filters live in the URL so results are shareable.
 export async function ProductResults({ q, searchParams }: { q: string; searchParams: ProductSearchParams }) {
+	const t = await getTranslations("market");
+	const c = await getTranslations("common");
+	const L = await getLabels();
 	const browse = q === "";
 	const category = CATEGORIES.find(c => c === searchParams.category);
 	const region = REGIONS.find(r => r === searchParams.region);
@@ -78,39 +82,39 @@ export async function ProductResults({ q, searchParams }: { q: string; searchPar
 
 	return (
 		<Section>
-			<ChipRow aria-label="카테고리">
-				<Chip href={href({ category: undefined })} $active={!category} scroll={false}>전체</Chip>
-				{CATEGORIES.map(c => (
-					<Chip key={c} href={href({ category: c })} $active={category === c} scroll={false}>
-						{c}
+			<ChipRow aria-label={t("categories")}>
+				<Chip href={href({ category: undefined })} $active={!category} scroll={false}>{t("all")}</Chip>
+				{CATEGORIES.map(cat => (
+					<Chip key={cat} href={href({ category: cat })} $active={category === cat} scroll={false}>
+						{L.enum("category", cat)}
 					</Chip>
 				))}
 			</ChipRow>
 			{!error && <SearchControls total={products.length} browse={browse} />}
 			{corrected && products.length > 0 && (
-				<p><Muted>정확히 일치하는 상품이 없어 비슷한 상품을 보여드려요.</Muted></p>
+				<p><Muted>{t("corrected")}</Muted></p>
 			)}
 			{error ? (
 				<ErrorText role="alert">{error}</ErrorText>
 			) : products.length === 0 ? (
 				<EmptyState>
 					<p>
-						{near ? `${searchParams.place ?? "선택한 위치"} (${distanceLabel(near.km)})에서 ` : ""}
-						{category ? `${category}에서 ` : ""}
-						{browse ? "조건에 맞는 상품이 없어요." : "검색 결과가 없어요."}
+						{near ? t("emptyNear", { place: searchParams.place ?? t("chosenPlace"), distance: L.distance(near.km) }) : ""}
+						{category ? t("emptyCategory", { category: L.enum("category", category) }) : ""}
+						{browse ? t("emptyBrowse") : t("emptySearch")}
 					</p>
 					{filtered
-						? <LinkButton href={base} $ghost>조건 없이 다시 보기</LinkButton>
-						: <LinkButton href={browse ? "/sell" : "/search"} $ghost>{browse ? "첫 상품 올리기" : "전체 상품 보기"}</LinkButton>}
+						? <LinkButton href={base} $ghost>{t("clearFilters")}</LinkButton>
+						: <LinkButton href={browse ? "/sell" : "/search"} $ghost>{browse ? t("firstItem") : t("allItems")}</LinkButton>}
 				</EmptyState>
 			) : (
 				<ProductGrid products={products} />
 			)}
 			{browse && (page > 1 || hasNext) && (
-				<Pagination aria-label="페이지">
-					{page > 1 && <LinkButton href={href({ page: page - 1 })} $ghost>← 이전</LinkButton>}
-					<span>{page} 페이지</span>
-					{hasNext && <LinkButton href={href({ page: page + 1 })} $ghost>다음 →</LinkButton>}
+				<Pagination aria-label={t("pages")}>
+					{page > 1 && <LinkButton href={href({ page: page - 1 })} $ghost>{c("prev")}</LinkButton>}
+					<span>{t("page", { page })}</span>
+					{hasNext && <LinkButton href={href({ page: page + 1 })} $ghost>{c("next")}</LinkButton>}
 				</Pagination>
 			)}
 		</Section>

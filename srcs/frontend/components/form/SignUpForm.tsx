@@ -11,8 +11,12 @@ import { PasswordInput } from "./PasswordInput";
 import Link from "next/link";
 import { MIN_AGE } from "@/libs/legal";
 import { ConsentRow } from "@/styles/styledForm";
+import { useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
 
 export const SignUpForm = () => {
+	const t = useTranslations("auth");
+	const L = useLabels();
 	const router = useRouter();
 	const { refresh } = useSession();
 	const [error, setError] = useState("");
@@ -34,7 +38,7 @@ export const SignUpForm = () => {
 		setError("");
 		const form = new FormData(event.currentTarget);
 		if (form.get("password") !== form.get("passwordConfirm")) {
-			setError("비밀번호가 서로 달라요.");
+			setError(t("passwordMismatch"));
 			return;
 		}
 		setSubmitting(true);
@@ -54,7 +58,7 @@ export const SignUpForm = () => {
 			});
 			if (!res.ok) {
 				const json = await res.json().catch(() => null);
-				setError(json?.error ?? "가입하지 못했어요.");
+				setError(json?.error ?? t("signupError"));
 				return;
 			}
 			const json = await res.json().catch(() => null);
@@ -67,7 +71,7 @@ export const SignUpForm = () => {
 			await refresh();
 			router.push("/");
 		} catch {
-			setError("서버에 연결하지 못했어요.");
+			setError(t("serverError"));
 		} finally {
 			setSubmitting(false);
 		}
@@ -75,7 +79,7 @@ export const SignUpForm = () => {
 
 	return (
 		<FormColumn onSubmit={handleSubmit}>
-			<FieldLabel>이메일
+			<FieldLabel>{t("email")}
 				<input
 					type="email"
 					name="email"
@@ -85,36 +89,39 @@ export const SignUpForm = () => {
 					onChange={() => setEmailTaken(false)}
 					aria-invalid={emailTaken}
 				/>
-				{emailTaken && <ErrorText>이미 사용 중인 이메일이에요.</ErrorText>}
+				{emailTaken && <ErrorText>{t("emailTaken")}</ErrorText>}
 			</FieldLabel>
-			<FieldLabel>닉네임 <Hint>2~20자</Hint>
+			<FieldLabel>{t("nickname")} <Hint>{t("nicknameHint")}</Hint>
 				<input type="text" name="nickname" autoComplete="nickname" required minLength={2} maxLength={20} />
 			</FieldLabel>
 			<TwoColumns>
-				<FieldLabel>사는 곳
+				<FieldLabel>{t("residence")}
 					<select name="residence" defaultValue={DEFAULT_REGION} required>
-						{REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+						{REGIONS.map(r => <option key={r} value={r}>{L.enum("region", r)}</option>)}
 					</select>
 				</FieldLabel>
-				<FieldLabel>상세 <Hint>선택</Hint>
-					<input type="text" name="residencedetail" maxLength={50} placeholder="예: 15구, Cachan" />
+				<FieldLabel>{t("detail")} <Hint>{t("optional")}</Hint>
+					<input type="text" name="residencedetail" maxLength={50} placeholder={t("detailPlaceholder")} />
 				</FieldLabel>
 			</TwoColumns>
-			<FieldLabel>비밀번호 <Hint>8자 이상</Hint>
+			<FieldLabel>{t("password")} <Hint>{t("passwordHint")}</Hint>
 				<PasswordInput name="password" autoComplete="new-password" required minLength={8} maxLength={72} />
 			</FieldLabel>
-			<FieldLabel>비밀번호 확인
+			<FieldLabel>{t("passwordConfirm")}
 				<PasswordInput name="passwordConfirm" autoComplete="new-password" required minLength={8} maxLength={72} />
 			</FieldLabel>
 			<ConsentRow>
 				<input type="checkbox" name="agree" required />
 				<span>
-					만 {MIN_AGE}세 이상이며, <Link href="/terms" target="_blank">이용약관</Link>과{" "}
-					<Link href="/privacy" target="_blank">개인정보처리방침</Link>에 동의해요. (필수)
+					{t.rich("consent", {
+						age: MIN_AGE,
+						terms: chunks => <Link href="/terms" target="_blank">{chunks}</Link>,
+						privacy: chunks => <Link href="/privacy" target="_blank">{chunks}</Link>,
+					})}
 				</span>
 			</ConsentRow>
 			{error && <ErrorText role="alert">{error}</ErrorText>}
-			<button type="submit" disabled={submitting || emailTaken}>{submitting ? "가입 중..." : "가입하기"}</button>
+			<button type="submit" disabled={submitting || emailTaken}>{submitting ? t("signingUp") : t("submitSignup")}</button>
 		</FormColumn>
 	);
 };

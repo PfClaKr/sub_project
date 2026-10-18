@@ -10,12 +10,14 @@ import { ChatMenu } from "./ChatMenu";
 import { RequireLogin } from "@/components/ui/RequireLogin";
 import { CHAT_URL, chatSocketUrl } from "@/libs/config";
 import { formatDate, formatTime, imageUrl, toMs } from "@/libs/format";
-import { subjectHref, subjectTitle } from "@/libs/subjects";
+import { subjectHref, subjectOf, subjectTitle } from "@/libs/subjects";
 import type { Message, Room, Session } from "@/libs/types";
+import { useTranslations } from "next-intl";
 
 const MAX_LENGTH = 1000;
 
 function Conversation({ chatId, session }: { chatId: string; session: Session }) {
+	const t = useTranslations("chat");
 	const [room, setRoom] = useState<Room | null>(null);
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [input, setInput] = useState("");
@@ -26,9 +28,9 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 
 	const loadHistory = useCallback(async () => {
 		const res = await fetch(`${CHAT_URL}/history/${chatId}`, { credentials: "include" });
-		if (!res.ok) throw new Error("채팅방을 불러오지 못했어요.");
+		if (!res.ok) throw new Error(t("loadError"));
 		setMessages(await res.json());
-	}, [chatId]);
+	}, [chatId, t]);
 
 	useEffect(() => {
 		let closedByUs = false;
@@ -68,12 +70,12 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 		(async () => {
 			try {
 				const res = await fetch(`${CHAT_URL}/room/${chatId}`, { credentials: "include" });
-				if (!res.ok) throw new Error("채팅방을 찾을 수 없어요.");
+				if (!res.ok) throw new Error(t("notFound"));
 				setRoom(await res.json());
 				await loadHistory();
 				if (!closedByUs) connect();
 			} catch (e) {
-				if (!closedByUs) setError(e instanceof Error ? e.message : "오류가 발생했어요.");
+				if (!closedByUs) setError(e instanceof Error ? e.message : t("error"));
 			}
 		})();
 
@@ -82,7 +84,7 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 			clearTimeout(retry);
 			wsRef.current?.close();
 		};
-	}, [chatId, loadHistory]);
+	}, [chatId, loadHistory, t]);
 
 	useEffect(() => {
 		const el = listRef.current;
@@ -105,14 +107,14 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 	const setBlock = async (block: boolean) => {
 		const res = await fetch(`${CHAT_URL}/blocks/${partnerId}`, { method: block ? "PUT" : "DELETE", credentials: "include" }).catch(() => null);
 		if (!res?.ok) {
-			setError("처리하지 못했어요. 잠시 후 다시 시도해주세요.");
+			setError(t("actionError"));
 			return;
 		}
 		// Unblocking only clears our side; the other may still block us.
 		const fresh = await fetch(`${CHAT_URL}/room/${chatId}`, { credentials: "include" }).then(r => (r.ok ? r.json() : null)).catch(() => null);
 		setRoom(fresh ?? { ...room, BlockedByMe: block, Blocked: block });
 	};
-	const partner = (selling ? room.BuyerNickname : room.SellerNickname) || "상대방";
+	const partner = (selling ? room.BuyerNickname : room.SellerNickname) || t("partner");
 	const thumb = imageUrl(room.SubjectImage || room.ProductImage);
 	const status = room.SubjectType === "product" || !room.SubjectType ? room.ProductStatus : undefined;
 
@@ -124,16 +126,16 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 				<div style={{ minWidth: 0 }}>
 					<strong>{partner}</strong>
 					<small>
-						<Link href={subjectHref(room)}>{subjectTitle(room)}</Link>
+						<Link href={subjectHref(room)}>{subjectTitle(room) || t(`missing.${subjectOf(room).type}`)}</Link>
 						{status ? ` · ${status}` : ""}
 					</small>
 				</div>
-				<ConnectionDot $on={connected}>{connected ? "연결됨" : "연결 중..."}</ConnectionDot>
+				<ConnectionDot $on={connected}>{connected ? t("connected") : t("connecting")}</ConnectionDot>
 				<ChatMenu chatId={chatId} partner={partner} blockedByMe={!!room.BlockedByMe} onBlock={setBlock} />
 			</ChatHeader>
 			<MessageList ref={listRef} aria-live="polite">
 				{messages.length === 0 && (
-					<EmptyHint>첫 메시지를 보내보세요.</EmptyHint>
+					<EmptyHint>{t("first")}</EmptyHint>
 				)}
 				{messages.map(msg => {
 					const mine = msg.UserId === session.UserId;
@@ -155,8 +157,8 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 			</MessageList>
 			{room.Blocked ? (
 				<BlockedBar role="status">
-					{room.BlockedByMe ? "차단한 사용자예요." : "대화할 수 없는 상대예요."}
-					{room.BlockedByMe && <GhostButton type="button" onClick={() => setBlock(false)}>차단 해제</GhostButton>}
+					{room.BlockedByMe ? t("youBlocked") : t("cannotTalk")}
+					{room.BlockedByMe && <GhostButton type="button" onClick={() => setBlock(false)}>{t("unblock")}</GhostButton>}
 				</BlockedBar>
 			) : (
 			<ChatInputRow onSubmit={handleSend}>
@@ -165,10 +167,10 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 					value={input}
 					maxLength={MAX_LENGTH}
 					onChange={e => setInput(e.target.value)}
-					placeholder={connected ? "메시지를 입력하세요" : "연결 중..."}
-					aria-label="메시지"
+					placeholder={connected ? t("placeholder") : t("connecting")}
+					aria-label={t("message")}
 				/>
-				<button type="submit" disabled={!connected || !input.trim()}>보내기</button>
+				<button type="submit" disabled={!connected || !input.trim()}>{t("send")}</button>
 			</ChatInputRow>
 			)}
 		</div>

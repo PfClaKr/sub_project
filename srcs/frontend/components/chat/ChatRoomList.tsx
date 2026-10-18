@@ -7,31 +7,35 @@ import { EmptyState, ErrorText, LinkButton, Skeleton, StatusBadge } from "@/styl
 import { RequireLogin } from "@/components/ui/RequireLogin";
 import { CHAT_URL } from "@/libs/config";
 import { imageUrl } from "@/libs/format";
-import { mineLabel, subjectOf, subjectTitle } from "@/libs/subjects";
+import { subjectOf, subjectTitle } from "@/libs/subjects";
 import type { Room, Session } from "@/libs/types";
 import { TimeAgo } from "@/components/ui/TimeAgo";
+import { useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
 
 function Rooms({ session }: { session: Session }) {
+	const t = useTranslations("chat");
+	const L = useLabels();
 	const [rooms, setRooms] = useState<Room[] | null>(null);
 	const [error, setError] = useState("");
 
 	useEffect(() => {
 		fetch(`${CHAT_URL}/rooms`, { credentials: "include" })
 			.then(res => {
-				if (!res.ok) throw new Error("채팅 목록을 불러오지 못했어요.");
+				if (!res.ok) throw new Error(t("listError"));
 				return res.json();
 			})
 			.then(setRooms)
 			.catch(e => setError(e.message));
-	}, []);
+	}, [t]);
 
 	if (error) return <ErrorText>{error}</ErrorText>;
 	if (rooms === null) return <Skeleton $h="160px" />;
 	if (rooms.length === 0) {
 		return (
 			<EmptyState>
-				<p>아직 채팅방이 없어요. 마음에 드는 상품에서 &lsquo;채팅하기&rsquo;를 눌러보세요.</p>
-				<LinkButton href="/">상품 둘러보기</LinkButton>
+				<p>{t("empty")}</p>
+				<LinkButton href="/search">{t("browse")}</LinkButton>
 			</EmptyState>
 		);
 	}
@@ -48,13 +52,13 @@ function Rooms({ session }: { session: Session }) {
 						<StyledLink href={`/chat/${room.ChatId}`}>
 							{thumb ? <img src={thumb} alt="" /> : <div className="thumb" />}
 							<div style={{ minWidth: 0 }}>
-								<strong>{partner || "알 수 없는 사용자"}</strong>
+								<strong>{partner || t("unknown")}</strong>
 								<small>
-									{selling ? `${mineLabel(kind)} · ` : ""}{subjectTitle(room)} · <TimeAgo ts={room.CreatedAt} />
+									{selling ? `${t(`mine.${kind}`)} · ` : ""}{subjectTitle(room) || t(`missing.${kind}`)} · <TimeAgo ts={room.CreatedAt} />
 								</small>
 							</div>
 							{kind === "product" && room.ProductStatus && room.ProductStatus !== "판매중" && (
-								<StatusBadge $status={room.ProductStatus} style={{ marginLeft: "auto" }}>{room.ProductStatus}</StatusBadge>
+								<StatusBadge $status={room.ProductStatus} style={{ marginLeft: "auto" }}>{L.enum("status", room.ProductStatus)}</StatusBadge>
 							)}
 						</StyledLink>
 					</li>

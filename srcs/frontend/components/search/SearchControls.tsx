@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
 import { LocateFixed, MapPin, SlidersHorizontal } from "lucide-react";
 import { REGIONS } from "@/libs/constants";
 import { Adorned, FieldLabel, TwoColumns } from "@/styles/styledForm";
@@ -10,20 +12,21 @@ import { GhostButton, Muted } from "@/styles/styledUi";
 import { FilterButton, PanelActions, Popover, PopoverPanel, Toolbar } from "@/styles/styledSearch";
 import { MapBox, PlaceResults, PlaceSearch, RadiusChips } from "@/styles/styledLocation";
 import {
-	areaCenter, currentPosition, distanceLabel, fetchArea, resolveArea, searchPlaces, SEARCH_DISTANCES,
+	areaCenter, currentPosition, fetchArea, resolveArea, searchPlaces, SEARCH_DISTANCES,
 	type Area, type LatLng, type Place,
 } from "@/libs/geo";
 
+// Labels: market.sort<Key>.
 const SORTS = [
-	{ value: "", label: "관련순" },
-	{ value: "newest", label: "최신순" },
-	{ value: "price_asc", label: "낮은 가격순" },
-	{ value: "price_desc", label: "높은 가격순" },
-	{ value: "distance", label: "가까운순", needsPlace: true },
+	{ value: "", key: "sortRelevance" },
+	{ value: "newest", key: "sortNewest" },
+	{ value: "price_asc", key: "sortPriceAsc" },
+	{ value: "price_desc", key: "sortPriceDesc" },
+	{ value: "distance", key: "sortDistance", needsPlace: true },
 ];
 
 // Without a keyword there is no relevance: the default is newest.
-const BROWSE_SORTS = [{ value: "", label: "최신순" }, ...SORTS.slice(2)];
+const BROWSE_SORTS = [{ value: "", key: "sortNewest" }, ...SORTS.slice(2)];
 
 // SearchControls edits the sort and the place filter through the URL
 // (area, place, lat, lng, km), so results stay shareable and the server
@@ -31,6 +34,8 @@ const BROWSE_SORTS = [{ value: "", label: "최신순" }, ...SORTS.slice(2)];
 // browse: no keyword (the 중고 tab), so newest is the default order and
 // the count is per page.
 export function SearchControls({ total, browse = false }: { total: number; browse?: boolean }) {
+	const t = useTranslations("market");
+	const L = useLabels();
 	const router = useRouter();
 	const pathname = usePathname();
 	const params = useSearchParams();
@@ -60,11 +65,11 @@ export function SearchControls({ total, browse = false }: { total: number; brows
 
 	return (
 		<Toolbar>
-			{!browse && <Muted>{total}개의 상품</Muted>}
+			{!browse && <Muted>{t("count", { count: total })}</Muted>}
 			<span style={{ flex: 1 }} />
 			<Popover>
 				<FilterButton $on={filterCount > 0} onClick={() => setFiltersOpen(o => !o)} aria-expanded={filtersOpen}>
-					<SlidersHorizontal size={16} /> 필터{filterCount > 0 ? ` ${filterCount}` : ""}
+					<SlidersHorizontal size={16} /> {t("filters")}{filterCount > 0 ? ` ${filterCount}` : ""}
 				</FilterButton>
 				{filtersOpen && (
 					<FilterPanel
@@ -79,7 +84,7 @@ export function SearchControls({ total, browse = false }: { total: number; brows
 			</Popover>
 			<Popover>
 				<FilterButton $on={hasPlace} onClick={() => setOpen(o => !o)} aria-expanded={open}>
-					<MapPin size={16} /> {hasPlace ? `${placeName ?? "선택한 위치"} · ${distanceLabel(km)}` : "위치 설정"}
+					<MapPin size={16} /> {hasPlace ? `${placeName ?? t("chosenPlace")} · ${L.distance(km)}` : t("setPlace")}
 				</FilterButton>
 				{open && (
 					<LocationFilterPanel
@@ -107,9 +112,9 @@ export function SearchControls({ total, browse = false }: { total: number; brows
 					/>
 				)}
 			</Popover>
-			<select aria-label="정렬" value={sort} onChange={e => update({ sort: e.target.value || null })}>
+			<select aria-label={t("sort")} value={sort} onChange={e => update({ sort: e.target.value || null })}>
 				{(browse ? BROWSE_SORTS : SORTS).filter(s => !s.needsPlace || hasPlace).map(s => (
-					<option key={s.value} value={s.value}>{s.label}</option>
+					<option key={s.value} value={s.value}>{t(s.key)}</option>
 				))}
 			</select>
 		</Toolbar>
@@ -124,6 +129,9 @@ function FilterPanel({ initial, onApply, onClose }: {
 	onApply: (f: Filters) => void;
 	onClose: () => void;
 }) {
+	const t = useTranslations("market");
+	const c = useTranslations("common");
+	const L = useLabels();
 	const [f, setF] = useState(initial);
 	const invalid = !!f.min && !!f.max && Number(f.min) > Number(f.max);
 
@@ -134,30 +142,30 @@ function FilterPanel({ initial, onApply, onClose }: {
 	}, [onClose]);
 
 	return (
-		<PopoverPanel role="dialog" aria-label="필터">
-			<strong>필터</strong>
-			<FieldLabel>지역
+		<PopoverPanel role="dialog" aria-label={t("filters")}>
+			<strong>{t("filters")}</strong>
+			<FieldLabel>{c("region")}
 				<select value={f.region} onChange={e => setF({ ...f, region: e.target.value })}>
-					<option value="">전체</option>
-					{REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+					<option value="">{t("all")}</option>
+					{REGIONS.map(r => <option key={r} value={r}>{L.enum("region", r)}</option>)}
 				</select>
 			</FieldLabel>
 			<TwoColumns>
-				<FieldLabel>최소 가격
+				<FieldLabel>{t("minPrice")}
 					<Adorned><span aria-hidden>€</span>
 						<input type="number" min={0} inputMode="decimal" placeholder="0" value={f.min} onChange={e => setF({ ...f, min: e.target.value })} />
 					</Adorned>
 				</FieldLabel>
-				<FieldLabel>최대 가격
+				<FieldLabel>{t("maxPrice")}
 					<Adorned><span aria-hidden>€</span>
-						<input type="number" min={0} inputMode="decimal" placeholder="제한 없음" value={f.max} onChange={e => setF({ ...f, max: e.target.value })} />
+						<input type="number" min={0} inputMode="decimal" placeholder={t("noLimit")} value={f.max} onChange={e => setF({ ...f, max: e.target.value })} />
 					</Adorned>
 				</FieldLabel>
 			</TwoColumns>
-			{invalid && <Muted role="alert">최소 가격이 최대 가격보다 커요.</Muted>}
+			{invalid && <Muted role="alert">{t("minOverMax")}</Muted>}
 			<PanelActions>
-				<GhostButton type="button" onClick={() => onApply({ region: "", min: "", max: "" })}>초기화</GhostButton>
-				<button type="button" disabled={invalid} onClick={() => onApply(f)}>적용</button>
+				<GhostButton type="button" onClick={() => onApply({ region: "", min: "", max: "" })}>{t("reset")}</GhostButton>
+				<button type="button" disabled={invalid} onClick={() => onApply(f)}>{t("apply")}</button>
 			</PanelActions>
 		</PopoverPanel>
 	);
@@ -174,6 +182,8 @@ export function LocationFilterPanel({ initial, onApply, onClose }: {
 	onApply: (f: Filter | null) => void;
 	onClose: () => void;
 }) {
+	const t = useTranslations("market");
+	const L = useLabels();
 	const [area, setArea] = useState<Area | null>(null);
 	const [center, setCenter] = useState<LatLng | null>(initial?.center ?? null);
 	const [name, setName] = useState(initial?.name ?? "");
@@ -193,9 +203,9 @@ export function LocationFilterPanel({ initial, onApply, onClose }: {
 			return;
 		}
 		const ctrl = new AbortController();
-		const t = setTimeout(() => searchPlaces(q, ctrl.signal).then(setResults).catch(() => {}), 500);
+		const timer = setTimeout(() => searchPlaces(q, ctrl.signal).then(setResults).catch(() => {}), 500);
 		return () => {
-			clearTimeout(t);
+			clearTimeout(timer);
 			ctrl.abort();
 		};
 	}, [query]);
@@ -213,7 +223,7 @@ export function LocationFilterPanel({ initial, onApply, onClose }: {
 		try {
 			const a = await resolveArea(p);
 			if (!a) {
-				setError("이 위치의 동네를 찾지 못했어요.");
+				setError(t("noArea"));
 				return;
 			}
 			setArea(a);
@@ -221,18 +231,18 @@ export function LocationFilterPanel({ initial, onApply, onClose }: {
 			setCenter(keepPoint ? p : areaCenter(a));
 			if (keepPoint && km === 0) setKm(5);
 		} catch (e) {
-			setError(e instanceof Error ? e.message : "위치를 확인하지 못했어요.");
+			setError(e instanceof Error ? e.message : t("checkError"));
 		}
 	};
 
 	return (
-		<PopoverPanel role="dialog" aria-label="위치 필터">
-			<strong>어디에서 찾을까요?</strong>
+		<PopoverPanel role="dialog" aria-label={t("placeFilter")}>
+			<strong>{t("where")}</strong>
 			<PlaceSearch>
 				<input
 					type="search"
-					placeholder="동네, 구, 역 (예: Paris 15, Boulogne)"
-					aria-label="장소 검색"
+					placeholder={t("placePlaceholder")}
+					aria-label={t("placeLabel")}
 					value={query}
 					onChange={e => setQuery(e.target.value)}
 				/>
@@ -240,7 +250,7 @@ export function LocationFilterPanel({ initial, onApply, onClose }: {
 					type="button"
 					onClick={() => currentPosition().then(p => pick(p, true)).catch(e => setError(e.message))}
 				>
-					<LocateFixed size={16} /> 내 위치
+					<LocateFixed size={16} /> {t("myPosition")}
 				</GhostButton>
 				{results.length > 0 && (
 					<PlaceResults>
@@ -262,18 +272,18 @@ export function LocationFilterPanel({ initial, onApply, onClose }: {
 			<MapBox $h={220}>
 				<PickerMap pin={null} area={area} radiusKm={km || undefined} onPick={p => pick(p)} />
 			</MapBox>
-			{name && <Muted>{name} · {distanceLabel(km)}</Muted>}
-			<RadiusChips role="group" aria-label="거리">
+			{name && <Muted>{name} · {L.distance(km)}</Muted>}
+			<RadiusChips role="group" aria-label={t("distance")}>
 				{SEARCH_DISTANCES.map(d => (
 					<button key={d} type="button" aria-pressed={km === d} disabled={d === 0 && !area} onClick={() => setKm(d)}>
-						{distanceLabel(d)}
+						{L.distance(d)}
 					</button>
 				))}
 			</RadiusChips>
 			{error && <Muted role="alert">{error}</Muted>}
 			<PanelActions>
-				<GhostButton type="button" onClick={() => onApply(null)}>위치 해제</GhostButton>
-				<button type="button" disabled={!center} onClick={() => center && onApply({ area, center, km, name })}>적용</button>
+				<GhostButton type="button" onClick={() => onApply(null)}>{t("clearPlace")}</GhostButton>
+				<button type="button" disabled={!center} onClick={() => center && onApply({ area, center, km, name })}>{t("apply")}</button>
 			</PanelActions>
 		</PopoverPanel>
 	);

@@ -12,8 +12,8 @@ describe("subjects", () => {
 		expect(subjectHref({ SubjectType: "job", SubjectId: "j1" })).toBe("/jobs/j1");
 	});
 
-	it("falls back to the product name, then to a deleted label", () => {
-		expect(subjectTitle({ SubjectType: "product", SubjectId: "p", ProductName: "의자" })).toBe("의자");
-		expect(subjectTitle({ SubjectType: "housing", SubjectId: "h" })).toBe("삭제된 글");
+	it("falls back to the product name, then to nothing", () => {
+		expect(subjectTitle({ ProductName: "의자" })).toBe("의자");
+		expect(subjectTitle({})).toBe("");
 	});
 });

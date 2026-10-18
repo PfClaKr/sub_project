@@ -6,6 +6,7 @@ import palette, { radius } from "@/theme/colorPalette";
 import Link from "next/link";
 import { LOGIN_URL } from "@/libs/config";
 import { MIN_AGE } from "@/libs/legal";
+import { useTranslations } from "next-intl";
 
 const GoogleLink = styled.a`
 	display: flex;
@@ -64,6 +65,7 @@ const GoogleMark = () => (
 
 // Only rendered when the loginserver reports Google OAuth is configured.
 export const GoogleButton = ({ label }: { label: string }) => {
+	const t = useTranslations("auth");
 	const [enabled, setEnabled] = useState(false);
 
 	useEffect(() => {
@@ -82,9 +84,13 @@ export const GoogleButton = ({ label }: { label: string }) => {
 				{label}
 			</GoogleLink>
 			<GoogleNote>
-				Google로 처음 가입하면 만 {MIN_AGE}세 이상이며 <Link href="/terms">이용약관</Link>과 <Link href="/privacy">개인정보처리방침</Link>에 동의한 것으로 봐요.
+				{t.rich("googleNote", {
+					age: MIN_AGE,
+					terms: chunks => <Link href="/terms">{chunks}</Link>,
+					privacy: chunks => <Link href="/privacy">{chunks}</Link>,
+				})}
 			</GoogleNote>
-			<Divider>또는</Divider>
+			<Divider>{t("or")}</Divider>
 		</>
 	);
 };

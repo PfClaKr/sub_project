@@ -5,6 +5,7 @@ import { Ban, Flag, MoreVertical, UserCheck } from "lucide-react";
 import { ReportDialog } from "@/components/community/ReportButton";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { MenuPanel, MenuToggle, MenuWrap } from "@/styles/styledChat";
+import { useTranslations } from "next-intl";
 
 // ChatMenu: report the conversation or block the other member.
 export function ChatMenu({ chatId, partner, blockedByMe, onBlock }: {
@@ -13,6 +14,7 @@ export function ChatMenu({ chatId, partner, blockedByMe, onBlock }: {
 	blockedByMe: boolean;
 	onBlock: (block: boolean) => Promise<void>;
 }) {
+	const t = useTranslations("chat");
 	const confirm = useConfirm();
 	const [open, setOpen] = useState(false);
 	const [reporting, setReporting] = useState(false);
@@ -36,9 +38,9 @@ export function ChatMenu({ chatId, partner, blockedByMe, onBlock }: {
 		setOpen(false);
 		if (!blockedByMe) {
 			const ok = await confirm({
-				title: `${partner}님을 차단할까요?`,
-				message: "서로 메시지를 보낼 수 없고, 새 채팅도 시작할 수 없어요. 상대에게는 차단했다는 사실이 알려지지 않아요. 마이페이지에서 언제든 해제할 수 있어요.",
-				confirmLabel: "차단",
+				title: t("blockTitle", { name: partner }),
+				message: t("blockBody"),
+				confirmLabel: t("block"),
 				danger: true,
 			});
 			if (!ok) return;
@@ -48,16 +50,16 @@ export function ChatMenu({ chatId, partner, blockedByMe, onBlock }: {
 
 	return (
 		<MenuWrap ref={wrap}>
-			<MenuToggle type="button" aria-label="채팅 메뉴" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(o => !o)}>
+			<MenuToggle type="button" aria-label={t("menu")} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(o => !o)}>
 				<MoreVertical size={18} aria-hidden />
 			</MenuToggle>
 			{open && (
 				<MenuPanel role="menu">
 					<button type="button" role="menuitem" disabled={reported} onClick={() => { setOpen(false); setReporting(true); }}>
-						<Flag size={16} aria-hidden /> {reported ? "신고했어요" : "신고하기"}
+						<Flag size={16} aria-hidden /> {reported ? t("reported") : t("report")}
 					</button>
 					<button type="button" role="menuitem" className={blockedByMe ? "" : "danger"} onClick={toggleBlock}>
-						{blockedByMe ? <><UserCheck size={16} aria-hidden /> 차단 해제</> : <><Ban size={16} aria-hidden /> 차단하기</>}
+						{blockedByMe ? <><UserCheck size={16} aria-hidden /> {t("unblock")}</> : <><Ban size={16} aria-hidden /> {t("blockAction")}</>}
 					</button>
 				</MenuPanel>
 			)}

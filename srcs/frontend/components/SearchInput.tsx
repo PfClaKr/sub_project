@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState, FormEvent, KeyboardEvent } from "react";
 import { SearchRow, ComboBox, SuggestionList } from "@/styles/styledHome";
 import { gql } from "@/libs/graphql";
@@ -22,6 +23,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
 // Hangul syllable is still being composed ("아잎" → 아이폰), which the
 // backend matches by jamo prefix.
 export const SearchInput = ({ initial = "" }: { initial?: string }) => {
+	const t = useTranslations("market");
 	const router = useRouter();
 	const listId = useId();
 	const [value, setValue] = useState(initial);
@@ -87,8 +89,8 @@ export const SearchInput = ({ initial = "" }: { initial?: string }) => {
 				<input
 					type="search"
 					role="combobox"
-					placeholder="어떤 물건을 찾고 있냥?"
-					aria-label="상품 검색"
+					placeholder={t("searchPlaceholder")}
+					aria-label={t("searchLabel")}
 					aria-autocomplete="list"
 					aria-expanded={showList}
 					aria-controls={listId}
@@ -105,7 +107,7 @@ export const SearchInput = ({ initial = "" }: { initial?: string }) => {
 					onKeyDown={handleKeyDown}
 				/>
 				{showList && (
-					<SuggestionList id={listId} role="listbox" aria-label="추천 검색어">
+					<SuggestionList id={listId} role="listbox" aria-label={t("suggestions")}>
 						{suggestions.map((s, i) => (
 							<li
 								key={s}
@@ -125,7 +127,7 @@ export const SearchInput = ({ initial = "" }: { initial?: string }) => {
 					</SuggestionList>
 				)}
 			</ComboBox>
-			<button type="submit">검색</button>
+			<button type="submit">{t("search")}</button>
 		</SearchRow>
 	);
 };

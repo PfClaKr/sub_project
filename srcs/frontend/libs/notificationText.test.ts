@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
+import { createTranslator } from "next-intl";
+import ko from "../messages/ko.json";
+import type { T } from "./labels";
 import { badgeText, notificationHref, notificationTitle } from "./notificationText";
+
+const t = createTranslator({ locale: "ko", messages: ko }) as unknown as T;
 
 describe("notification text", () => {
 	it("has a headline for every type and a fallback", () => {
-		expect(notificationTitle({ Type: "accepted" })).toBe("내 답변이 채택됐어요");
-		expect(notificationTitle({ Type: "unknown" as never })).toBe("새 알림");
+		expect(notificationTitle(t, { Type: "accepted" })).toBe("내 답변이 채택됐어요");
+		expect(notificationTitle(t, { Type: "unknown" as never })).toBe("새 알림");
 	});
 
 	it("follows only site paths", () => {

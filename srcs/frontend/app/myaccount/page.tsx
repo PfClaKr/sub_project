@@ -1,16 +1,15 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
 import { MyAccount } from "@/components/account/MyAccount";
 import { PageHeader } from "@/styles/styledLayout";
 
-export const metadata: Metadata = {
-	title: "마이페이지",
-};
+export const generateMetadata = pageMetadata("pages.myaccount");
 
-export default function Page() {
+export default async function Page() {
 	return (
 		<div>
 			<PageHeader>
-				<h1>마이페이지</h1>
+				<h1>{(await getTranslations("pages.myaccount"))("title")}</h1>
 			</PageHeader>
 			<MyAccount />
 		</div>

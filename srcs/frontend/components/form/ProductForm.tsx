@@ -10,12 +10,17 @@ import { uploadImages } from "@/libs/upload";
 import type { Product } from "@/libs/types";
 import { LocationField, type LocationState } from "./LocationField";
 import { ImageUploader, photoFromUrl, type Photo } from "./ImageUploader";
+import { useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
 
 const FIELDS = `$name: String!, $description: String!, $price: Float!, $category: String!, $images: [String!], $location: String!, $region: String, $lat: Float, $lng: Float, $exact: Boolean`;
 const ARGS = `ProductName: $name, ProductDescription: $description, ProductPrice: $price, ProductCategory: $category, ProductImage: $images, PreferedLocation: $location, ProductRegion: $region, Latitude: $lat, Longitude: $lng, ExactLocation: $exact`;
 
 // ProductForm creates a product, or edits one when `product` is given.
 export const ProductForm = ({ product }: { product?: Product }) => {
+	const t = useTranslations("productForm");
+	const c = useTranslations("common");
+	const L = useLabels();
 	const router = useRouter();
 	const [photos, setPhotos] = useState<Photo[]>(() => (product?.ProductImage ?? []).map(photoFromUrl));
 	const [description, setDescription] = useState(product?.ProductDescription ?? "");
@@ -35,11 +40,11 @@ export const ProductForm = ({ product }: { product?: Product }) => {
 		event.preventDefault();
 		setError("");
 		if (!location.point) {
-			setError("지도에서 거래 희망 위치를 골라주세요.");
+			setError(t("pickPlace"));
 			return;
 		}
 		if (!location.exact && !location.area && !location.areaId) {
-			setError("동네를 확인하지 못했어요. 다른 위치를 고르거나 정확한 위치로 표시해주세요.");
+			setError(t("noArea"));
 			return;
 		}
 		setSubmitting(true);
@@ -75,13 +80,13 @@ export const ProductForm = ({ product }: { product?: Product }) => {
 				).then(r => ({ data: r.data?.createProduct, error: r.error }));
 
 			if (!data?.ProductId) {
-				setError(error ?? "저장하지 못했어요. 다시 시도해주세요.");
+				setError(error ?? c("saveError"));
 				return;
 			}
 			router.push(`/product/${data.ProductId}`);
 			router.refresh();
 		} catch (e) {
-			setError(e instanceof Error ? e.message : "저장하지 못했어요.");
+			setError(e instanceof Error ? e.message : c("saveError"));
 		} finally {
 			setSubmitting(false);
 		}
@@ -91,62 +96,62 @@ export const ProductForm = ({ product }: { product?: Product }) => {
 		<FormColumn onSubmit={handleSubmit} style={{ maxWidth: 680 }}>
 			<FormSection aria-labelledby="sec-photos">
 				<header>
-					<h2 id="sec-photos">사진</h2>
-					<p>첫 번째 사진이 목록에 보이는 대표 사진이에요.</p>
+					<h2 id="sec-photos">{t("photos")}</h2>
+					<p>{t("photosTip")}</p>
 				</header>
 				<ImageUploader photos={photos} onChange={setPhotos} uploading={submitting} />
 			</FormSection>
 
 			<FormSection aria-labelledby="sec-basic">
-				<header><h2 id="sec-basic">기본 정보</h2></header>
-				<FieldLabel>상품명
-					<input type="text" name="name" required maxLength={100} placeholder="예: 이케아 원목 책상" defaultValue={product?.ProductName} />
+				<header><h2 id="sec-basic">{t("basics")}</h2></header>
+				<FieldLabel>{t("name")}
+					<input type="text" name="name" required maxLength={100} placeholder={t("namePlaceholder")} defaultValue={product?.ProductName} />
 				</FieldLabel>
 				<TwoColumns>
-					<FieldLabel>가격
+					<FieldLabel>{t("price")}
 						<Adorned>
 							<span aria-hidden>€</span>
 							<input type="number" name="price" required min={0} max={1000000} step={0.01} inputMode="decimal" placeholder="0" defaultValue={product?.ProductPrice} />
 						</Adorned>
 					</FieldLabel>
-					<FieldLabel>카테고리
+					<FieldLabel>{t("category")}
 						<select name="category" required defaultValue={product?.ProductCategory ?? ""}>
-							<option value="" disabled>선택해주세요</option>
-							{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+							<option value="" disabled>{c("choose")}</option>
+							{CATEGORIES.map(cat => <option key={cat} value={cat}>{L.enum("category", cat)}</option>)}
 						</select>
 					</FieldLabel>
 				</TwoColumns>
 			</FormSection>
 
 			<FormSection aria-labelledby="sec-location">
-				<header><h2 id="sec-location">거래 위치</h2></header>
-				<FieldLabel>지역 <Hint>검색 필터에 쓰여요</Hint>
+				<header><h2 id="sec-location">{t("location")}</h2></header>
+				<FieldLabel>{c("region")} <Hint>{t("regionHint")}</Hint>
 					<select name="region" required defaultValue={product?.ProductRegion ?? DEFAULT_REGION}>
-						{REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+						{REGIONS.map(r => <option key={r} value={r}>{L.enum("region", r)}</option>)}
 					</select>
 				</FieldLabel>
 				<LocationField value={location} onChange={setLocation} />
 			</FormSection>
 
 			<FormSection aria-labelledby="sec-desc">
-				<header><h2 id="sec-desc">설명</h2></header>
+				<header><h2 id="sec-desc">{t("description")}</h2></header>
 				<FieldLabel>
-					<span className="sr-only">설명</span>
+					<span className="sr-only">{t("description")}</span>
 					<textarea
 						required
 						maxLength={2000}
 						rows={7}
-						placeholder={"상품 상태, 구매 시기, 하자 여부 등을 적어주세요.\n예) 1년 사용, 모서리에 작은 긁힘 있어요."}
+						placeholder={t("descriptionPlaceholder")}
 						value={description}
 						onChange={e => setDescription(e.target.value)}
 					/>
-					<Counter>{description.length.toLocaleString()} / 2,000</Counter>
+					<Counter>{description.length.toLocaleString()} / {(2000).toLocaleString()}</Counter>
 				</FieldLabel>
 			</FormSection>
 
 			{error && <ErrorText role="alert">{error}</ErrorText>}
 			<SubmitButton type="submit" disabled={submitting}>
-				{submitting ? "저장 중..." : product ? "수정 완료" : "등록하기"}
+				{submitting ? c("saving") : product ? t("update") : t("submit")}
 			</SubmitButton>
 		</FormColumn>
 	);

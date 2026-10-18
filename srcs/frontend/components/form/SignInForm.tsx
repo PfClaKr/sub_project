@@ -9,9 +9,11 @@ import { ErrorText } from "@/styles/styledUi";
 import { safeNext } from "@/libs/redirect";
 import { ResendVerification } from "@/components/auth/ResendVerification";
 import { PasswordInput } from "./PasswordInput";
+import { useTranslations } from "next-intl";
 
 // Runs in the browser so the loginserver's Set-Cookie reaches it.
 export const SignInForm = ({ next }: { next?: string }) => {
+	const t = useTranslations("auth");
 	const router = useRouter();
 	const { refresh } = useSession();
 	const [error, setError] = useState("");
@@ -34,13 +36,13 @@ export const SignInForm = ({ next }: { next?: string }) => {
 			if (!res.ok) {
 				const json = await res.json().catch(() => null);
 				if (json?.code === "EMAIL_NOT_VERIFIED") setUnverified(String(form.get("email") ?? ""));
-				setError(json?.error ?? "로그인하지 못했어요.");
+				setError(json?.error ?? t("loginError"));
 				return;
 			}
 			await refresh();
 			router.push(safeNext(next));
 		} catch {
-			setError("서버에 연결하지 못했어요.");
+			setError(t("serverError"));
 		} finally {
 			setSubmitting(false);
 		}
@@ -48,15 +50,15 @@ export const SignInForm = ({ next }: { next?: string }) => {
 
 	return (
 		<FormColumn onSubmit={handleSubmit}>
-			<FieldLabel>이메일
+			<FieldLabel>{t("email")}
 				<input type="email" name="email" autoComplete="email" required />
 			</FieldLabel>
-			<FieldLabel>비밀번호
+			<FieldLabel>{t("password")}
 				<PasswordInput name="password" autoComplete="current-password" required />
 			</FieldLabel>
 			{error && <ErrorText role="alert">{error}</ErrorText>}
 			{unverified && <ResendVerification email={unverified} />}
-			<button type="submit" disabled={submitting}>{submitting ? "로그인 중..." : "로그인"}</button>
+			<button type="submit" disabled={submitting}>{submitting ? t("loggingIn") : t("login")}</button>
 		</FormColumn>
 	);
 };

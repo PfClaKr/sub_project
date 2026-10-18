@@ -19,13 +19,13 @@ export function LegalShell({ doc, lang, title, children }: { doc: Doc; lang: Leg
 			<LegalNav aria-label={lang === "ko" ? "약관과 정책" : "Documents"}>
 				<div className="docs">
 					{DOCS.map(d => (
-						<Link key={d.key} href={lang === "fr" ? `${d.href}?lang=fr` : d.href} aria-current={d.key === doc ? "page" : undefined}>
+						<Link key={d.key} href={`${d.href}?lang=${lang}`} aria-current={d.key === doc ? "page" : undefined}>
 							{d[lang]}
 						</Link>
 					))}
 				</div>
 				<div className="langs" role="group" aria-label="언어 / Langue">
-					<LangLink href={href} $on={lang === "ko"} hrefLang="ko">한국어</LangLink>
+					<LangLink href={`${href}?lang=ko`} $on={lang === "ko"} hrefLang="ko">한국어</LangLink>
 					<LangLink href={`${href}?lang=fr`} $on={lang === "fr"} hrefLang="fr">Français</LangLink>
 				</div>
 			</LegalNav>

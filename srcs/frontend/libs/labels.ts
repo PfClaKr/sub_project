@@ -23,7 +23,7 @@ export function makeLabels(t: T, locale: Locale = DEFAULT_LOCALE) {
 	const known = (key: string, fallback = "") => (t.has(key) ? t(key) : fallback);
 	const price = (n: number | undefined) => formatPrice(n, locale);
 	return {
-		enum: (group: EnumGroup, value: string | undefined) => (value ? known(`enums.${group}.${value}`, value) : ""),
+		enum: (group: EnumGroup, value: string | null | undefined) => (value ? known(`enums.${group}.${value}`, value) : ""),
 		board: (type: Post["Type"]) => known(`enums.board.${type}`, type),
 		mode: (type: ListingType, mode?: string) => (mode ? known(`enums.mode.${type}.${mode}`) : ""),
 		deal: (deal?: string) => (deal ? known(`enums.deal.${deal}`) : ""),

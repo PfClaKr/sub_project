@@ -6,8 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { API_URL } from "@/libs/config";
 import { useSession } from "@/libs/session";
 import { GhostButton } from "@/styles/styledUi";
+import { useTranslations } from "next-intl";
 
 export const FavoriteButton = ({ productId }: { productId: string }) => {
+	const t = useTranslations("product");
 	const { session } = useSession();
 	const router = useRouter();
 	const pathname = usePathname();
@@ -51,7 +53,7 @@ export const FavoriteButton = ({ productId }: { productId: string }) => {
 	return (
 		<GhostButton onClick={toggle} disabled={busy} aria-pressed={favorited}>
 			<Heart size={16} fill={favorited ? "currentColor" : "none"} aria-hidden />
-			{favorited ? "찜 해제" : "찜하기"}
+			{favorited ? t("unfavorite") : t("favorite")}
 		</GhostButton>
 	);
 };

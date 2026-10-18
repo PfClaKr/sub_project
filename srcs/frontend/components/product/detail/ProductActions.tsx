@@ -11,6 +11,9 @@ import { ChatButton } from "@/components/button/ChatButton";
 import { FavoriteButton } from "@/components/button/FavoriteButton";
 import { StatusSelector } from "./StatusSelector";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
+import { useLocale, useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
+import type { Locale } from "@/i18n/config";
 
 // Owners manage the listing; everyone else can save it or start a chat.
 export function ProductActions({ productId, ownerId, status, price }: {
@@ -19,6 +22,9 @@ export function ProductActions({ productId, ownerId, status, price }: {
 	status: string;
 	price?: number;
 }) {
+	const t = useTranslations("product");
+	const L = useLabels();
+	const locale = useLocale() as Locale;
 	const { session, loading } = useSession();
 	const router = useRouter();
 	const confirm = useConfirm();
@@ -31,9 +37,9 @@ export function ProductActions({ productId, ownerId, status, price }: {
 	if (session && session.UserId === ownerId) {
 		const handleDelete = async () => {
 			const ok = await confirm({
-				title: "이 상품을 삭제할까요?",
-				message: "삭제한 상품과 사진은 되돌릴 수 없어요.",
-				confirmLabel: "삭제",
+				title: t("deleteTitle"),
+				message: t("deleteBody"),
+				confirmLabel: t("delete"),
 				danger: true,
 			});
 			if (!ok) return;
@@ -44,7 +50,7 @@ export function ProductActions({ productId, ownerId, status, price }: {
 			);
 			setDeleting(false);
 			if (!data?.deleteProduct) {
-				setError(error ?? "삭제하지 못했어요.");
+				setError(error ?? t("deleteError"));
 				return;
 			}
 			router.push("/myaccount");
@@ -55,9 +61,9 @@ export function ProductActions({ productId, ownerId, status, price }: {
 			<>
 				<StatusSelector productId={productId} initial={currentStatus} onChange={setCurrentStatus} />
 				<Actions>
-					<LinkButton href={`/product/${productId}/edit`} $ghost>수정하기</LinkButton>
+					<LinkButton href={`/product/${productId}/edit`} $ghost>{t("edit")}</LinkButton>
 					<DangerButton onClick={handleDelete} disabled={deleting}>
-						{deleting ? "삭제 중..." : "삭제하기"}
+						{deleting ? t("deleting") : t("delete")}
 					</DangerButton>
 				</Actions>
 				{error && <ErrorText>{error}</ErrorText>}
@@ -68,12 +74,12 @@ export function ProductActions({ productId, ownerId, status, price }: {
 	return (
 		<>
 			{currentStatus !== "판매중" && (
-				<div><StatusBadge $status={currentStatus}>{currentStatus}</StatusBadge></div>
+				<div><StatusBadge $status={currentStatus}>{L.enum("status", currentStatus)}</StatusBadge></div>
 			)}
 			<StickyActions>
-				{price !== undefined && <span className="price">{formatPrice(price)}</span>}
+				{price !== undefined && <span className="price">{formatPrice(price, locale)}</span>}
 				<FavoriteButton productId={productId} />
-				<ChatButton productId={productId} disabled={currentStatus === "판매완료"} />
+				<ChatButton productId={productId} disabled={currentStatus === "판매완료"} disabledLabel={L.enum("status", "판매완료")} />
 			</StickyActions>
 			<ReserveActionSpace />
 		</>

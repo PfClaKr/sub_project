@@ -1,15 +1,16 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
 import { BlockList } from "@/components/chat/BlockList";
 import { PageHeader } from "@/styles/styledLayout";
 
-export const metadata: Metadata = { title: "차단한 사용자" };
+export const generateMetadata = pageMetadata("pages.blocked");
 
-export default function Page() {
+export default async function Page() {
 	return (
 		<div style={{ maxWidth: 640 }}>
 			<PageHeader>
-				<h1>차단한 사용자</h1>
-				<p>차단한 사람과는 서로 메시지를 보낼 수 없고, 새 채팅도 시작할 수 없어요.</p>
+				<h1>{(await getTranslations("pages.blocked"))("title")}</h1>
+				<p>{(await getTranslations("pages.blocked"))("lead")}</p>
 			</PageHeader>
 			<BlockList />
 		</div>

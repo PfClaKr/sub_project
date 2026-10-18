@@ -20,8 +20,13 @@ import { Section, SectionTitle, Row } from "@/styles/styledLayout";
 import { FieldLabel } from "@/styles/styledForm";
 import { EmptyState, ErrorText, GhostButton, LinkButton, MenuGrid, MenuTile, Muted } from "@/styles/styledUi";
 import type { Product, Session } from "@/libs/types";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLabels } from "@/libs/labels";
 
 function ProfileEditor({ session }: { session: Session }) {
+	const t = useTranslations("account");
+	const L = useLabels();
 	const { refresh } = useSession();
 	const [editing, setEditing] = useState(false);
 	const [busy, setBusy] = useState(false);
@@ -38,7 +43,7 @@ function ProfileEditor({ session }: { session: Session }) {
 		);
 		setBusy(false);
 		if (!data?.updateProfile) {
-			setError(error ?? "저장하지 못했어요.");
+			setError(error ?? t("saveError"));
 			return false;
 		}
 		await refresh();
@@ -59,16 +64,16 @@ function ProfileEditor({ session }: { session: Session }) {
 			await save(session.UserNickname ?? "", url);
 		} catch (e) {
 			setBusy(false);
-			setError(e instanceof Error ? e.message : "사진을 올리지 못했어요.");
+			setError(e instanceof Error ? e.message : t("photoError"));
 		}
 	};
 
 	return (
 		<Row style={{ gap: 16, alignItems: "flex-start" }}>
-			<AvatarPicker title="프로필 사진 바꾸기" aria-busy={busy}>
+			<AvatarPicker title={t("changePhoto")} aria-busy={busy}>
 				<Avatar src={session.ProfileImage} name={session.UserNickname} size={72} />
 				<span className="badge" aria-hidden><Camera size={14} /></span>
-				<span className="sr-only">프로필 사진 바꾸기</span>
+				<span className="sr-only">{t("changePhoto")}</span>
 				<input
 					type="file"
 					accept="image/jpeg,image/png,image/gif,image/webp"
@@ -81,20 +86,20 @@ function ProfileEditor({ session }: { session: Session }) {
 				{editing ? (
 					<form onSubmit={handleNickname} style={{ display: "flex", gap: 8, maxWidth: 360 }}>
 						<FieldLabel style={{ flex: 1 }}>
-							<span className="sr-only">닉네임</span>
+							<span className="sr-only">{t("nickname")}</span>
 							<input name="nickname" defaultValue={session.UserNickname} minLength={2} maxLength={20} required autoFocus />
 						</FieldLabel>
-						<button type="submit" disabled={busy}>저장</button>
-						<GhostButton type="button" onClick={() => setEditing(false)}>취소</GhostButton>
+						<button type="submit" disabled={busy}>{t("save")}</button>
+						<GhostButton type="button" onClick={() => setEditing(false)}>{t("cancel")}</GhostButton>
 					</form>
 				) : (
 					<Row>
 						<strong style={{ fontSize: 20 }}>{session.UserNickname}</strong>
-						<GhostButton onClick={() => setEditing(true)}>닉네임 변경</GhostButton>
+						<GhostButton onClick={() => setEditing(true)}>{t("changeNickname")}</GhostButton>
 					</Row>
 				)}
 				<Muted>
-					{session.Residence ? `${session.Residence} · ` : ""}프로필 사진을 눌러 바꿀 수 있어요.
+					{session.Residence ? `${L.enum("region", session.Residence)} · ` : ""}{t("photoTip")}
 				</Muted>
 				{error && <ErrorText role="alert">{error}</ErrorText>}
 			</div>
@@ -103,6 +108,7 @@ function ProfileEditor({ session }: { session: Session }) {
 }
 
 function MyProducts({ userId }: { userId: string }) {
+	const t = useTranslations("account");
 	const [products, setProducts] = useState<Product[] | null>(null);
 	const [error, setError] = useState("");
 
@@ -124,8 +130,8 @@ function MyProducts({ userId }: { userId: string }) {
 	if (products.length === 0) {
 		return (
 			<EmptyState>
-				<p>아직 올린 상품이 없어요.</p>
-				<LinkButton href="/sell">첫 상품 올리기</LinkButton>
+				<p>{t("noItems")}</p>
+				<LinkButton href="/sell">{t("firstItem")}</LinkButton>
 			</EmptyState>
 		);
 	}
@@ -134,6 +140,7 @@ function MyProducts({ userId }: { userId: string }) {
 
 // Shortcuts the phone header has no room for (logout, wishlist, alerts).
 function AccountLinks() {
+	const t = useTranslations("account");
 	const { logout } = useSession();
 	const { unread } = useNotifications();
 	// Full reload: drops pages cached for the logged-in user.
@@ -143,21 +150,21 @@ function AccountLinks() {
 	};
 	return (
 		<>
-			<MenuGrid aria-label="바로가기">
-				<li><MenuTile href="/sell"><PlusSquare size={22} aria-hidden />판매하기</MenuTile></li>
-				<li><MenuTile href="/wishlist"><Heart size={22} aria-hidden />찜 목록</MenuTile></li>
-				<li><MenuTile href="/chat"><MessageCircle size={22} aria-hidden />채팅</MenuTile></li>
+			<MenuGrid aria-label={t("shortcuts")}>
+				<li><MenuTile href="/sell"><PlusSquare size={22} aria-hidden />{t("sell")}</MenuTile></li>
+				<li><MenuTile href="/wishlist"><Heart size={22} aria-hidden />{t("wishlist")}</MenuTile></li>
+				<li><MenuTile href="/chat"><MessageCircle size={22} aria-hidden />{t("chat")}</MenuTile></li>
 				<li>
 					<MenuTile href="/notifications">
-						<Bell size={22} aria-hidden />알림
-						{unread > 0 && <span className="count" aria-label={`읽지 않은 알림 ${unread}개`}>{unread > 99 ? "99+" : unread}</span>}
+						<Bell size={22} aria-hidden />{t("notifications")}
+						{unread > 0 && <span className="count" aria-label={t("unread", { count: unread })}>{unread > 99 ? "99+" : unread}</span>}
 					</MenuTile>
 				</li>
-				<li><MenuTile href="#activity"><FileText size={22} aria-hidden />내 글</MenuTile></li>
-				<li><MenuTile href="/myaccount/notifications"><Settings size={22} aria-hidden />알림 설정</MenuTile></li>
+				<li><MenuTile href="#activity"><FileText size={22} aria-hidden />{t("myPosts")}</MenuTile></li>
+				<li><MenuTile href="/myaccount/notifications"><Settings size={22} aria-hidden />{t("notifySettings")}</MenuTile></li>
 			</MenuGrid>
 			<Row style={{ justifyContent: "flex-end", marginTop: 8 }}>
-				<GhostButton onClick={handleLogout} style={{ border: "none" }}>로그아웃</GhostButton>
+				<GhostButton onClick={handleLogout} style={{ border: "none" }}>{t("logout")}</GhostButton>
 			</Row>
 		</>
 	);
@@ -166,22 +173,23 @@ function AccountLinks() {
 // LeaveButton deletes the account after a typed confirmation
 // (DELETE /account on the apiserver; what is kept is in the privacy policy).
 function LeaveButton() {
+	const t = useTranslations("account");
 	const confirm = useConfirm();
 	const [error, setError] = useState("");
 	const leave = async () => {
 		const ok = await confirm({
-			title: "정말 탈퇴할까요?",
-			message: "계정, 올린 상품과 사진, 찜과 알림이 바로 삭제되고 되돌릴 수 없어요. 커뮤니티 글과 댓글은 '탈퇴한 회원'으로 남으니, 지우고 싶은 글은 먼저 삭제해주세요. 채팅과 신고 기록은 분쟁 대응을 위해 1년 보관 후 삭제돼요.",
-			confirmLabel: "탈퇴하기",
+			title: t("leaveTitle"),
+			message: t("leaveBody"),
+			confirmLabel: t("leaveConfirm"),
 			danger: true,
-			requireText: "탈퇴",
-			requireLabel: "확인을 위해 '탈퇴'를 입력해주세요",
+			requireText: t("leaveWord"),
+			requireLabel: t("leaveLabel", { word: t("leaveWord") }),
 		});
 		if (!ok) return;
 		const res = await fetch(`${API_URL}/account`, { method: "DELETE", credentials: "include" }).catch(() => null);
 		if (!res?.ok) {
 			const json = await res?.json().catch(() => null);
-			setError(json?.error ?? "탈퇴하지 못했어요. 잠시 후 다시 시도해주세요.");
+			setError(json?.error ?? t("leaveError"));
 			return;
 		}
 		// Full reload: no page keeps the deleted member's data.
@@ -189,7 +197,7 @@ function LeaveButton() {
 	};
 	return (
 		<>
-			<TextButton type="button" onClick={leave}>회원 탈퇴</TextButton>
+			<TextButton type="button" onClick={leave}>{t("leave")}</TextButton>
 			{error && <ErrorText role="alert">{error}</ErrorText>}
 		</>
 	);
@@ -197,6 +205,7 @@ function LeaveButton() {
 
 // Account settings: password change, blocked users, leaving.
 function AccountSettings() {
+	const t = useTranslations("account");
 	const [open, setOpen] = useState(false);
 	const [done, setDone] = useState("");
 	const [arrivalHidden, setArrivalHiddenState] = useState(false);
@@ -204,49 +213,56 @@ function AccountSettings() {
 	// After a reset the page opens with ?reset=1 (read here rather than with
 	// useSearchParams, which would need a Suspense boundary on this page).
 	useEffect(() => {
-		if (new URLSearchParams(window.location.search).get("reset") === "1") setDone("비밀번호를 새로 정했어요.");
-	}, []);
+		if (new URLSearchParams(window.location.search).get("reset") === "1") setDone(t("passwordReset"));
+	}, [t]);
 	return (
 		<Section id="account">
-			<SectionTitle>계정</SectionTitle>
+			<SectionTitle>{t("title")}</SectionTitle>
 			{done && <Muted as="p" role="status">{done}</Muted>}
 			{open
-				? <ChangePasswordForm onDone={() => { setOpen(false); setDone("비밀번호를 바꿨어요."); }} />
+				? <ChangePasswordForm onDone={() => { setOpen(false); setDone(t("passwordChanged")); }} />
 				: (
 					<Row style={{ gap: 8, flexWrap: "wrap" }}>
-						<GhostButton onClick={() => { setOpen(true); setDone(""); }}>비밀번호 변경</GhostButton>
-						<LinkButton href="/myaccount/blocked" $ghost>차단한 사용자</LinkButton>
+						<GhostButton onClick={() => { setOpen(true); setDone(""); }}>{t("changePassword")}</GhostButton>
+						<LinkButton href="/myaccount/blocked" $ghost>{t("blocked")}</LinkButton>
 						{arrivalHidden && (
-							<GhostButton onClick={() => { setArrivalHidden(false); setArrivalHiddenState(false); setDone("홈에 정착 체크리스트를 다시 보여드려요."); }}>
-								정착 체크리스트 다시 보기
+							<GhostButton onClick={() => { setArrivalHidden(false); setArrivalHiddenState(false); setDone(t("checklistBack")); }}>
+								{t("showChecklist")}
 							</GhostButton>
 						)}
 					</Row>
 				)}
+			<div style={{ marginTop: 16 }}>
+				<Muted as="div" style={{ fontSize: 13, fontWeight: 700 }}>{t("language")}</Muted>
+				<LanguageSwitcher />
+			</div>
 			<div style={{ marginTop: 28 }}><LeaveButton /></div>
 		</Section>
 	);
 }
 
-export const MyAccount = () => (
-	<RequireLogin>
-		{session => (
-			<>
-				<ProfileEditor session={session} />
-				<AccountLinks />
-				<Section>
-					<Row style={{ justifyContent: "space-between", marginBottom: 14 }}>
-						<SectionTitle style={{ margin: 0 }}>내가 올린 상품</SectionTitle>
-						<LinkButton href="/sell" $ghost>+ 새 상품</LinkButton>
-					</Row>
-					<MyProducts userId={session.UserId} />
-				</Section>
-				<Section id="activity">
-					<SectionTitle>커뮤니티 활동</SectionTitle>
-					<MyActivity />
-				</Section>
-				<AccountSettings />
-			</>
-		)}
-	</RequireLogin>
-);
+export function MyAccount() {
+	const t = useTranslations("account");
+	return (
+		<RequireLogin>
+			{session => (
+				<>
+					<ProfileEditor session={session} />
+					<AccountLinks />
+					<Section>
+						<Row style={{ justifyContent: "space-between", marginBottom: 14 }}>
+							<SectionTitle style={{ margin: 0 }}>{t("myItems")}</SectionTitle>
+							<LinkButton href="/sell" $ghost>{t("newItem")}</LinkButton>
+						</Row>
+						<MyProducts userId={session.UserId} />
+					</Section>
+					<Section id="activity">
+						<SectionTitle>{t("activity")}</SectionTitle>
+						<MyActivity />
+					</Section>
+					<AccountSettings />
+				</>
+			)}
+		</RequireLogin>
+	);
+}
