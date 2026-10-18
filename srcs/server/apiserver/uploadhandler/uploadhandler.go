@@ -52,6 +52,11 @@ func init() {
 	s3Client = s3.New(session.Must(session.NewSession(cfg)))
 
 	switch {
+	// A CDN (CloudFront) in front of the bucket serves objects at its
+	// root: photos then go out through its free tier instead of S3's
+	// (deploy/README.md).
+	case os.Getenv("S3_CDN_URL") != "":
+		publicBase = strings.TrimRight(os.Getenv("S3_CDN_URL"), "/")
 	case os.Getenv("S3_PUBLIC_URL") != "":
 		publicBase = os.Getenv("S3_PUBLIC_URL") + "/" + bucket
 	case endpoint == "":
