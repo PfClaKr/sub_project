@@ -143,3 +143,25 @@ export const NoticeBar = styled.div<{ $tone: "info" | "warning" }>`
 		color: inherit;
 	}
 `;
+
+// Shown while an admin previews unsaved site changes (PreviewBar).
+export const PreviewRibbon = styled.div`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-wrap: wrap;
+	gap: 8px 12px;
+	padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+	font-size: 14px;
+	color: #fff;
+	background: ${palette.heading};
+
+	button,
+	button:hover:not(:disabled) {
+		padding: 6px 12px;
+		font-size: 13px;
+		color: ${palette.heading};
+		background: #fff;
+		border: none;
+	}
+`;

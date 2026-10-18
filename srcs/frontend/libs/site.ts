@@ -9,7 +9,14 @@ export type SiteSettings = {
 	Hero: string;
 	Theme: Partial<Record<ColorToken, string>>;
 };
-export type SiteData = { Texts: Record<string, string>; Settings: SiteSettings };
+// Preview is true when the content is an admin's unsaved draft.
+export type SiteData = { Texts: Record<string, string>; Settings: SiteSettings; Preview?: boolean };
+
+// While the editor's preview is open, this cookie (value: the preview's
+// language) makes the site render the admin's draft (libs/site.server.ts).
+export const PREVIEW_COOKIE = "itnyang.preview";
+// Set by middleware.ts on /admin pages, which always show saved content.
+export const ADMIN_PAGE_HEADER = "x-itnyang-admin-page";
 
 export const DEFAULT_SETTINGS: SiteSettings = {
 	Notice: { Enabled: false, Tone: "info", Link: "", Text: {}, Version: 0 },

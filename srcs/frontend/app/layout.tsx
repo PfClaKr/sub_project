@@ -14,6 +14,7 @@ import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar"
 import GlobalStyle from "@/styles/globalStyles";
 import { Main } from "@/styles/styledLayout";
 import { NoticeBanner } from "@/components/NoticeBanner";
+import { PreviewBar } from "@/components/PreviewBar";
 import { getSite } from "@/libs/site.server";
 import { colors, cssVar, type ColorToken } from "@/theme/colorPalette";
 
@@ -39,7 +40,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
 	const locale = await getLocale();
 	const messages = await getMessages();
-	const { Settings: site } = await getSite(locale);
+	const { Settings: site, Preview: preview } = await getSite(locale);
 	const notice = site.Notice;
 	const noticeText = notice.Enabled ? notice.Text[locale] || notice.Text.ko || "" : "";
 	// Theme colours changed on /admin/site, as CSS variables over the
@@ -62,8 +63,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 							<NotificationProvider>
 								<RegionProvider>
 									<ConfirmProvider>
+										{preview && <PreviewBar />}
 										<Navigation />
-										{noticeText && <NoticeBanner text={noticeText} tone={notice.Tone} link={notice.Link} version={notice.Version} />}
+										{noticeText && <NoticeBanner text={noticeText} tone={notice.Tone} link={notice.Link} version={notice.Version} alwaysShow={preview} />}
 										<SuspendedBanner />
 										<Main>{children}</Main>
 										<Footer />
