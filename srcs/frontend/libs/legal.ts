@@ -4,7 +4,7 @@
 // documents say means a new LEGAL_VERSION (and the same value as
 // TermsVersion in srcs/server/loginserver/signuphandler).
 
-export const LEGAL_VERSION = "2026-10-17";
+export const LEGAL_VERSION = "2026-10-18";
 
 export const OPERATOR = {
 	// Person or company running the site (éditeur). For an individual:
