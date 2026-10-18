@@ -4,6 +4,14 @@ import Link from "next/link";
 import styled from "styled-components";
 import palette, { radius, breakpoint } from "@/theme/colorPalette";
 
+// Tables need room: on wide screens the admin breaks out of the site's
+// 1120px column (up to 1440px, keeping a 24px gutter).
+export const AdminFrame = styled.div`
+	@media (min-width: 1200px) {
+		margin-inline: calc(50% - min(50vw - 24px, 720px));
+	}
+`;
+
 export const AdminShell = styled.div`
 	display: flex;
 	gap: 28px;
@@ -25,7 +33,7 @@ export const AdminShell = styled.div`
 
 export const SideNav = styled.nav`
 	flex: none;
-	width: 200px;
+	width: 168px;
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
@@ -79,7 +87,12 @@ export const Panel = styled.section`
 
 export const StatGrid = styled.div`
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+
+	@media (max-width: ${breakpoint.sm}) {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 10px;
+	}
 	gap: 14px;
 	margin-top: 16px;
 `;
@@ -174,6 +187,14 @@ export const Table = styled.table`
 		padding: 10px 12px;
 		border-bottom: 1px solid ${palette.border};
 		vertical-align: middle;
+		/* Korean words and prices stay whole; the wrapper scrolls instead. */
+		word-break: keep-all;
+		overflow-wrap: normal;
+	}
+	td button,
+	td select,
+	td time {
+		white-space: nowrap;
 	}
 	tr:last-child td {
 		border-bottom: none;
@@ -183,7 +204,56 @@ export const Table = styled.table`
 	}
 	select {
 		width: auto;
-		padding: 5px 8px;
+		min-width: 92px;
+		/* Room for the global chevron, or the value gets cut. */
+		padding: 5px 30px 5px 8px;
+		background-position: right 8px center;
+	}
+	td button {
+		padding: 6px 12px;
+		font-size: 13px;
+	}
+
+	/* Phones: one card per row, cells stacked, so the actions are on
+	   screen without scrolling sideways. Labels come from data-label. */
+	@media (max-width: ${breakpoint.sm}) {
+		min-width: 0;
+
+		thead {
+			display: none;
+		}
+		tbody,
+		tr,
+		td {
+			display: block;
+		}
+		tr {
+			padding: 12px 14px;
+			border-bottom: 1px solid ${palette.border};
+		}
+		tr:last-child {
+			border-bottom: none;
+		}
+		td {
+			padding: 3px 0;
+			border-bottom: none;
+		}
+		td:empty {
+			display: none;
+		}
+		td[data-label]::before {
+			content: attr(data-label);
+			display: inline-block;
+			min-width: 64px;
+			margin-right: 8px;
+			font-size: 12px;
+			font-weight: 700;
+			color: ${palette.muted};
+		}
+		/* The last cell holds the controls: give them room. */
+		td:last-child {
+			padding-top: 8px;
+		}
 	}
 	a {
 		text-decoration: none;

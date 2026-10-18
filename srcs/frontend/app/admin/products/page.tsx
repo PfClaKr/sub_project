@@ -60,14 +60,14 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
 											</div>
 										</Who>
 									</td>
-									<td>
+									<td data-label="판매자">
 										<Link href={`/user/${p.UserId}`}>{p.SellerNickname || "(탈퇴)"}</Link>
 										<Who><small>{p.SellerEmail}</small></Who>
 									</td>
-									<td>{formatPrice(p.ProductPrice)}</td>
-									<td>{p.ProductCategory}</td>
-									<td><ProductStatusControl productId={p.ProductId} status={p.ProductStatus || "판매중"} /></td>
-									<td>{formatDate(p.ProductCreatedAt)}</td>
+									<td data-label="가격">{formatPrice(p.ProductPrice)}</td>
+									<td data-label="카테고리">{p.ProductCategory}</td>
+									<td data-label="상태"><ProductStatusControl productId={p.ProductId} status={p.ProductStatus || "판매중"} /></td>
+									<td data-label="등록일">{formatDate(p.ProductCreatedAt)}</td>
 									<td><ProductDeleteControl productId={p.ProductId} name={p.ProductName} /></td>
 								</tr>
 							);
