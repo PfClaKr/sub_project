@@ -51,6 +51,13 @@ export const MainImage = styled.div`
 	overflow: hidden;
 	background-color: ${palette.surface};
 
+	/* One column on tablets and landscape phones: a full-width square
+	   would fill the screen and push the title and price out of view. */
+	@media (min-width: ${parseInt(breakpoint.sm) + 1}px) and (max-width: ${breakpoint.md}) {
+		aspect-ratio: 4 / 3;
+		max-height: 60vh;
+	}
+
 	img {
 		width: 100%;
 		height: 100%;

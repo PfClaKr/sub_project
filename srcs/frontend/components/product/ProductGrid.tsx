@@ -7,9 +7,10 @@ import { Skeleton } from "@/styles/styledUi";
 import type { Product } from "@/libs/types";
 
 // showSeller: false on a member's own list, where every card has the same name.
-export default function ProductGrid({ products, showSeller = true }: { products: Product[]; showSeller?: boolean }) {
+// preview: show only as many as fill whole rows (the home's 12).
+export default function ProductGrid({ products, showSeller = true, preview }: { products: Product[]; showSeller?: boolean; preview?: boolean }) {
 	return (
-		<Grid>
+		<Grid $preview={preview}>
 			{products.map(product => (
 				<li key={product.ProductId}>
 					<StyledLink href={`/product/${product.ProductId}`}>

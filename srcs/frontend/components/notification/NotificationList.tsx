@@ -72,11 +72,13 @@ function List() {
 		);
 	}
 
+	const unread = items.filter(n => !n.Read).length;
 	return (
 		<>
-			{items.some(n => !n.Read) && (
+			{unread > 0 && (
 				<ListActions>
-					<GhostButton onClick={() => markRead()}>모두 읽음으로 표시</GhostButton>
+					<span>읽지 않은 알림 <strong>{unread}</strong>개</span>
+					<GhostButton onClick={() => markRead()}>모두 읽음</GhostButton>
 				</ListActions>
 			)}
 			<NoticeList>

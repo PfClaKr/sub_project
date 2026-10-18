@@ -57,8 +57,19 @@ export const NoticeItem = styled.a<{ $unread: boolean }>`
 
 export const ListActions = styled.div`
 	display: flex;
-	justify-content: flex-end;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
 	margin-bottom: 12px;
+	font-size: 14px;
+	color: ${palette.muted};
+
+	strong {
+		color: ${palette.primary};
+	}
+	button {
+		padding: 6px 12px;
+	}
 `;
 
 

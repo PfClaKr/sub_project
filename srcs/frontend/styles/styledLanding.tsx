@@ -318,6 +318,7 @@ export const PurposeGrid = styled.div`
 
 export const PurposeCard = styled.article<{ $tint: string; $ink: string }>`
 	position: relative;
+	height: 100%;
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
@@ -371,7 +372,8 @@ export const PurposeCard = styled.article<{ $tint: string; $ink: string }>`
 		position: relative;
 		z-index: 1;
 		align-self: flex-start;
-		margin-top: 6px;
+		/* Cards in a row share a height; keep the buttons on one line. */
+		margin-top: auto;
 		padding: 6px 12px;
 		border-radius: 999px;
 		background: ${palette.bg};
@@ -687,7 +689,14 @@ export const TrustGrid = styled.ul`
 		line-height: 1.6;
 		color: ${palette.muted};
 	}
-	@media (max-width: ${breakpoint.md}) {
+	@media (max-width: ${breakpoint.sm}) {
 		grid-template-columns: 1fr;
+	}
+	@media (min-width: ${parseInt(breakpoint.sm) + 1}px) and (max-width: ${breakpoint.md}) {
+		gap: 10px;
+
+		li {
+			padding: 16px;
+		}
 	}
 `;
