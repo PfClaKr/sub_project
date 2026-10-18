@@ -58,19 +58,19 @@ export default async function AdminPostsPage({ searchParams }: { searchParams: S
 									<RoleBadge>{boardLabel(p.Type)}</RoleBadge> <small>{p.Topic}</small>{p.Deal && <small> · {dealLabel(p.Deal)}</small>}
 									<div><Link href={postHref(p)} target="_blank">{p.Title}</Link> <small>댓글 {p.CommentCount}</small></div>
 								</td>
-								<td>
+								<td data-label="작성자">
 									{p.AuthorNickname
 										? <Link href={`/admin/users?q=${encodeURIComponent(p.AuthorEmail || p.AuthorNickname)}`}>{p.AuthorNickname}</Link>
 										: "(탈퇴)"}
 									{p.Anonymous && <> <RoleBadge>익명</RoleBadge></>}
 								</td>
-								<td>
+								<td data-label="경고·신고">
 									{p.Flags.map(f => <div key={f}><small>⚠ {warningText(f).title}</small></div>)}
 									{p.ReportCount > 0 && <Link href="/admin/reports?type=post"><small>신고 {p.ReportCount}건</small></Link>}
 									{p.Flags.length === 0 && !p.ReportCount && "—"}
 								</td>
-								<td><PostStatusControl postId={p.PostId} status={p.Status} /></td>
-								<td>{formatDate(p.CreatedAt)}</td>
+								<td data-label="상태"><PostStatusControl postId={p.PostId} status={p.Status} /></td>
+								<td data-label="작성일">{formatDate(p.CreatedAt)}</td>
 							</tr>
 						))}
 					</tbody>

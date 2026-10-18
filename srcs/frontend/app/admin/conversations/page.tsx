@@ -33,10 +33,10 @@ export default async function AdminConversationsPage({ searchParams }: { searchP
 						{list.Items.map(r => (
 							<tr key={r.ChatId}>
 								<td>{r.ProductName || "(삭제된 상품)"}</td>
-								<td><Who><div>{r.SellerNickname || "(탈퇴)"}<small>{r.SellerEmail}</small></div></Who></td>
-								<td><Who><div>{r.BuyerNickname || "(탈퇴)"}<small>{r.BuyerEmail}</small></div></Who></td>
-								<td>{r.MessageCount}</td>
-								<td>{formatDateTime(r.LastActivity)}</td>
+								<td data-label="판매자"><Who><div>{r.SellerNickname || "(탈퇴)"}<small>{r.SellerEmail}</small></div></Who></td>
+								<td data-label="구매자"><Who><div>{r.BuyerNickname || "(탈퇴)"}<small>{r.BuyerEmail}</small></div></Who></td>
+								<td data-label="메시지">{r.MessageCount}</td>
+								<td data-label="마지막 활동">{formatDateTime(r.LastActivity)}</td>
 								<td><Link href={`/admin/conversations/${r.ChatId}`}>대화 보기 →</Link></td>
 							</tr>
 						))}

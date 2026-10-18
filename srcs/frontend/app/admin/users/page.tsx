@@ -54,19 +54,19 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
 											<Link href={`/user/${u.UserId}`}>{u.UserNickname || "(닉네임 없음)"}</Link>
 										</Who>
 									</td>
-									<td>{u.Email || "—"}</td>
-									<td>
+									<td data-label="이메일">{u.Email || "—"}</td>
+									<td data-label="권한">
 										{self
 											? <RoleBadge $admin>나 · 관리자</RoleBadge>
 											: <RoleControl userId={u.UserId} role={u.Role} />}
 									</td>
-									<td>
+									<td data-label="등록 상품">
 										<Link href={`/admin/products?q=${encodeURIComponent(u.Email || u.UserNickname)}`}>
 											{u.PublishedQuantity}개
 										</Link>
 									</td>
-									<td>{formatDate(u.CreatedAt)}</td>
-									<td>
+									<td data-label="가입일">{formatDate(u.CreatedAt)}</td>
+									<td data-label="이용 정지">
 										{self || u.Role === "admin"
 											? "—"
 											: <SuspensionControl userId={u.UserId} nickname={u.UserNickname} suspended={u.Status === "suspended"} until={u.SuspendedUntil} />}

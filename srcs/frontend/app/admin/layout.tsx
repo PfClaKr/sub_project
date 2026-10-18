@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { currentSession } from "@/libs/adminApi";
-import { AdminShell } from "@/styles/styledAdmin";
+import { AdminFrame, AdminShell } from "@/styles/styledAdmin";
 import { PageHeader } from "@/styles/styledLayout";
 import { EmptyState, LinkButton } from "@/styles/styledUi";
 
@@ -29,7 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 	}
 
 	return (
-		<div>
+		<AdminFrame>
 			<PageHeader>
 				<h1>관리자</h1>
 				<p>{session.UserNickname}님으로 로그인했어요.</p>
@@ -38,6 +38,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 				<AdminNav />
 				<div>{children}</div>
 			</AdminShell>
-		</div>
+		</AdminFrame>
 	);
 }

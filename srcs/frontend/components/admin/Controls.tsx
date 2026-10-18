@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { DangerButton, ErrorText } from "@/styles/styledUi";
+import { DangerButton, ErrorText, GhostButton } from "@/styles/styledUi";
 import { STATUSES } from "@/libs/constants";
 import { adminAction } from "./adminAction";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
@@ -11,6 +11,7 @@ function useAction() {
 	const router = useRouter();
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState("");
+	// Resolves to whether it worked, so a select can go back to its value.
 	const run = async (fn: () => Promise<string>) => {
 		setBusy(true);
 		setError("");
@@ -18,6 +19,7 @@ function useAction() {
 		setBusy(false);
 		if (err) setError(err);
 		else router.refresh();
+		return !err;
 	};
 	return { busy, error, run };
 }
@@ -41,7 +43,7 @@ export function RoleControl({ userId, role }: { userId: string; role: string }) 
 						select.value = role;
 						return;
 					}
-					run(() => adminAction("PATCH", `/users/${userId}`, { Role: next }));
+					if (!(await run(() => adminAction("PATCH", `/users/${userId}`, { Role: next })))) select.value = role;
 				}}
 			>
 				<option value="user">회원</option>
@@ -88,7 +90,10 @@ export function ProductStatusControl({ productId, status }: { productId: string;
 				aria-label="판매 상태"
 				defaultValue={status}
 				disabled={busy}
-				onChange={e => run(() => adminAction("PATCH", `/products/${productId}`, { ProductStatus: e.target.value }))}
+				onChange={async e => {
+					const select = e.target;
+					if (!(await run(() => adminAction("PATCH", `/products/${productId}`, { ProductStatus: select.value })))) select.value = status;
+				}}
 			>
 				{STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
 			</select>
@@ -184,11 +189,12 @@ export function SuspensionControl({ userId, nickname, suspended, until }: {
 	);
 }
 
-const REPORT_ACTIONS: Record<string, { label: string; title: string; message: string; danger?: boolean }> = {
-	dismiss: { label: "문제 없음", title: "신고를 기각할까요?", message: "숨겨진 경우 다시 공개되고, 작성자에게 복구 알림이 가요." },
-	hide: { label: "숨기기", title: "숨김 처리할까요?", message: "작성자에게만 보이고, 작성자에게 알림이 가요." },
-	delete: { label: "삭제", title: "삭제할까요?", message: "되돌릴 수 없어요.", danger: true },
-	resolve: { label: "조치 완료", title: "조치 완료로 닫을까요?", message: "회원 정지 등 필요한 조치를 했다면 신고를 닫아요. 대상은 바뀌지 않아요." },
+// tone: the main action of a row is filled, the rest outlined, deleting red.
+const REPORT_ACTIONS: Record<string, { label: string; title: string; message: string; tone: "primary" | "ghost" | "danger" }> = {
+	dismiss: { label: "문제 없음", title: "신고를 기각할까요?", message: "숨겨진 경우 다시 공개되고, 작성자에게 복구 알림이 가요.", tone: "ghost" },
+	hide: { label: "숨기기", title: "숨김 처리할까요?", message: "작성자에게만 보이고, 작성자에게 알림이 가요.", tone: "primary" },
+	delete: { label: "삭제", title: "삭제할까요?", message: "되돌릴 수 없어요.", tone: "danger" },
+	resolve: { label: "조치 완료", title: "조치 완료로 닫을까요?", message: "회원 정지 등 필요한 조치를 했거나 대상이 이미 사라졌다면 신고를 닫아요. 대상은 바뀌지 않아요.", tone: "primary" },
 };
 
 // ReportActions closes every open report about a target with one action.
@@ -199,14 +205,14 @@ export function ReportActions({ targetType, targetId, actions }: { targetType: s
 		<div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
 			{actions.map(a => {
 				const def = REPORT_ACTIONS[a];
-				const Button = def.danger ? DangerButton : "button";
+				const Button = { primary: "button" as const, ghost: GhostButton, danger: DangerButton }[def.tone];
 				return (
 					<Button
 						key={a}
 						type="button"
 						disabled={busy}
 						onClick={async () => {
-							if (await confirm({ title: def.title, message: def.message, confirmLabel: def.label, danger: def.danger })) {
+							if (await confirm({ title: def.title, message: def.message, confirmLabel: def.label, danger: def.tone === "danger" })) {
 								run(() => adminAction("POST", "/reports/resolve", { TargetType: targetType, TargetId: targetId, Action: a }));
 							}
 						}}
@@ -237,7 +243,7 @@ export function PostStatusControl({ postId, status }: { postId: string; status: 
 						select.value = status;
 						return;
 					}
-					run(() => adminAction("PATCH", `/posts/${postId}`, { Status: next }));
+					if (!(await run(() => adminAction("PATCH", `/posts/${postId}`, { Status: next })))) select.value = status;
 				}}
 			>
 				<option value="active">공개</option>
