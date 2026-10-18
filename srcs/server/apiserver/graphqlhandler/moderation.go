@@ -201,10 +201,11 @@ func DescribeReportTarget(targetType, targetId string) (*ReportTarget, error) {
 		if err != nil || c == nil {
 			return nil, err
 		}
-		// The post's title tells the admin where the comment was left.
-		title := "댓글"
+		// The title of the post it was left on (the admin page words it,
+		// "“…”의 댓글"); empty when the post is gone.
+		title := ""
 		if post, err := getPost(postId); err == nil && post != nil {
-			title = "“" + dynamo.S(post, "Title") + "”의 댓글"
+			title = dynamo.S(post, "Title")
 		}
 		return &ReportTarget{
 			Title: title, Body: preview(dynamo.S(c, "Body")), Status: dynamo.S(c, "Status"),
