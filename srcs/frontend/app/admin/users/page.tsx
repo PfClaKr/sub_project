@@ -1,4 +1,6 @@
-import { Metadata } from "next";
+import { getLocale, getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
+import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import { AdminListFilters } from "@/components/admin/AdminListFilters";
 import { AdminPagination } from "@/components/admin/AdminPagination";
@@ -9,7 +11,7 @@ import { apiQuery, param, type SearchParams } from "@/libs/adminParams";
 import { formatDate } from "@/libs/format";
 import { EmptyRow, Panel, RoleBadge, Table, TableWrap, Who } from "@/styles/styledAdmin";
 
-export const metadata: Metadata = { title: "회원" };
+export const generateMetadata = pageMetadata("admin.users");
 
 type User = {
 	UserId: string; UserNickname: string; Email: string; Role: string;
@@ -23,25 +25,27 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
 		adminGet<AdminPage<User>>(`/users${apiQuery(searchParams, ["q", "role", "status", "page"])}`),
 		currentSession(),
 	]);
+	const t = await getTranslations("admin");
+	const locale = (await getLocale()) as Locale;
 
 	return (
 		<Panel>
-			<h2>회원</h2>
+			<h2>{t("users.title")}</h2>
 			<AdminListFilters
 				search={param(searchParams, "q")}
-				placeholder="닉네임 또는 이메일"
+				placeholder={t("users.placeholder")}
 				selects={[{
-					name: "role", label: "권한", value: param(searchParams, "role"),
-					options: [{ value: "", label: "전체" }, { value: "user", label: "회원" }, { value: "admin", label: "관리자" }],
+					name: "role", label: t("users.role"), value: param(searchParams, "role"),
+					options: [{ value: "", label: t("all") }, { value: "user", label: t("users.member") }, { value: "admin", label: t("users.admin") }],
 				}, {
-					name: "status", label: "상태", value: param(searchParams, "status"),
-					options: [{ value: "", label: "전체" }, { value: "active", label: "정상" }, { value: "suspended", label: "정지" }],
+					name: "status", label: t("users.status"), value: param(searchParams, "status"),
+					options: [{ value: "", label: t("all") }, { value: "active", label: t("users.active") }, { value: "suspended", label: t("users.suspended") }],
 				}]}
 			/>
 			<TableWrap>
 				<Table>
 					<thead>
-						<tr><th>회원</th><th>이메일</th><th>권한</th><th>등록 상품</th><th>가입일</th><th>이용 정지</th><th>관리</th></tr>
+						<tr><th>{t("users.colMember")}</th><th>{t("users.colEmail")}</th><th>{t("users.colRole")}</th><th>{t("users.colItems")}</th><th>{t("users.colJoined")}</th><th>{t("users.colSuspension")}</th><th>{t("users.colManage")}</th></tr>
 					</thead>
 					<tbody>
 						{list.Items.map(u => {
@@ -51,22 +55,22 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
 									<td>
 										<Who>
 											<Avatar src={u.ProfileImage} name={u.UserNickname} size={32} />
-											<Link href={`/user/${u.UserId}`}>{u.UserNickname || "(닉네임 없음)"}</Link>
+											<Link href={`/user/${u.UserId}`}>{u.UserNickname || t("noNickname")}</Link>
 										</Who>
 									</td>
-									<td data-label="이메일">{u.Email || "—"}</td>
-									<td data-label="권한">
+									<td data-label={t("users.colEmail")}>{u.Email || "—"}</td>
+									<td data-label={t("users.colRole")}>
 										{self
-											? <RoleBadge $admin>나 · 관리자</RoleBadge>
+											? <RoleBadge $admin>{t("users.me")}</RoleBadge>
 											: <RoleControl userId={u.UserId} role={u.Role} />}
 									</td>
-									<td data-label="등록 상품">
+									<td data-label={t("users.colItems")}>
 										<Link href={`/admin/products?q=${encodeURIComponent(u.Email || u.UserNickname)}`}>
-											{u.PublishedQuantity}개
+											{t("users.items", { count: u.PublishedQuantity })}
 										</Link>
 									</td>
-									<td data-label="가입일">{formatDate(u.CreatedAt)}</td>
-									<td data-label="이용 정지">
+									<td data-label={t("users.colJoined")}>{formatDate(u.CreatedAt, locale)}</td>
+									<td data-label={t("users.colSuspension")}>
 										{self || u.Role === "admin"
 											? "—"
 											: <SuspensionControl userId={u.UserId} nickname={u.UserNickname} suspended={u.Status === "suspended"} until={u.SuspendedUntil} />}
@@ -81,7 +85,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
 						})}
 					</tbody>
 				</Table>
-				{list.Items.length === 0 && <EmptyRow>조건에 맞는 회원이 없어요.</EmptyRow>}
+				{list.Items.length === 0 && <EmptyRow>{t("users.empty")}</EmptyRow>}
 			</TableWrap>
 			<AdminPagination pathname="/admin/users" params={searchParams} page={list.Page} totalPages={list.TotalPages} total={list.Total} />
 		</Panel>

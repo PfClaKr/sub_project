@@ -6,12 +6,16 @@ import { LOGIN_URL } from "@/libs/config";
 import { AuthCard, FormFooter } from "@/styles/styledForm";
 import { LinkButton, Skeleton } from "@/styles/styledUi";
 import palette from "@/theme/colorPalette";
+import { useTranslations } from "next-intl";
 
 type State = "loading" | "ok" | "error";
 
 // Activates the account from the mailed link. The server treats repeated
 // calls for a verified account as success, so opening the link twice is fine.
 export const VerifyResult = ({ token }: { token?: string }) => {
+	const t = useTranslations("auth");
+	const nav = useTranslations("nav");
+	const footer = useTranslations("footer");
 	const [state, setState] = useState<State>("loading");
 	const [message, setMessage] = useState("");
 	const started = useRef(false);
@@ -21,32 +25,32 @@ export const VerifyResult = ({ token }: { token?: string }) => {
 		started.current = true;
 		if (!token) {
 			setState("error");
-			setMessage("인증 링크가 올바르지 않아요.");
+			setMessage(t("verifyBadLink"));
 			return;
 		}
 		fetch(`${LOGIN_URL}/verify?token=${encodeURIComponent(token)}`)
 			.then(async res => {
-				if (!res.ok) throw new Error("링크가 만료되었거나 올바르지 않아요. 로그인 화면에서 인증 메일을 다시 받을 수 있어요.");
+				if (!res.ok) throw new Error(t("verifyExpired"));
 				setState("ok");
 			})
 			.catch(e => {
 				setState("error");
-				setMessage(e instanceof Error ? e.message : "인증하지 못했어요.");
+				setMessage(e instanceof Error ? e.message : t("verifyError"));
 			});
-	}, [token]);
+	}, [token, t]);
 
 	if (state === "loading") {
-		return <AuthCard><h1>인증하는 중...</h1><Skeleton $h="40px" /></AuthCard>;
+		return <AuthCard><h1>{t("verifying")}</h1><Skeleton $h="40px" /></AuthCard>;
 	}
 	return (
 		<AuthCard>
 			{state === "ok"
 				? <CheckCircle2 size={40} color={palette.primary} aria-hidden />
 				: <XCircle size={40} color={palette.danger} aria-hidden />}
-			<h1>{state === "ok" ? "이메일 인증 완료" : "인증하지 못했어요"}</h1>
-			<p>{state === "ok" ? "이제 로그인하고 잇냥을 이용할 수 있어요." : message}</p>
-			<LinkButton href="/login" style={{ display: "block" }}>로그인하러 가기</LinkButton>
-			<FormFooter>잇냥 · 프랑스 한인 생활 커뮤니티</FormFooter>
+			<h1>{state === "ok" ? t("verified") : t("verifyError")}</h1>
+			<p>{state === "ok" ? t("verifiedBody") : message}</p>
+			<LinkButton href="/login" style={{ display: "block" }}>{t("goLogin")}</LinkButton>
+			<FormFooter>{nav("brand")} · {footer("tagline")}</FormFooter>
 		</AuthCard>
 	);
 };

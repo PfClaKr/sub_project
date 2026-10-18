@@ -44,8 +44,12 @@ export const NOTIFICATION_RETENTION = { ko: "90일", fr: "90 jours" };
 
 export type LegalLang = "ko" | "fr";
 
-export function legalLang(v?: string): LegalLang {
-	return v === "fr" ? "fr" : "ko";
+// The documents exist in Korean and French (the version that binds in
+// France). ?lang= picks one; otherwise Korean readers get Korean and
+// French or English readers the French text.
+export function legalLang(v: string | undefined, locale: string): LegalLang {
+	if (v === "fr" || v === "ko") return v;
+	return locale === "ko" ? "ko" : "fr";
 }
 
 // Dates as written in each language, e.g. "2026년 10월 17일" / "17 octobre 2026".

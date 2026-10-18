@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { API_URL } from "@/libs/config";
 import { EmptyState, LinkButton, Skeleton } from "@/styles/styledUi";
+import { useTranslations } from "next-intl";
 
 // Unsubscribe is the page behind the link at the bottom of notification
 // mails: the signed link itself proves the request, no login needed.
 export function Unsubscribe() {
+	const t = useTranslations("notifications");
 	const sp = useSearchParams();
 	const [state, setState] = useState<"busy" | "done" | "error">("busy");
 	const sent = useRef(false);
@@ -27,8 +29,8 @@ export function Unsubscribe() {
 	if (state === "busy") return <Skeleton $h="160px" />;
 	return (
 		<EmptyState>
-			<p>{state === "done" ? "이메일 알림을 껐어요. 사이트 안의 알림은 계속 받을 수 있어요." : "링크가 올바르지 않거나 만료됐어요."}</p>
-			<LinkButton href="/myaccount/notifications">알림 설정 열기</LinkButton>
+			<p>{state === "done" ? t("unsubscribed") : t("badLink")}</p>
+			<LinkButton href="/myaccount/notifications">{t("openSettings")}</LinkButton>
 		</EmptyState>
 	);
 }

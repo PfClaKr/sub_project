@@ -1,22 +1,22 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
 import { WifiOff } from "lucide-react";
 import { EmptyState } from "@/styles/styledUi";
 import { PageHeader } from "@/styles/styledLayout";
 
-export const metadata: Metadata = {
-	title: "오프라인",
-};
+export const generateMetadata = pageMetadata("offline");
 
 // Served by the service worker (public/sw.js) when a page cannot load.
-export default function OfflinePage() {
+export default async function OfflinePage() {
+	const t = await getTranslations("offline");
 	return (
 		<div>
 			<PageHeader>
-				<h1>인터넷 연결이 끊겼어요</h1>
+				<h1>{t("heading")}</h1>
 			</PageHeader>
 			<EmptyState>
 				<WifiOff size={36} aria-hidden />
-				<p>연결을 확인한 뒤 다시 시도해주세요.</p>
+				<p>{t("body")}</p>
 			</EmptyState>
 		</div>
 	);

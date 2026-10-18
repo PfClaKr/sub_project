@@ -1,22 +1,22 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
 import Link from "next/link";
 import { SignUpForm } from "@/components/form/SignUpForm";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { AuthCard, FormFooter } from "@/styles/styledForm";
 
-export const metadata: Metadata = {
-	title: "회원가입",
-};
+export const generateMetadata = pageMetadata("pages.signup");
 
-export default function AccountSignUpPage() {
+export default async function AccountSignUpPage() {
+	const t = await getTranslations("auth");
 	return (
 		<AuthCard>
-			<h1>회원가입</h1>
-			<p>파리 한인들과 물건을 사고팔고, 생활 정보를 나눠요.</p>
-			<GoogleButton label="Google로 시작하기" />
+			<h1>{t("signupTitle")}</h1>
+			<p>{t("signupLead")}</p>
+			<GoogleButton label={t("googleStart")} />
 			<SignUpForm />
 			<FormFooter>
-				이미 계정이 있나요? <Link href="/login">로그인</Link>
+				{t("haveAccount")} <Link href="/login">{t("login")}</Link>
 			</FormFooter>
 		</AuthCard>
 	);

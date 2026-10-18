@@ -6,6 +6,7 @@ import { PreviewMap } from "@/components/map";
 import { Description } from "@/styles/styledDetail";
 import { LocationSummary, MapBox } from "@/styles/styledLocation";
 import { fetchArea, type Area, type LatLng } from "@/libs/geo";
+import { useLocale, useTranslations } from "next-intl";
 
 // Exact locations show a pin; otherwise the town / arrondissement is
 // outlined, as on leboncoin.
@@ -16,6 +17,7 @@ export function LocationPreview({ point, exact, areaId, areaName, label }: {
 	areaName: string | null;
 	label: string;
 }) {
+	const t = useTranslations("product");
 	const [area, setArea] = useState<Area | null>(null);
 
 	useEffect(() => {
@@ -23,14 +25,14 @@ export function LocationPreview({ point, exact, areaId, areaName, label }: {
 	}, [exact, areaId]);
 
 	return (
-		<Description aria-label="거래 희망 위치">
-			<h2>거래 희망 위치</h2>
+		<Description aria-label={t("meetArea")}>
+			<h2>{t("meetArea")}</h2>
 			<MapBox $h={280}>
 				<PreviewMap pin={exact ? point : null} area={area} />
 			</MapBox>
 			<LocationSummary>
 				{exact ? <MapPin size={16} aria-hidden /> : <MapIcon size={16} aria-hidden />}
-				<span>{exact ? label : `${areaName ?? label} 주변에서 거래해요`}</span>
+				<span>{exact ? label : t("around", { area: areaName ?? label })}</span>
 			</LocationSummary>
 		</Description>
 	);

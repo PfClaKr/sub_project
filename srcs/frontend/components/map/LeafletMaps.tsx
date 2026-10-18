@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { Circle, GeoJSON, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import palette from "@/theme/colorPalette";
 import { PARIS, type Area, type LatLng } from "@/libs/geo";
+import { useTranslations } from "next-intl";
 
 // A CSS pin (see .itnyang-pin in globalStyles) instead of Leaflet's
 // default PNG marker, whose asset paths break under bundlers.
@@ -135,6 +136,7 @@ function FitAll({ items }: { items: MapItem[] }) {
 // ListingsMap shows listings as bubbles (a price, or a count when several
 // share a neighbourhood centre), each opening a list of links.
 export function ListingsMap({ items }: { items: MapItem[] }) {
+	const t = useTranslations("map");
 	const groups = new Map<string, MapItem[]>();
 	for (const item of items) {
 		const key = `${item.lat.toFixed(4)},${item.lng.toFixed(4)}`;
@@ -145,7 +147,7 @@ export function ListingsMap({ items }: { items: MapItem[] }) {
 			<Tiles />
 			<FitAll items={items} />
 			{Array.from(groups.entries()).map(([key, group]) => {
-				const text = group.length > 1 ? `${group.length}개` : group[0].label;
+				const text = group.length > 1 ? t("count", { count: group.length }) : group[0].label;
 				const icon = L.divIcon({ className: "itnyang-bubble", html: `<span>${escapeHtml(text)}</span>`, iconSize: [0, 0] });
 				return (
 					<Marker key={key} position={[group[0].lat, group[0].lng]} icon={icon}>

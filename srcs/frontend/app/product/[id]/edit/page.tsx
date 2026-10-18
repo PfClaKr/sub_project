@@ -7,8 +7,10 @@ import { PageHeader } from "@/styles/styledLayout";
 import { EmptyState, ErrorText, LinkButton, Skeleton } from "@/styles/styledUi";
 import { gql } from "@/libs/graphql";
 import type { Product, Session } from "@/libs/types";
+import { useTranslations } from "next-intl";
 
 function EditProduct({ productId, session }: { productId: string; session: Session }) {
+	const t = useTranslations("productForm");
 	const [product, setProduct] = useState<Product | null | undefined>(undefined);
 	const [error, setError] = useState("");
 
@@ -31,8 +33,8 @@ function EditProduct({ productId, session }: { productId: string; session: Sessi
 	if (!product || product.UserId !== session.UserId) {
 		return (
 			<EmptyState>
-				<p>수정할 수 없는 상품이에요.</p>
-				<LinkButton href={`/product/${productId}`} $ghost>상품으로 돌아가기</LinkButton>
+				<p>{t("cannotEdit")}</p>
+				<LinkButton href={`/product/${productId}`} $ghost>{t("back")}</LinkButton>
 			</EmptyState>
 		);
 	}
@@ -40,10 +42,11 @@ function EditProduct({ productId, session }: { productId: string; session: Sessi
 }
 
 export default function EditProductPage({ params }: { params: { id: string } }) {
+	const t = useTranslations("productForm");
 	return (
 		<div>
 			<PageHeader>
-				<h1>상품 수정</h1>
+				<h1>{t("editTitle")}</h1>
 			</PageHeader>
 			<RequireLogin>{session => <EditProduct productId={params.id} session={session} />}</RequireLogin>
 		</div>

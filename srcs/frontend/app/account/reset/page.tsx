@@ -1,14 +1,18 @@
 import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { ResetForm } from "@/components/auth/PasswordForms";
 import { AuthCard } from "@/styles/styledForm";
 
-export const metadata: Metadata = { title: "새 비밀번호 정하기", robots: { index: false } };
+export async function generateMetadata(): Promise<Metadata> {
+	return { title: (await getTranslations("pages.reset"))("title"), robots: { index: false } };
+}
 
-export default function Page({ searchParams }: { searchParams: { email?: string; token?: string } }) {
+export default async function Page({ searchParams }: { searchParams: { email?: string; token?: string } }) {
+	const t = await getTranslations("auth");
 	return (
 		<AuthCard>
-			<h1>새 비밀번호 정하기</h1>
-			<p>앞으로 로그인할 때 쓸 비밀번호를 입력해주세요.</p>
+			<h1>{t("resetTitle")}</h1>
+			<p>{t("resetLead")}</p>
 			<ResetForm email={searchParams.email ?? ""} token={searchParams.token ?? ""} />
 		</AuthCard>
 	);

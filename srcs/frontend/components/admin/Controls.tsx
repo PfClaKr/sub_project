@@ -6,6 +6,10 @@ import { DangerButton, ErrorText, GhostButton } from "@/styles/styledUi";
 import { STATUSES } from "@/libs/constants";
 import { adminAction } from "./adminAction";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
+import { useLocale, useTranslations } from "next-intl";
+import { useLabels } from "@/libs/labels";
+import { formatDate } from "@/libs/format";
+import type { Locale } from "@/i18n/config";
 
 function useAction() {
 	const router = useRouter();
@@ -25,20 +29,22 @@ function useAction() {
 }
 
 export function RoleControl({ userId, role }: { userId: string; role: string }) {
+	const t = useTranslations("admin.controls");
+	const u = useTranslations("admin.users");
 	const { busy, error, run } = useAction();
 	const confirm = useConfirm();
 	return (
 		<>
 			<select
-				aria-label="권한"
+				aria-label={t("role")}
 				defaultValue={role}
 				disabled={busy}
 				onChange={async e => {
 					const select = e.target;
 					const next = select.value;
 					const ok = await confirm(next === "admin"
-						? { title: "관리자로 지정할까요?", message: "관리자는 모든 회원, 상품, 채팅을 보고 관리할 수 있어요.", confirmLabel: "지정" }
-						: { title: "관리자 권한을 해제할까요?", message: "이 회원은 바로 관리자 페이지에 들어올 수 없게 돼요.", confirmLabel: "해제", danger: true });
+						? { title: t("makeAdminTitle"), message: t("makeAdminBody"), confirmLabel: t("makeAdmin") }
+						: { title: t("removeAdminTitle"), message: t("removeAdminBody"), confirmLabel: t("removeAdmin"), danger: true });
 					if (!ok) {
 						select.value = role;
 						return;
@@ -46,8 +52,8 @@ export function RoleControl({ userId, role }: { userId: string; role: string }) 
 					if (!(await run(() => adminAction("PATCH", `/users/${userId}`, { Role: next })))) select.value = role;
 				}}
 			>
-				<option value="user">회원</option>
-				<option value="admin">관리자</option>
+				<option value="user">{u("member")}</option>
+				<option value="admin">{u("admin")}</option>
 			</select>
 			{error && <ErrorText>{error}</ErrorText>}
 		</>
@@ -57,6 +63,7 @@ export function RoleControl({ userId, role }: { userId: string; role: string }) 
 // Deleting asks for the account's email typed back, as in ineverywhere:
 // it removes the member's listings and favourites for good.
 export function UserDeleteControl({ userId, email, nickname }: { userId: string; email: string; nickname: string }) {
+	const t = useTranslations("admin.controls");
 	const { busy, error, run } = useAction();
 	const confirm = useConfirm();
 	return (
@@ -65,17 +72,17 @@ export function UserDeleteControl({ userId, email, nickname }: { userId: string;
 				disabled={busy}
 				onClick={async () => {
 					const ok = await confirm({
-						title: `${nickname} 회원을 삭제할까요?`,
-						message: "등록한 상품과 찜 목록이 모두 삭제되고 되돌릴 수 없어요. 채팅 기록은 분쟁 처리를 위해 남아요.",
-						confirmLabel: "회원 삭제",
+						title: t("deleteMemberTitle", { name: nickname }),
+						message: t("deleteMemberBody"),
+						confirmLabel: t("deleteMember"),
 						danger: true,
 						requireText: email,
-						requireLabel: "확인을 위해 이메일을 입력해주세요",
+						requireLabel: t("typeEmail"),
 					});
 					if (ok) run(() => adminAction("DELETE", `/users/${userId}`));
 				}}
 			>
-				{busy ? "삭제 중..." : "삭제"}
+				{busy ? t("deleting") : t("delete")}
 			</DangerButton>
 			{error && <ErrorText>{error}</ErrorText>}
 		</>
@@ -83,11 +90,13 @@ export function UserDeleteControl({ userId, email, nickname }: { userId: string;
 }
 
 export function ProductStatusControl({ productId, status }: { productId: string; status: string }) {
+	const t = useTranslations("admin.controls");
+	const L = useLabels();
 	const { busy, error, run } = useAction();
 	return (
 		<>
 			<select
-				aria-label="판매 상태"
+				aria-label={t("productStatus")}
 				defaultValue={status}
 				disabled={busy}
 				onChange={async e => {
@@ -95,7 +104,7 @@ export function ProductStatusControl({ productId, status }: { productId: string;
 					if (!(await run(() => adminAction("PATCH", `/products/${productId}`, { ProductStatus: select.value })))) select.value = status;
 				}}
 			>
-				{STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+				{STATUSES.map(s => <option key={s} value={s}>{L.enum("status", s)}</option>)}
 			</select>
 			{error && <ErrorText>{error}</ErrorText>}
 		</>
@@ -103,6 +112,7 @@ export function ProductStatusControl({ productId, status }: { productId: string;
 }
 
 export function ProductDeleteControl({ productId, name }: { productId: string; name: string }) {
+	const t = useTranslations("admin.controls");
 	const { busy, error, run } = useAction();
 	const confirm = useConfirm();
 	return (
@@ -111,27 +121,23 @@ export function ProductDeleteControl({ productId, name }: { productId: string; n
 				disabled={busy}
 				onClick={async () => {
 					const ok = await confirm({
-						title: "상품을 삭제할까요?",
-						message: `"${name}"\n삭제하면 검색과 판매자 목록에서도 사라지고 되돌릴 수 없어요.`,
-						confirmLabel: "삭제",
+						title: t("deleteProductTitle"),
+						message: t("deleteProductBody", { name }),
+						confirmLabel: t("delete"),
 						danger: true,
 					});
 					if (ok) run(() => adminAction("DELETE", `/products/${productId}`));
 				}}
 			>
-				{busy ? "삭제 중..." : "삭제"}
+				{busy ? t("deleting") : t("delete")}
 			</DangerButton>
 			{error && <ErrorText>{error}</ErrorText>}
 		</>
 	);
 }
 
-const SUSPENSIONS = [
-	{ days: 1, label: "1일" },
-	{ days: 7, label: "7일" },
-	{ days: 30, label: "30일" },
-	{ days: 0, label: "무기한" },
-];
+// Labels: admin.controls.days<n>.
+const SUSPENSIONS = [1, 7, 30, 0];
 
 // SuspensionControl blocks a member's writes for a period, or lifts it.
 export function SuspensionControl({ userId, nickname, suspended, until }: {
@@ -140,22 +146,24 @@ export function SuspensionControl({ userId, nickname, suspended, until }: {
 	suspended: boolean;
 	until?: number;
 }) {
+	const t = useTranslations("admin.controls");
+	const locale = useLocale() as Locale;
 	const { busy, error, run } = useAction();
 	const confirm = useConfirm();
 	if (suspended) {
 		return (
 			<>
-				<small>{until ? `${new Date(until).toLocaleDateString("ko-KR")}까지 정지` : "무기한 정지"}</small>{" "}
+				<small>{until ? t("suspendedUntil", { date: formatDate(until, locale) }) : t("suspendedForever")}</small>{" "}
 				<button
 					type="button"
 					disabled={busy}
 					onClick={async () => {
-						if (await confirm({ title: `${nickname} 회원의 정지를 풀까요?`, confirmLabel: "해제" })) {
+						if (await confirm({ title: t("liftTitle", { name: nickname }), confirmLabel: t("lift") })) {
 							run(() => adminAction("DELETE", `/users/${userId}/suspension`));
 						}
 					}}
 				>
-					해제
+					{t("lift")}
 				</button>
 				{error && <ErrorText>{error}</ErrorText>}
 			</>
@@ -164,55 +172,58 @@ export function SuspensionControl({ userId, nickname, suspended, until }: {
 	return (
 		<>
 			<select
-				aria-label="정지"
+				aria-label={t("suspension")}
 				defaultValue=""
 				disabled={busy}
 				onChange={async e => {
 					const select = e.target;
 					const days = Number(select.value);
 					select.value = "";
-					const label = SUSPENSIONS.find(s => s.days === days)?.label;
+					const period = t(`days${days}`);
 					const ok = await confirm({
-						title: `${nickname} 회원을 ${label} 정지할까요?`,
-						message: "정지된 회원은 로그인은 되지만 글·댓글·채팅·사진 올리기를 할 수 없어요.",
-						confirmLabel: "정지",
+						title: t("suspendTitle", { name: nickname, period }),
+						message: t("suspendBody"),
+						confirmLabel: t("suspend"),
 						danger: true,
 					});
 					if (ok) run(() => adminAction("PUT", `/users/${userId}/suspension`, { Days: days }));
 				}}
 			>
-				<option value="" disabled>정지…</option>
-				{SUSPENSIONS.map(s => <option key={s.days} value={s.days}>{s.label}</option>)}
+				<option value="" disabled>{t("suspendPlaceholder")}</option>
+				{SUSPENSIONS.map(d => <option key={d} value={d}>{t(`days${d}`)}</option>)}
 			</select>
 			{error && <ErrorText>{error}</ErrorText>}
 		</>
 	);
 }
 
-// tone: the main action of a row is filled, the rest outlined, deleting red.
-const REPORT_ACTIONS: Record<string, { label: string; title: string; message: string; tone: "primary" | "ghost" | "danger" }> = {
-	dismiss: { label: "문제 없음", title: "신고를 기각할까요?", message: "숨겨진 경우 다시 공개되고, 작성자에게 복구 알림이 가요.", tone: "ghost" },
-	hide: { label: "숨기기", title: "숨김 처리할까요?", message: "작성자에게만 보이고, 작성자에게 알림이 가요.", tone: "primary" },
-	delete: { label: "삭제", title: "삭제할까요?", message: "되돌릴 수 없어요.", tone: "danger" },
-	resolve: { label: "조치 완료", title: "조치 완료로 닫을까요?", message: "회원 정지 등 필요한 조치를 했거나 대상이 이미 사라졌다면 신고를 닫아요. 대상은 바뀌지 않아요.", tone: "primary" },
+// tone: the main action of a row is filled, the rest outlined, deleting
+// red. Texts: admin.controls.actions.<action>.{label,title,message}.
+const REPORT_ACTIONS: Record<string, "primary" | "ghost" | "danger"> = {
+	dismiss: "ghost",
+	hide: "primary",
+	delete: "danger",
+	resolve: "primary",
 };
 
 // ReportActions closes every open report about a target with one action.
 export function ReportActions({ targetType, targetId, actions }: { targetType: string; targetId: string; actions: string[] }) {
+	const t = useTranslations("admin.controls");
 	const { busy, error, run } = useAction();
 	const confirm = useConfirm();
 	return (
 		<div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
 			{actions.map(a => {
-				const def = REPORT_ACTIONS[a];
-				const Button = { primary: "button" as const, ghost: GhostButton, danger: DangerButton }[def.tone];
+				const tone = REPORT_ACTIONS[a];
+				const def = { label: t(`actions.${a}.label`), title: t(`actions.${a}.title`), message: t(`actions.${a}.message`) };
+				const Button = { primary: "button" as const, ghost: GhostButton, danger: DangerButton }[tone];
 				return (
 					<Button
 						key={a}
 						type="button"
 						disabled={busy}
 						onClick={async () => {
-							if (await confirm({ title: def.title, message: def.message, confirmLabel: def.label, danger: def.tone === "danger" })) {
+							if (await confirm({ title: def.title, message: def.message, confirmLabel: def.label, danger: tone === "danger" })) {
 								run(() => adminAction("POST", "/reports/resolve", { TargetType: targetType, TargetId: targetId, Action: a }));
 							}
 						}}
@@ -228,28 +239,30 @@ export function ReportActions({ targetType, targetId, actions }: { targetType: s
 
 // PostStatusControl shows, hides or deletes a community/housing/job post.
 export function PostStatusControl({ postId, status }: { postId: string; status: string }) {
+	const t = useTranslations("admin.controls");
+	const p = useTranslations("admin.posts");
 	const { busy, error, run } = useAction();
 	const confirm = useConfirm();
 	return (
 		<>
 			<select
-				aria-label="공개 상태"
+				aria-label={t("postStatus")}
 				defaultValue={status}
 				disabled={busy || status === "deleted"}
 				onChange={async e => {
 					const select = e.target;
 					const next = select.value;
-					if (next === "deleted" && !(await confirm({ title: "글을 삭제할까요?", message: "되돌릴 수 없어요.", danger: true, confirmLabel: "삭제" }))) {
+					if (next === "deleted" && !(await confirm({ title: t("deletePostTitle"), message: t("deletePostBody"), danger: true, confirmLabel: t("delete") }))) {
 						select.value = status;
 						return;
 					}
 					if (!(await run(() => adminAction("PATCH", `/posts/${postId}`, { Status: next })))) select.value = status;
 				}}
 			>
-				<option value="active">공개</option>
-				<option value="hidden">숨김</option>
-				{status === "expired" && <option value="expired" disabled>만료</option>}
-				<option value="deleted">삭제</option>
+				<option value="active">{p("active")}</option>
+				<option value="hidden">{p("hidden")}</option>
+				{status === "expired" && <option value="expired" disabled>{p("expired")}</option>}
+				<option value="deleted">{p("deleted")}</option>
 			</select>
 			{error && <ErrorText>{error}</ErrorText>}
 		</>

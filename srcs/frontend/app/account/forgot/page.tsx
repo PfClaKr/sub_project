@@ -1,14 +1,16 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { pageMetadata } from "@/libs/meta";
 import { ForgotForm } from "@/components/auth/PasswordForms";
 import { AuthCard } from "@/styles/styledForm";
 
-export const metadata: Metadata = { title: "비밀번호 찾기" };
+export const generateMetadata = pageMetadata("pages.forgot");
 
-export default function Page() {
+export default async function Page() {
+	const t = await getTranslations("auth");
 	return (
 		<AuthCard>
-			<h1>비밀번호 찾기</h1>
-			<p>가입한 이메일을 입력하면 비밀번호를 다시 정할 수 있는 링크를 보내드려요.</p>
+			<h1>{t("forgotTitle")}</h1>
+			<p>{t("forgotLead")}</p>
 			<ForgotForm />
 		</AuthCard>
 	);

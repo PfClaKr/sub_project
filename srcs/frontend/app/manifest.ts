@@ -1,18 +1,21 @@
 import { MetadataRoute } from "next";
+import { getLocale, getTranslations } from "next-intl/server";
 
-// Served at /manifest.webmanifest by Next.js.
-export default function manifest(): MetadataRoute.Manifest {
+// Served at /manifest.webmanifest by Next.js, in the visitor's language.
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+	const t = await getTranslations("manifest");
+	const brand = (await getTranslations("nav"))("brand");
 	return {
-		name: "잇냥 — 프랑스 한인 생활 커뮤니티",
-		short_name: "잇냥",
-		description: "중고거래, 집·알바 구하기, 생활 질문까지. 프랑스 한인 이웃들과 함께해요.",
+		name: t("name"),
+		short_name: brand,
+		description: t("description"),
 		start_url: "/",
 		scope: "/",
 		display: "standalone",
 		orientation: "portrait",
 		background_color: "#ffffff",
 		theme_color: "#0048b4",
-		lang: "ko",
+		lang: await getLocale(),
 		categories: ["shopping", "lifestyle"],
 		icons: [
 			{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
@@ -21,10 +24,10 @@ export default function manifest(): MetadataRoute.Manifest {
 			{ src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
 		],
 		shortcuts: [
-			{ name: "질문하기", short_name: "질문", url: "/community/write?board=qna" },
-			{ name: "판매하기", short_name: "판매", url: "/sell" },
-			{ name: "집 구하기", short_name: "집", url: "/housing" },
-			{ name: "내 채팅", short_name: "채팅", url: "/chat" },
+			{ name: t("ask"), short_name: t("askShort"), url: "/community/write?board=qna" },
+			{ name: t("sell"), short_name: t("sellShort"), url: "/sell" },
+			{ name: t("housing"), short_name: t("housingShort"), url: "/housing" },
+			{ name: t("chat"), short_name: t("chatShort"), url: "/chat" },
 		],
 	};
 }

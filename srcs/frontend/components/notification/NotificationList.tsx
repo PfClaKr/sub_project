@@ -13,6 +13,8 @@ import { useNotifications } from "@/libs/notifications";
 import { notificationHref, notificationTitle } from "@/libs/notificationText";
 import type { AppNotification, NotificationType } from "@/libs/types";
 import { TimeAgo } from "@/components/ui/TimeAgo";
+import { useTranslations } from "next-intl";
+import type { T } from "@/libs/labels";
 
 const ICONS: Record<NotificationType, LucideIcon> = {
 	comment: MessageSquare,
@@ -32,6 +34,8 @@ const QUERY = `query($before: String) {
 }`;
 
 function List() {
+	const t = useTranslations("notifications");
+	const tAll = useTranslations() as unknown as T;
 	const { refresh } = useNotifications();
 	const [items, setItems] = useState<AppNotification[] | null>(null);
 	const [next, setNext] = useState("");
@@ -43,12 +47,12 @@ function List() {
 		const { data, error } = await gql<{ notifications: Page }>(QUERY, { before: before || null });
 		setBusy(false);
 		if (error || !data) {
-			setError(error ?? "알림을 불러오지 못했어요.");
+			setError(error ?? t("loadError"));
 			return;
 		}
 		setItems(prev => (before && prev ? [...prev, ...data.notifications.Items] : data.notifications.Items));
 		setNext(data.notifications.Next);
-	}, []);
+	}, [t]);
 
 	useEffect(() => {
 		load();
@@ -67,7 +71,7 @@ function List() {
 		return (
 			<EmptyState>
 				<Bell size={28} aria-hidden />
-				<p>아직 알림이 없어요. 내 글에 댓글이 달리거나 답변이 채택되면 여기에 알려드릴게요.</p>
+				<p>{t("empty")}</p>
 			</EmptyState>
 		);
 	}
@@ -77,8 +81,8 @@ function List() {
 		<>
 			{unread > 0 && (
 				<ListActions>
-					<span>읽지 않은 알림 <strong>{unread}</strong>개</span>
-					<GhostButton onClick={() => markRead()}>모두 읽음</GhostButton>
+					<span>{t.rich("unreadCount", { count: unread, strong: chunks => <strong>{chunks}</strong> })}</span>
+					<GhostButton onClick={() => markRead()}>{t("markAll")}</GhostButton>
 				</ListActions>
 			)}
 			<NoticeList>
@@ -94,9 +98,9 @@ function List() {
 							>
 								<Icon size={20} aria-hidden />
 								<div>
-									<strong>{notificationTitle(n)}</strong>
+									<strong>{notificationTitle(tAll, n)}</strong>
 									{n.Preview && <p>{n.Preview}</p>}
-									<small><TimeAgo ts={n.CreatedAt} />{n.Read ? "" : " · 읽지 않음"}</small>
+									<small><TimeAgo ts={n.CreatedAt} />{n.Read ? "" : t("unread")}</small>
 								</div>
 							</NoticeItem>
 						</li>
@@ -105,7 +109,7 @@ function List() {
 			</NoticeList>
 			{next && (
 				<ListActions style={{ justifyContent: "center", marginTop: 12 }}>
-					<GhostButton disabled={busy} onClick={() => load(next)}>{busy ? "불러오는 중..." : "더 보기"}</GhostButton>
+					<GhostButton disabled={busy} onClick={() => load(next)}>{busy ? t("loading") : t("more")}</GhostButton>
 				</ListActions>
 			)}
 		</>

@@ -1,4 +1,6 @@
+import { getLocale, getTranslations } from "next-intl/server";
 import { adminGet, isAdmin } from "@/libs/adminApi";
+import { getLabels } from "@/libs/labels.server";
 import { Panel, StatGrid, StatTile } from "@/styles/styledAdmin";
 
 type Stats = {
@@ -14,29 +16,32 @@ type Stats = {
 export default async function AdminOverviewPage() {
 	if (!(await isAdmin())) return null;
 	const s = await adminGet<Stats>("/stats");
+	const t = await getTranslations("admin");
+	const L = await getLabels();
+	const locale = await getLocale();
 	const tiles = [
-		{ label: "처리할 신고", value: s.OpenReports, href: "/admin/reports" },
-		{ label: "경고 표시된 글", value: s.FlaggedPosts, href: "/admin/posts?flagged=1" },
-		{ label: "숨겨진 글", value: s.HiddenPosts, href: "/admin/posts?status=hidden" },
-		{ label: "커뮤니티 글", value: s.Posts, sub: `Q&A ${s.Questions} · 집·알바 ${s.Listings}`, href: "/admin/posts" },
-		{ label: "전체 회원", value: s.Users, sub: `최근 7일 +${s.NewUsers7d}`, href: "/admin/users" },
-		{ label: "관리자", value: s.Admins, href: "/admin/users?role=admin" },
-		{ label: "전체 상품", value: s.Products, sub: `최근 7일 +${s.NewProducts7d}`, href: "/admin/products" },
-		{ label: "판매중", value: s.Selling, href: "/admin/products?status=판매중" },
-		{ label: "예약중", value: s.Reserved, href: "/admin/products?status=예약중" },
-		{ label: "판매완료", value: s.Sold, href: "/admin/products?status=판매완료" },
-		{ label: "채팅방", value: s.ChatRooms, href: "/admin/conversations" },
-		{ label: "메시지", value: s.Messages, sub: `최근 7일 ${s.Messages7d}개`, href: "/admin/conversations" },
+		{ label: t("stats.openReports"), value: s.OpenReports, href: "/admin/reports" },
+		{ label: t("stats.flagged"), value: s.FlaggedPosts, href: "/admin/posts?flagged=1" },
+		{ label: t("stats.hidden"), value: s.HiddenPosts, href: "/admin/posts?status=hidden" },
+		{ label: t("stats.posts"), value: s.Posts, sub: t("stats.postsSub", { questions: s.Questions, listings: s.Listings }), href: "/admin/posts" },
+		{ label: t("stats.users"), value: s.Users, sub: t("stats.newSub", { count: s.NewUsers7d }), href: "/admin/users" },
+		{ label: t("stats.admins"), value: s.Admins, href: "/admin/users?role=admin" },
+		{ label: t("stats.products"), value: s.Products, sub: t("stats.newSub", { count: s.NewProducts7d }), href: "/admin/products" },
+		{ label: L.enum("status", "판매중"), value: s.Selling, href: "/admin/products?status=판매중" },
+		{ label: L.enum("status", "예약중"), value: s.Reserved, href: "/admin/products?status=예약중" },
+		{ label: L.enum("status", "판매완료"), value: s.Sold, href: "/admin/products?status=판매완료" },
+		{ label: t("stats.rooms"), value: s.ChatRooms, href: "/admin/conversations" },
+		{ label: t("stats.messages"), value: s.Messages, sub: t("stats.messagesSub", { count: s.Messages7d }), href: "/admin/conversations" },
 	];
 	return (
 		<Panel>
-			<h2>개요</h2>
+			<h2>{t("nav.overview")}</h2>
 			<StatGrid>
-				{tiles.map(t => (
-					<StatTile key={t.label} href={t.href}>
-						<span>{t.label}</span>
-						<strong>{t.value.toLocaleString("ko-KR")}</strong>
-						{t.sub && <small>{t.sub}</small>}
+				{tiles.map(tile => (
+					<StatTile key={tile.href + tile.label} href={tile.href}>
+						<span>{tile.label}</span>
+						<strong>{tile.value.toLocaleString(locale)}</strong>
+						{tile.sub && <small>{tile.sub}</small>}
 					</StatTile>
 				))}
 			</StatGrid>

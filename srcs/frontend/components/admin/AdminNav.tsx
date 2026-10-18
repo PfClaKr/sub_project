@@ -3,25 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SideNav } from "@/styles/styledAdmin";
+import { useTranslations } from "next-intl";
 
+// Labels: admin.nav.<key>.
 const LINKS = [
-	{ href: "/admin", label: "개요" },
-	{ href: "/admin/reports", label: "신고" },
-	{ href: "/admin/posts", label: "게시글" },
-	{ href: "/admin/users", label: "회원" },
-	{ href: "/admin/products", label: "상품" },
-	{ href: "/admin/conversations", label: "채팅" },
-];
+	{ href: "/admin", key: "overview" },
+	{ href: "/admin/reports", key: "reports" },
+	{ href: "/admin/posts", key: "posts" },
+	{ href: "/admin/users", key: "users" },
+	{ href: "/admin/products", key: "products" },
+	{ href: "/admin/conversations", key: "conversations" },
+] as const;
 
 export function AdminNav() {
+	const t = useTranslations("admin");
 	const pathname = usePathname();
 	return (
-		<SideNav aria-label="관리자 메뉴">
+		<SideNav aria-label={t("menu")}>
 			{LINKS.map(l => {
 				const active = l.href === "/admin" ? pathname === "/admin" : pathname.startsWith(l.href);
 				return (
 					<Link key={l.href} href={l.href} aria-current={active ? "page" : undefined}>
-						{l.label}
+						{t(`nav.${l.key}`)}
 					</Link>
 				);
 			})}
