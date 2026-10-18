@@ -360,3 +360,108 @@ export const ReportOptions = styled.fieldset`
 		width: auto;
 	}
 `;
+
+// Board with a side column (BoardSide) on wide screens.
+export const BoardLayout = styled.div`
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 280px;
+	gap: 32px;
+	align-items: start;
+
+	@media (max-width: 1023px) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+`;
+
+export const SideColumn = styled.aside`
+	position: sticky;
+	top: 84px;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+
+	@media (max-width: 1023px) {
+		display: none;
+	}
+`;
+
+export const SideCard = styled.section<{ $soft?: boolean }>`
+	padding: 16px;
+	border: 1px solid ${p => (p.$soft ? "transparent" : palette.border)};
+	border-radius: ${radius.lg};
+	background-color: ${p => (p.$soft ? palette.surface : palette.bg)};
+
+	h2 {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin: 0 0 8px;
+		font-size: 15px;
+	}
+	h2 svg {
+		color: ${palette.primary};
+	}
+	p {
+		margin: 0 0 8px;
+		font-size: 13px;
+		line-height: 1.6;
+		color: ${palette.muted};
+	}
+	.more {
+		display: inline-block;
+		margin-top: 6px;
+		font-size: 13px;
+		font-weight: 600;
+		color: ${palette.primary};
+		text-decoration: none;
+	}
+	.more:hover {
+		text-decoration: underline;
+	}
+`;
+
+export const SideList = styled.ul`
+	margin: 0;
+	padding: 0;
+	list-style: none;
+
+	a {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		padding: 7px 8px;
+		margin: 0 -8px;
+		border-radius: ${radius.sm};
+		font-size: 14px;
+		color: ${palette.text};
+		text-decoration: none;
+	}
+	a:hover {
+		background-color: ${palette.surface};
+	}
+	a[aria-current="page"] {
+		color: ${palette.primary};
+		font-weight: 700;
+	}
+	a svg {
+		color: ${palette.muted};
+	}
+	/* Waiting questions: title over its answer count. */
+	a:has(small) {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 2px;
+	}
+	a span {
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		line-height: 1.45;
+	}
+	small {
+		font-size: 12px;
+		color: ${palette.muted};
+	}
+`;

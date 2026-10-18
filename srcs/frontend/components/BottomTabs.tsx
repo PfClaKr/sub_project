@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation";
 import { BottomBar, BottomSpacer, BottomTab } from "@/styles/styledNav";
 import { HOME, SECTIONS, isActive } from "@/libs/sections";
 
-// Phone-only tab bar: home plus the four sections.
+// Phone-only tab bar: home plus the four sections. A chat room hides it so
+// the conversation and its input get the whole screen, as in messengers.
 export default function BottomTabs() {
 	const pathname = usePathname();
+	if (/^\/chat\/[^/]+/.test(pathname)) return null;
 	return (
 		<>
 			<BottomSpacer />

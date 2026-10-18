@@ -21,7 +21,7 @@ type HomeData = {
 export default async function HomePage() {
 	const { data, error } = await gql<HomeData>(
 		`query Home {
-			recentProducts(Limit: 8) { ${PRODUCT_CARD_FIELDS} }
+			recentProducts(Limit: 12) { ${PRODUCT_CARD_FIELDS} }
 			marketStats { Selling }
 			rooms: listings(Type: "housing", Size: 1) { Total }
 			jobs: listings(Type: "job", Size: 1) { Total }
@@ -58,7 +58,7 @@ export default async function HomePage() {
 						<LinkButton href="/sell">첫 물건 올리기</LinkButton>
 					</EmptyState>
 				) : (
-					<Reveal><ProductGrid products={products} /></Reveal>
+					<Reveal><ProductGrid products={products} preview /></Reveal>
 				)}
 			</section>
 

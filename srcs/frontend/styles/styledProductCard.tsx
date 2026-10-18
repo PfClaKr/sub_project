@@ -3,8 +3,10 @@
 import styled from "styled-components";
 import palette, { radius, shadow, breakpoint } from "@/theme/colorPalette";
 
-// Four columns on desktop: pages of 12 (home) and 40 (browse) fill every row.
-export const Grid = styled.ul`
+// Four columns on desktop, three on tablets, two on phones; browse pages
+// of 40 fill every row. $preview (the home) gets 12 and keeps only full
+// rows: 8, 9 or 6 cards.
+export const Grid = styled.ul<{ $preview?: boolean }>`
 	display: grid;
 	grid-template-columns: repeat(4, minmax(0, 1fr));
 	gap: 20px;
@@ -12,12 +14,16 @@ export const Grid = styled.ul`
 	padding: 0;
 	list-style: none;
 
+	${p => p.$preview && "> li:nth-child(n + 9) { display: none; }"}
+
 	@media (max-width: ${breakpoint.md}) {
 		grid-template-columns: repeat(3, minmax(0, 1fr));
+		${p => p.$preview && "> li:nth-child(9) { display: block; }"}
 	}
 	@media (max-width: ${breakpoint.sm}) {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 12px;
+		${p => p.$preview && "> li:nth-child(n + 7) { display: none; }"}
 	}
 `;
 

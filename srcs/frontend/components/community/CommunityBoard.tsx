@@ -9,7 +9,8 @@ import { gql, POST_LIST_FIELDS } from "@/libs/graphql";
 import { useRegion } from "@/libs/region";
 import { useSession } from "@/libs/session";
 import { Chip, ChipRow, EmptyState, ErrorText, GhostButton, LinkButton, Muted, Pagination } from "@/styles/styledUi";
-import { BoardHeader, Toolbar } from "@/styles/styledCommunity";
+import { BoardHeader, BoardLayout, Toolbar } from "@/styles/styledCommunity";
+import { BoardSide } from "./BoardSide";
 import { PostList, PostListSkeleton } from "./PostList";
 import { RegionChip } from "./RegionChip";
 import type { PostPage } from "@/libs/types";
@@ -83,71 +84,76 @@ export function CommunityBoard() {
 				</LinkButton>
 			</BoardHeader>
 
-			<ChipRow aria-label="게시판" style={{ marginBottom: 12 }}>
-				{BOARD_TABS.map(t => (
-					<Chip key={t.label} href={boardHref(params, { board: t.key })} $active={params.board === t.key} aria-current={params.board === t.key ? "page" : undefined}>
-						{t.label}
-					</Chip>
-				))}
-			</ChipRow>
-			{topics.length > 0 && (
-				<ChipRow aria-label="주제" style={{ marginBottom: 12 }}>
-					<Chip href={boardHref(params, { topic: undefined })} $active={!params.topic}>전체 주제</Chip>
-					{topics.map(t => (
-						<Chip key={t} href={boardHref(params, { topic: t })} $active={params.topic === t}>{t}</Chip>
-					))}
-				</ChipRow>
-			)}
+			<BoardLayout>
+				<div>
+					<ChipRow aria-label="게시판" style={{ marginBottom: 12 }}>
+						{BOARD_TABS.map(t => (
+							<Chip key={t.label} href={boardHref(params, { board: t.key })} $active={params.board === t.key} aria-current={params.board === t.key ? "page" : undefined}>
+								{t.label}
+							</Chip>
+						))}
+					</ChipRow>
+					{topics.length > 0 && (
+						<ChipRow aria-label="주제" style={{ marginBottom: 12 }}>
+							<Chip href={boardHref(params, { topic: undefined })} $active={!params.topic}>전체 주제</Chip>
+							{topics.map(t => (
+								<Chip key={t} href={boardHref(params, { topic: t })} $active={params.topic === t}>{t}</Chip>
+							))}
+						</ChipRow>
+					)}
 
-			<Toolbar>
-				<RegionChip />
-				<form role="search" onSubmit={onSearch}>
-					<input
-						type="search"
-						value={query}
-						onChange={e => setQuery(e.target.value)}
-						placeholder={params.board === "qna" ? "궁금한 걸 검색해보세요 (예: 체류증 갱신)" : "글 검색"}
-						aria-label="커뮤니티 검색"
-						maxLength={100}
-					/>
-					<GhostButton type="submit" aria-label="검색"><Search size={16} /></GhostButton>
-				</form>
-				{params.board === "qna" && (
-					<select
-						aria-label="답변 상태"
-						value={params.solved ?? ""}
-						onChange={e => go({ solved: (e.target.value || undefined) as BoardParams["solved"] })}
-					>
-						<option value="">모든 질문</option>
-						<option value="open">답변 대기</option>
-						<option value="solved">해결됨</option>
-					</select>
-				)}
-				<select aria-label="정렬" value={params.sort ?? ""} onChange={e => go({ sort: (e.target.value || undefined) as BoardParams["sort"] })}>
-					<option value="">{params.q ? "관련순" : "최신순"}</option>
-					{params.q && <option value="newest">최신순</option>}
-					<option value="popular">인기순</option>
-				</select>
-			</Toolbar>
+					<Toolbar>
+						<RegionChip />
+						<form role="search" onSubmit={onSearch}>
+							<input
+								type="search"
+								value={query}
+								onChange={e => setQuery(e.target.value)}
+								placeholder={params.board === "qna" ? "궁금한 걸 검색해보세요 (예: 체류증 갱신)" : "글 검색"}
+								aria-label="커뮤니티 검색"
+								maxLength={100}
+							/>
+							<GhostButton type="submit" aria-label="검색"><Search size={16} /></GhostButton>
+						</form>
+						{params.board === "qna" && (
+							<select
+								aria-label="답변 상태"
+								value={params.solved ?? ""}
+								onChange={e => go({ solved: (e.target.value || undefined) as BoardParams["solved"] })}
+							>
+								<option value="">모든 질문</option>
+								<option value="open">답변 대기</option>
+								<option value="solved">해결됨</option>
+							</select>
+						)}
+						<select aria-label="정렬" value={params.sort ?? ""} onChange={e => go({ sort: (e.target.value || undefined) as BoardParams["sort"] })}>
+							<option value="">{params.q ? "관련순" : "최신순"}</option>
+							{params.q && <option value="newest">최신순</option>}
+							<option value="popular">인기순</option>
+						</select>
+					</Toolbar>
 
-			{error && <ErrorText role="alert">{error}</ErrorText>}
-			{!error && !data && <PostListSkeleton />}
-			{data?.Corrected && <Muted as="p">정확히 맞는 글이 없어 비슷한 글을 보여드려요.</Muted>}
-			{data && data.Items.length === 0 && (
-				<EmptyState>
-					<p>{params.q ? `"${params.q}"에 맞는 글이 없어요.` : "아직 글이 없어요. 첫 글을 남겨보세요."}</p>
-					<LinkButton href={writeHref}>{params.board === "qna" ? "질문하기" : "글쓰기"}</LinkButton>
-				</EmptyState>
-			)}
-			{data && data.Items.length > 0 && <PostList posts={data.Items} showBoard={!params.board} />}
+					{error && <ErrorText role="alert">{error}</ErrorText>}
+					{!error && !data && <PostListSkeleton />}
+					{data?.Corrected && <Muted as="p">정확히 맞는 글이 없어 비슷한 글을 보여드려요.</Muted>}
+					{data && data.Items.length === 0 && (
+						<EmptyState>
+							<p>{params.q ? `"${params.q}"에 맞는 글이 없어요.` : "아직 글이 없어요. 첫 글을 남겨보세요."}</p>
+							<LinkButton href={writeHref}>{params.board === "qna" ? "질문하기" : "글쓰기"}</LinkButton>
+						</EmptyState>
+					)}
+					{data && data.Items.length > 0 && <PostList posts={data.Items} showBoard={!params.board} />}
 
-			{data && data.TotalPages > 1 && (
-				<Pagination aria-label="페이지">
-					{data.Page > 1 && <LinkButton href={boardHref(params, { page: data.Page - 1 })} $ghost>← 이전</LinkButton>}
-					<span>{data.Page} / {data.TotalPages}</span>
-					{data.Page < data.TotalPages && <LinkButton href={boardHref(params, { page: data.Page + 1 })} $ghost>다음 →</LinkButton>}
-				</Pagination>
-			)}
+					{data && data.TotalPages > 1 && (
+						<Pagination aria-label="페이지">
+							{data.Page > 1 && <LinkButton href={boardHref(params, { page: data.Page - 1 })} $ghost>← 이전</LinkButton>}
+							<span>{data.Page} / {data.TotalPages}</span>
+							{data.Page < data.TotalPages && <LinkButton href={boardHref(params, { page: data.Page + 1 })} $ghost>다음 →</LinkButton>}
+						</Pagination>
+					)}
+				</div>
+				<BoardSide params={params} />
+			</BoardLayout>
 		</div>
 	);
 }

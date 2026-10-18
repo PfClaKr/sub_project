@@ -33,7 +33,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="ko">
+		// The home page's pre-paint script may add data-arrival-hidden
+		// (libs/arrival.ts) before React hydrates.
+		<html lang="ko" suppressHydrationWarning>
 			<body>
 				<StyledComponentsRegistry>
 					<GlobalStyle />

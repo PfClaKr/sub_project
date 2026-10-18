@@ -1,7 +1,7 @@
 'use client';
 
 import styled from "styled-components";
-import palette, { radius } from "@/theme/colorPalette";
+import palette, { breakpoint, radius } from "@/theme/colorPalette";
 
 export const ChatHeader = styled.div`
 	display: flex;
@@ -26,12 +26,17 @@ export const ChatHeader = styled.div`
 	}
 	small {
 		display: block;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 		color: ${palette.muted};
 	}
 `;
 
 export const ConnectionDot = styled.span<{ $on: boolean }>`
+	flex: none;
 	margin-left: auto;
+	white-space: nowrap;
 	font-size: 12px;
 	color: ${p => (p.$on ? "#1e8e3e" : palette.muted)};
 
@@ -47,6 +52,13 @@ export const MessageList = styled.div`
 	gap: 6px;
 	height: min(60vh, 520px);
 	overflow-y: auto;
+
+	/* Phones hide the tab bar in a room (BottomTabs): the conversation
+	   takes the screen down to the input. */
+	@media (max-width: ${breakpoint.sm}) {
+		height: calc(100dvh - 300px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+		min-height: 220px;
+	}
 	padding: 16px;
 	border: 1px solid ${palette.border};
 	background-color: ${palette.surface};

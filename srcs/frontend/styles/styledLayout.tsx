@@ -66,6 +66,14 @@ export const FooterLinks = styled.nav`
 	a:hover {
 		color: ${palette.primary};
 	}
+	/* Finger-sized targets without changing the look. */
+	@media (pointer: coarse) {
+		gap: 0 8px;
+
+		a {
+			padding: 8px 6px;
+		}
+	}
 `;
 
 export const FooterLegal = styled.nav`
@@ -82,5 +90,12 @@ export const FooterLegal = styled.nav`
 	}
 	a:hover {
 		text-decoration: underline;
+	}
+	@media (pointer: coarse) {
+		gap: 0 6px;
+
+		a {
+			padding: 6px 4px;
+		}
 	}
 `;

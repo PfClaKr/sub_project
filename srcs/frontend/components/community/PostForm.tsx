@@ -163,9 +163,12 @@ export function PostForm({ post, board: initialBoard }: { post?: Post; board?: B
 				</FieldLabel>
 				<ImageUploader photos={photos} onChange={setPhotos} uploading={submitting} />
 				{!post && (
-					<label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
-						<input type="checkbox" checked={anonymous} onChange={e => setAnonymous(e.target.checked)} style={{ width: "auto" }} />
-						익명으로 쓰기 <Hint>닉네임 대신 &lsquo;익명&rsquo;으로 보여요. 올린 뒤에는 바꿀 수 없어요.</Hint>
+					<label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14 }}>
+						<input type="checkbox" checked={anonymous} onChange={e => setAnonymous(e.target.checked)} style={{ width: "auto", marginTop: 3 }} />
+						<span>
+							<span style={{ display: "block", fontWeight: 600 }}>익명으로 쓰기</span>
+							<Hint>닉네임 대신 &lsquo;익명&rsquo;으로 보여요. 올린 뒤에는 바꿀 수 없어요.</Hint>
+						</span>
 					</label>
 				)}
 			</FormSection>

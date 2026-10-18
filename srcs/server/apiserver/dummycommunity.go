@@ -176,6 +176,15 @@ func seedDummyPosts(users int) error {
 			"LikeCount":    {N: aws.String(strconv.Itoa(p.likes))},
 			"ViewCount":    {N: aws.String(strconv.Itoa(p.likes*7 + 3))},
 		}
+		// Comment ids carry the seed time, so a rerun would add a second
+		// thread next to the old one: drop the old one first.
+		old, err := queryBy(dynamo.TableComments, "", "PostId", postId)
+		if err != nil {
+			return err
+		}
+		if err := deleteKeys(dynamo.TableComments, old, "PostId", "CommentId"); err != nil {
+			return err
+		}
 		for j, body := range p.comments {
 			commentId := fmt.Sprintf("%013d-dummy%d", ts-int64(i)*5400_000+int64(j+1)*60_000, j)
 			commenter := fmt.Sprintf("%s%d", dummyUserPrefix, (i+j+1)%users+1)
