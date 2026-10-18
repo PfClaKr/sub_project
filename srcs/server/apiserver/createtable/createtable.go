@@ -133,6 +133,18 @@ var tables = []tableDef{
 		schema:  hashRangeKey("UserId", "BlockedId"),
 		attribs: []*dynamodb.AttributeDefinition{attr("UserId", "S"), attr("BlockedId", "S")},
 	},
+	{
+		// Site editing: "settings" and "texts:<locale>" (sitehandler).
+		name:    dynamo.TableSiteContent,
+		schema:  hashKey("Id"),
+		attribs: []*dynamodb.AttributeDefinition{attr("Id", "S")},
+	},
+	{
+		// One partition ("all") of changes, newest first by At (ms).
+		name:    dynamo.TableSiteContentLog,
+		schema:  hashRangeKey("Feed", "At"),
+		attribs: []*dynamodb.AttributeDefinition{attr("Feed", "S"), attr("At", "N")},
+	},
 }
 
 // obsoleteIndexes were created by earlier versions and are not queried;

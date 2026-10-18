@@ -15,6 +15,7 @@ import (
 	"apiserver/geohandler"
 	"apiserver/graphqlhandler"
 	"apiserver/notifyhandler"
+	"apiserver/sitehandler"
 	"apiserver/uploadhandler"
 
 	"local.com/account"
@@ -127,6 +128,7 @@ func main() {
 	adminhandler.Register(r)
 	geohandler.Register(r)
 	notifyhandler.Register(r)
+	sitehandler.Register(r, adminhandler.RequireAdmin)
 
 	// Table dumps and dummy data; never enable outside local dev.
 	if os.Getenv("ENABLE_DEBUG_ROUTES") == "true" {

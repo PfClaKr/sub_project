@@ -143,5 +143,12 @@ var catalog = map[string][2]string{
 	"지도 서비스에 연결하지 못했어요.":                               {"Impossible de joindre le service de cartes.", "Couldn't reach the map service."},
 	"지역을 찾을 수 없어요.":                                    {"Zone introuvable.", "Area not found."},
 	"알 수 없는 언어예요.":                                     {"Langue inconnue.", "Unknown language."},
+	"문구 키가 올바르지 않아요.":                                  {"Clé de texte invalide.", "Invalid text key."},
+	"문구는 5000자 이하로 입력해주세요.":                            {"Le texte doit faire 5 000 caractères au plus.", "Text must be 5,000 characters or fewer."},
+	"공지 링크는 /로 시작하는 주소나 https 주소여야 해요.":                {"Le lien de l'annonce doit commencer par / ou https://.", "The notice link must start with / or https://."},
+	"공지는 300자 이하로 입력해주세요.":                             {"L'annonce doit faire 300 caractères au plus.", "The notice must be 300 characters or fewer."},
+	"공지를 켜려면 한국어 문구가 필요해요.":                            {"Pour activer l'annonce, saisissez au moins le texte coréen.", "To turn the notice on, enter at least the Korean text."},
+	"색상은 #0048b4 같은 형식으로 입력해주세요.":                      {"Saisissez les couleurs au format #0048b4.", "Enter colours like #0048b4."},
+	"변경 기록을 찾을 수 없어요.":                                 {"Modification introuvable.", "Change not found."},
 	"internal error":                                   {"Erreur interne.", "Internal error."},
 }
