@@ -123,3 +123,29 @@ func TestContentHTML(t *testing.T) {
 		t.Error("the frame is not translated")
 	}
 }
+
+func TestTheme(t *testing.T) {
+	th := ThemeFrom(map[string]string{"primary": "#AA3300", "muted": "grey", "danger": "#000000"})
+	if th.Primary != "#aa3300" || th.Muted != DefaultTheme.Muted || th.Heading != DefaultTheme.Heading {
+		t.Errorf("theme = %+v", th)
+	}
+
+	calls := 0
+	themeSource = func() (map[string]string, error) { calls++; return map[string]string{"primary": "#123456"}, nil }
+	t.Cleanup(func() { themeSource = nil; ForgetTheme() })
+	ForgetTheme()
+	_, c := Verification("ko", "https://itnyang.test/v")
+	html := c.HTML()
+	c.HTML()
+	if calls != 1 {
+		t.Errorf("theme read %d times, want once (cached)", calls)
+	}
+	if !strings.Contains(html, `bgcolor="#123456"`) || strings.Contains(html, DefaultTheme.Primary) {
+		t.Error("the mail does not use the site theme")
+	}
+	ForgetTheme()
+	themeSource = func() (map[string]string, error) { calls++; return nil, io.ErrUnexpectedEOF }
+	if CurrentTheme() != DefaultTheme {
+		t.Error("a failed first read must fall back to the built-in colours")
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"log"
 	"strings"
 
 	"local.com/i18n"
@@ -84,8 +85,15 @@ func (c Content) Text() string {
 }
 
 // HTML is the designed version: a centred card on a soft background,
-// tables and inline styles only, since mail clients drop most CSS.
+// tables and inline styles only, since mail clients drop most CSS. It
+// uses the site's current theme.
 func (c Content) HTML() string {
+	return c.HTMLWith(CurrentTheme())
+}
+
+// HTMLWith renders with the given colours (the admin preview of an
+// unsaved theme).
+func (c Content) HTMLWith(t Theme) string {
 	lang := c.Lang
 	if !i18n.Valid(lang) {
 		lang = i18n.Korean
@@ -93,6 +101,7 @@ func (c Content) HTML() string {
 	var b bytes.Buffer
 	err := layout.Execute(&b, map[string]interface{}{
 		"C":        c,
+		"T":        t,
 		"Lang":     lang,
 		"AppURL":   AppURL(),
 		"Brand":    i18n.T(lang, "잇냥"),
@@ -101,14 +110,16 @@ func (c Content) HTML() string {
 		"NoReply":  i18n.T(lang, "발신 전용 메일이라 답장은 확인하지 못해요."),
 	})
 	if err != nil {
-		// The template is fixed and the data plain strings: this cannot
-		// happen, and the text part still carries the message.
+		// The template is fixed and the data plain strings, so this is
+		// a bug (tests render every mail); the text part still carries
+		// the message.
+		log.Printf("mail html: %v", err)
 		return ""
 	}
 	return b.String()
 }
 
-// Brand colours from the site's theme (frontend theme/colorPalette.ts).
+// Colours come from the theme (.T); the button text stays white.
 var layout = template.Must(template.New("mail").Parse(`<!doctype html>
 <html lang="{{.Lang}}">
 <head>
@@ -126,43 +137,43 @@ var layout = template.Must(template.New("mail").Parse(`<!doctype html>
 }
 </style>
 </head>
-<body style="margin:0;padding:0;background:#f2f5fa;-webkit-text-size-adjust:100%;">
-{{if .C.Preheader}}<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:#f2f5fa;">{{.C.Preheader}}</div>{{end}}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f2f5fa;">
+<body style="margin:0;padding:0;background:{{$.T.Surface}};-webkit-text-size-adjust:100%;">
+{{if .C.Preheader}}<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:{{$.T.Surface}};">{{.C.Preheader}}</div>{{end}}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:{{$.T.Surface}};">
 <tr><td align="center" class="outer" style="padding:36px 16px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR','Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
 <tr><td style="padding:0 4px 18px;">
-<a href="{{.AppURL}}" style="text-decoration:none;color:#0048b4;font-size:20px;font-weight:800;letter-spacing:-0.3px;">
+<a href="{{.AppURL}}" style="text-decoration:none;color:{{$.T.Primary}};font-size:20px;font-weight:800;letter-spacing:-0.3px;">
 <img src="{{.AppURL}}/icons/icon-192.png" width="32" height="32" alt="" style="width:32px;height:32px;border:0;border-radius:9px;vertical-align:middle;">
 <span style="vertical-align:middle;padding-left:6px;">{{.Brand}}</span>
 </a>
 </td></tr>
-<tr><td class="card" style="background:#ffffff;border:1px solid #e2e8f2;border-radius:18px;padding:36px 32px;color:#1f2937;">
-<h1 style="margin:0 0 14px;font-size:22px;line-height:1.4;font-weight:800;color:#111827;letter-spacing:-0.3px;">{{.C.Heading}}</h1>
-{{range .C.Intro}}<p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#374151;">{{.}}</p>
+<tr><td class="card" style="background:#ffffff;border:1px solid {{$.T.Border}};border-radius:18px;padding:36px 32px;color:{{$.T.Text}};">
+<h1 style="margin:0 0 14px;font-size:22px;line-height:1.4;font-weight:800;color:{{$.T.Heading}};letter-spacing:-0.3px;">{{.C.Heading}}</h1>
+{{range .C.Intro}}<p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:{{$.T.Text}};">{{.}}</p>
 {{end}}
 {{range .C.Items}}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;">
-<tr><td style="background:#f4f8fe;border-left:4px solid #0048b4;border-radius:10px;padding:14px 16px;">
-<div style="font-size:15px;line-height:1.5;font-weight:700;color:#111827;">{{.Title}}</div>
-{{if .Text}}<div style="margin-top:4px;font-size:14px;line-height:1.6;color:#4b5563;">{{.Text}}</div>{{end}}
-{{if .Link.URL}}<div style="margin-top:8px;"><a href="{{.Link.URL}}" style="font-size:14px;font-weight:700;color:#0048b4;text-decoration:none;">{{.Link.Label}} &rarr;</a></div>{{end}}
+<tr><td style="background:{{$.T.Surface}};border-left:4px solid {{$.T.Primary}};border-radius:10px;padding:14px 16px;">
+<div style="font-size:15px;line-height:1.5;font-weight:700;color:{{$.T.Heading}};">{{.Title}}</div>
+{{if .Text}}<div style="margin-top:4px;font-size:14px;line-height:1.6;color:{{$.T.Muted}};">{{.Text}}</div>{{end}}
+{{if .Link.URL}}<div style="margin-top:8px;"><a href="{{.Link.URL}}" style="font-size:14px;font-weight:700;color:{{$.T.Primary}};text-decoration:none;">{{.Link.Label}} &rarr;</a></div>{{end}}
 </td></tr>
 </table>
 {{end}}
 {{if .C.Button.URL}}<table role="presentation" class="button" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 20px;">
-<tr><td align="center" bgcolor="#0048b4" style="border-radius:12px;">
+<tr><td align="center" bgcolor="{{$.T.Primary}}" style="border-radius:12px;">
 <a href="{{.C.Button.URL}}" style="display:inline-block;padding:14px 30px;font-size:16px;line-height:1.2;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;">{{.C.Button.Label}}</a>
 </td></tr>
 </table>
-{{if not .C.Items}}<p style="margin:0 0 4px;font-size:13px;line-height:1.6;color:#6b7280;">{{.Fallback}}</p>
-<p style="margin:0 0 8px;font-size:13px;line-height:1.6;word-break:break-all;"><a href="{{.C.Button.URL}}" style="color:#0048b4;">{{.C.Button.URL}}</a></p>
+{{if not .C.Items}}<p style="margin:0 0 4px;font-size:13px;line-height:1.6;color:{{$.T.Muted}};">{{.Fallback}}</p>
+<p style="margin:0 0 8px;font-size:13px;line-height:1.6;word-break:break-all;"><a href="{{.C.Button.URL}}" style="color:{{$.T.Primary}};">{{.C.Button.URL}}</a></p>
 {{end}}{{end}}
-{{if .C.Notes}}<div style="margin-top:24px;padding-top:18px;border-top:1px solid #edf1f6;">
-{{range .C.Notes}}<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:#6b7280;">{{.}}</p>
+{{if .C.Notes}}<div style="margin-top:24px;padding-top:18px;border-top:1px solid {{$.T.Border}};">
+{{range .C.Notes}}<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:{{$.T.Muted}};">{{.}}</p>
 {{end}}</div>{{end}}
 </td></tr>
-<tr><td align="center" style="padding:22px 12px 8px;font-size:12px;line-height:1.7;color:#8b95a7;">
-{{if .C.Footer}}<p style="margin:0 0 8px;">{{range $i, $l := .C.Footer}}{{if $i}} &nbsp;·&nbsp; {{end}}<a href="{{$l.URL}}" style="color:#5b6577;text-decoration:underline;">{{$l.Label}}</a>{{end}}</p>
+<tr><td align="center" style="padding:22px 12px 8px;font-size:12px;line-height:1.7;color:{{$.T.Muted}};">
+{{if .C.Footer}}<p style="margin:0 0 8px;">{{range $i, $l := .C.Footer}}{{if $i}} &nbsp;·&nbsp; {{end}}<a href="{{$l.URL}}" style="color:{{$.T.Muted}};text-decoration:underline;">{{$l.Label}}</a>{{end}}</p>
 {{end}}<p style="margin:0;">{{.Brand}} · {{.Tagline}}<br>{{.NoReply}}</p>
 </td></tr>
 </table>

@@ -17,6 +17,7 @@ import (
 	"local.com/cors"
 	"local.com/i18n"
 	"local.com/jwt"
+	"local.com/mailer"
 
 	"github.com/gorilla/mux"
 )
@@ -32,6 +33,9 @@ func main() {
 		fmt.Println(userId)
 		return
 	}
+
+	// Mails follow the theme colours set on /admin/site.
+	mailer.UseSiteTheme()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) }).Methods("GET")

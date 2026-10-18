@@ -23,6 +23,7 @@ import (
 	"local.com/dynamo"
 	"local.com/i18n"
 	"local.com/jwt"
+	"local.com/mailer"
 	"local.com/notify"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -109,7 +110,9 @@ func main() {
 	uploadhandler.EnsureBucket()
 	// Expire housing/job posts and warn authors three days ahead.
 	go graphqlhandler.RunListingExpiry(context.Background(), 30*time.Minute)
-	// Sends queued notification mails (immediate and digests).
+	// Sends queued notification mails (immediate and digests), in the
+	// theme colours set on /admin/site.
+	mailer.UseSiteTheme()
 	go notify.RunEmailWorker(context.Background(), notify.New(svc))
 
 	r := mux.NewRouter()

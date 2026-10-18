@@ -122,15 +122,8 @@ func issue(email, lang string) error {
 		return err
 	}
 	link := fmt.Sprintf("%s/account/reset?email=%s&token=%s", mailer.AppURL(), url.QueryEscape(email), token)
-	content := mailer.Content{
-		Lang:      lang,
-		Preheader: i18n.T(lang, "새 비밀번호를 정해주세요. 링크는 1시간 동안 한 번만 쓸 수 있어요."),
-		Heading:   i18n.T(lang, "비밀번호 재설정을 요청하셨어요."),
-		Intro:     []string{i18n.T(lang, "새 비밀번호를 정해주세요. 링크는 1시간 동안 한 번만 쓸 수 있어요.")},
-		Button:    mailer.Link{Label: i18n.T(lang, "새 비밀번호 정하기"), URL: link},
-		Notes:     []string{i18n.T(lang, "본인이 요청하지 않았다면 이 메일을 무시하세요. 비밀번호는 바뀌지 않아요.")},
-	}
-	return mailer.SendMessage(content.Message(email, i18n.T(lang, "[잇냥] 비밀번호 재설정")))
+	subject, content := mailer.PasswordReset(lang, link)
+	return mailer.SendMessage(content.Message(email, subject))
 }
 
 var errBadLink = "링크가 만료되었거나 이미 사용되었어요. 비밀번호 찾기를 다시 요청해주세요."
