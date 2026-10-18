@@ -90,3 +90,12 @@ func TestListingFilters(t *testing.T) {
 		t.Error("IncludeClosed must keep closed deals")
 	}
 }
+
+func TestExpiringListingsQuery(t *testing.T) {
+	q, _ := json.Marshal(expiringListingsQuery(1700000000000, 1000))
+	for _, want := range []string{`"terms":{"Type":["housing","job"]}`, `"term":{"Status":"active"}`, `"range":{"ExpiresAt":{"lte":1700000000000}}`, `"sort":[{"ExpiresAt":"asc"}]`} {
+		if !strings.Contains(string(q), want) {
+			t.Errorf("query lacks %s: %s", want, q)
+		}
+	}
+}

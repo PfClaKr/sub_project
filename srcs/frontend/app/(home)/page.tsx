@@ -31,6 +31,8 @@ export default async function HomePage() {
 			jobs: listings(Type: "job", Size: 1) { Total }
 			open: posts(Type: "qna", Solved: false, Size: 1) { Total }
 		}`,
+		{},
+		{ revalidate: 30 },
 	);
 	const counts: HomeCounts = {
 		selling: data?.marketStats?.Selling ?? null,

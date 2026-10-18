@@ -207,7 +207,7 @@ func visibleOfType(postId, viewer string, types ...string) (dynamo.Item, error) 
 
 // authors batch-reads nicknames and pictures of the given user ids.
 func authors(ids []string) (map[string]dynamo.Item, error) {
-	return dynamo.BatchGet(svc, dynamo.TableUsers, "UserId", ids, "UserId, UserNickname, ProfileImage")
+	return userCache.BatchGet(svc, ids)
 }
 
 const previewRunes = 120
@@ -284,7 +284,7 @@ func postViews(items []dynamo.Item, viewer string) ([]map[string]interface{}, er
 // postsByIds keeps the order of ids (search ranking) and drops posts no
 // longer active, e.g. deleted after indexing.
 func postsByIds(ids []string) ([]dynamo.Item, error) {
-	found, err := dynamo.BatchGet(svc, dynamo.TablePosts, "PostId", ids, "")
+	found, err := postCache.BatchGet(svc, ids)
 	if err != nil {
 		return nil, err
 	}
@@ -303,6 +303,7 @@ func reindexPost(item dynamo.Item) {
 	if item == nil {
 		return
 	}
+	postCache.Forget(dynamo.S(item, "PostId"))
 	var err error
 	if dynamo.S(item, "Status") == PostDeleted {
 		err = eshandler.DeletePost(dynamo.S(item, "PostId"))

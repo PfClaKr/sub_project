@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { getLabels } from "@/libs/labels.server";
@@ -13,7 +14,7 @@ import type { Product, User } from "@/libs/types";
 
 type Props = { params: { id: string } };
 
-async function getProfile(userId: string) {
+const getProfile = cache(async (userId: string) => {
 	return gql<{ user: User | null; userProducts: Product[] }>(
 		`query Profile($userId: String!) {
 			user(UserId: $userId) { UserId UserNickname ProfileImage Residence PublishedQuantity CreatedAt }
@@ -21,7 +22,7 @@ async function getProfile(userId: string) {
 		}`,
 		{ userId },
 	);
-}
+});
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const { data } = await getProfile(params.id);

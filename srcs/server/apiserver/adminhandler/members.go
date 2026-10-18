@@ -28,6 +28,7 @@ import (
 //
 // It returns the number of products removed.
 func DeleteMember(userId string) (int, error) {
+	defer graphqlhandler.ForgetUser(userId)
 	user, err := svc.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(dynamo.TableUsers),
 		Key:       dynamo.Item{"UserId": {S: aws.String(userId)}},

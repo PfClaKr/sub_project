@@ -297,3 +297,26 @@ func searchPostIds(query m) ([]string, int, error) {
 	}
 	return ids, res.Hits.Total.Value, nil
 }
+
+// expiringListingsQuery finds active housing and job posts whose
+// ExpiresAt is at or before before (ms), soonest first.
+func expiringListingsQuery(before int64, size int) m {
+	return m{
+		"size":    size,
+		"_source": []string{"PostId"},
+		"query": m{"bool": m{"filter": []m{
+			{"terms": m{"Type": []string{"housing", "job"}}},
+			{"term": m{"Status": "active"}},
+			{"range": m{"ExpiresAt": m{"lte": before}}},
+		}}},
+		"sort": []m{{"ExpiresAt": "asc"}},
+	}
+}
+
+// ExpiringListingIds lists the posts the expiry pass has to look at, so
+// it does not scan the whole Posts table (every scanned item is billed).
+// More than size waiting are handled by the following runs.
+func ExpiringListingIds(before int64) ([]string, error) {
+	ids, _, err := searchPostIds(expiringListingsQuery(before, 1000))
+	return ids, err
+}

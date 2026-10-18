@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { getLabels } from "@/libs/labels.server";
@@ -18,7 +19,7 @@ import { TimeAgo } from "@/components/ui/TimeAgo";
 
 type Props = { params: { id: string } };
 
-async function getProduct(productId: string) {
+const getProduct = cache(async (productId: string) => {
 	return gql<{ product: Product | null; }>(
 		`query Product($productId: String!) {
 			product(ProductId: $productId) {
@@ -43,9 +44,9 @@ async function getProduct(productId: string) {
 		}`,
 		{ productId },
 	);
-}
+});
 
-async function getUser(userId: string) {
+const getUser = cache(async (userId: string) => {
 	const { data } = await gql<{ user: User | null }>(
 		`query User($userId: String!) {
 			user(UserId: $userId) { UserId UserNickname ProfileImage PublishedQuantity }
@@ -53,7 +54,7 @@ async function getUser(userId: string) {
 		{ userId },
 	);
 	return data?.user ?? null;
-}
+});
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const { data } = await getProduct(params.id);

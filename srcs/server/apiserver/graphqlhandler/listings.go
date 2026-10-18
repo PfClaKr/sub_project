@@ -845,16 +845,9 @@ func listingLink(item dynamo.Item) string {
 }
 
 // ExpireListings marks listings past ExpiresAt expired and warns authors
-// three days before. Scans the Posts table (fine at this size).
+// three days before.
 func ExpireListings(now time.Time) error {
-	items, err := dynamo.ScanAll(svc, &dynamodb.ScanInput{
-		TableName:                aws.String(dynamo.TablePosts),
-		FilterExpression:         aws.String("(#t = :h OR #t = :j) AND #s = :a"),
-		ExpressionAttributeNames: map[string]*string{"#t": aws.String("Type"), "#s": aws.String("Status")},
-		ExpressionAttributeValues: dynamo.Item{
-			":h": strAttr(PostTypeHousing), ":j": strAttr(PostTypeJob), ":a": strAttr(PostActive),
-		},
-	})
+	items, err := expiringListings(now)
 	if err != nil {
 		return err
 	}
@@ -891,6 +884,36 @@ func ExpireListings(now time.Time) error {
 		}
 	}
 	return nil
+}
+
+// expiringListings returns the active listings that expire within
+// expiryNotice. The search index names them (every listing write
+// reindexes it) and DynamoDB has the final say; a full scan, billed for
+// every post, is only the fallback when search is down.
+func expiringListings(now time.Time) ([]dynamo.Item, error) {
+	ids, err := eshandler.ExpiringListingIds(now.Add(expiryNotice).UnixMilli())
+	if err != nil {
+		log.Printf("listing expiry: search unavailable, scanning Posts: %v", err)
+		return dynamo.ScanAll(svc, &dynamodb.ScanInput{
+			TableName:                aws.String(dynamo.TablePosts),
+			FilterExpression:         aws.String("(#t = :h OR #t = :j) AND #s = :a"),
+			ExpressionAttributeNames: map[string]*string{"#t": aws.String("Type"), "#s": aws.String("Status")},
+			ExpressionAttributeValues: dynamo.Item{
+				":h": strAttr(PostTypeHousing), ":j": strAttr(PostTypeJob), ":a": strAttr(PostActive),
+			},
+		})
+	}
+	found, err := dynamo.BatchGet(svc, dynamo.TablePosts, "PostId", ids, "")
+	if err != nil {
+		return nil, err
+	}
+	items := make([]dynamo.Item, 0, len(found))
+	for _, item := range found {
+		if t := dynamo.S(item, "Type"); (t == PostTypeHousing || t == PostTypeJob) && dynamo.S(item, "Status") == PostActive {
+			items = append(items, item)
+		}
+	}
+	return items, nil
 }
 
 // RunListingExpiry runs ExpireListings now and then every interval until
