@@ -1,5 +1,6 @@
 import type { Geometry } from "geojson";
 import { API_URL } from "@/libs/config";
+import { libText } from "@/libs/libText";
 
 // Places and areas come from the apiserver's /geo proxy, which throttles
 // and caches OpenStreetMap Nominatim (see apiserver/geohandler).
@@ -25,10 +26,6 @@ export const PARIS: LatLng = { lat: 48.8566, lng: 2.3522 };
 export const SEARCH_DISTANCES = [0, 5, 10, 20, 50];
 
 // Shared by the (server) search page and the (client) filter.
-export function distanceLabel(km: number): string {
-	return km === 0 ? "이 지역만" : `+${km}km`;
-}
-
 export function areaLabel(a: Pick<Area, "Name" | "Postcode">): string {
 	return a.Postcode ? `${a.Name} (${a.Postcode})` : a.Name;
 }
@@ -40,7 +37,7 @@ export function areaCenter(a: Area): LatLng {
 async function geo<T>(path: string, signal?: AbortSignal): Promise<T | null> {
 	const res = await fetch(`${API_URL}/geo${path}`, { signal });
 	if (res.status === 404) return null;
-	if (!res.ok) throw new Error("지도 서비스에 연결하지 못했어요.");
+	if (!res.ok) throw new Error(libText("map"));
 	return res.json();
 }
 
@@ -69,12 +66,12 @@ export async function streetLabel(p: LatLng): Promise<string> {
 export function currentPosition(): Promise<LatLng> {
 	return new Promise((resolve, reject) => {
 		if (!navigator.geolocation) {
-			reject(new Error("이 브라우저는 위치 확인을 지원하지 않아요."));
+			reject(new Error(libText("noGeolocation")));
 			return;
 		}
 		navigator.geolocation.getCurrentPosition(
 			pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-			() => reject(new Error("현재 위치를 가져오지 못했어요. 위치 권한을 확인해주세요.")),
+			() => reject(new Error(libText("position"))),
 			{ enableHighAccuracy: true, timeout: 10000 },
 		);
 	});

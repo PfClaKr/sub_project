@@ -1,4 +1,5 @@
 import { API_URL } from "@/libs/config";
+import { libText } from "@/libs/libText";
 
 // The VAPID public key arrives base64url encoded; PushManager wants bytes.
 export function urlBase64ToUint8Array(base64: string): Uint8Array {
@@ -33,9 +34,9 @@ export async function currentSubscription(): Promise<PushSubscription | null> {
 // it with the apiserver. Returns an error message or "".
 export async function enablePush(): Promise<string> {
 	const keyRes = await fetch(`${API_URL}/push/key`).then(r => r.json()).catch(() => null);
-	if (!keyRes?.Enabled) return "푸시 알림이 아직 준비되지 않았어요.";
+	if (!keyRes?.Enabled) return libText("pushNotReady");
 	const permission = await Notification.requestPermission();
-	if (permission !== "granted") return "브라우저에서 알림이 차단되어 있어요. 사이트 설정에서 허용해주세요.";
+	if (permission !== "granted") return libText("pushBlocked");
 	const reg = await navigator.serviceWorker.ready;
 	const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(keyRes.PublicKey) });
 	const res = await fetch(`${API_URL}/push/subscription`, {
@@ -44,7 +45,7 @@ export async function enablePush(): Promise<string> {
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(sub.toJSON()),
 	});
-	return res.ok ? "" : "이 기기를 등록하지 못했어요.";
+	return res.ok ? "" : libText("pushRegister");
 }
 
 export async function disablePush(): Promise<void> {

@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { areaLabel, distanceLabel, SEARCH_DISTANCES } from "./geo";
+import { areaLabel, SEARCH_DISTANCES } from "./geo";
 
 describe("geo labels", () => {
 	it("labels distances like leboncoin's radius", () => {
-		expect(distanceLabel(0)).toBe("이 지역만");
-		expect(distanceLabel(10)).toBe("+10km");
 		expect(SEARCH_DISTANCES[0]).toBe(0);
 	});
 
