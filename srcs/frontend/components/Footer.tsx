@@ -17,7 +17,7 @@ export default function Footer() {
 				<Link href="/privacy"><strong>개인정보처리방침</strong></Link>
 				<Link href="/legal">운영자 정보 · Mentions légales</Link>
 			</FooterLegal>
-			<p><strong>잇냥</strong> · 파리 한인 중고마켓·커뮤니티</p>
+			<p><strong>잇냥</strong> · 프랑스 한인 생활 커뮤니티</p>
 			<p>거래는 직접 만나서, 안전한 공공장소에서 해주세요. 물건이나 집을 보기 전에는 돈을 보내지 마세요.</p>
 		</FooterBar>
 	);

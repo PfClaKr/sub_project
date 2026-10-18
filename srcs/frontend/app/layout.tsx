@@ -15,9 +15,9 @@ import { Main } from "@/styles/styledLayout";
 export const metadata: Metadata = {
 	title: {
 		template: "%s | 잇냥",
-		default: "잇냥 - 파리 한인 중고마켓·커뮤니티",
+		default: "잇냥 - 프랑스 한인 생활 커뮤니티",
 	},
-	description: "파리에 사는 한인들끼리 중고 물건을 사고팔고, 생활 정보를 묻고 답하는 곳, 잇냥.",
+	description: "프랑스에 사는 한인들이 중고 물건을 사고팔고, 집과 알바를 구하고, 생활 질문을 묻고 답하는 곳, 잇냥.",
 	applicationName: "잇냥",
 	appleWebApp: { capable: true, title: "잇냥", statusBarStyle: "default" },
 };
