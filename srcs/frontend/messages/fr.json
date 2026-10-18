@@ -1460,7 +1460,7 @@
       "uploading": "Envoi…",
       "chooseImage": "Choisir une image",
       "useMascot": "Revenir au chat",
-      "themeLead": "Les couleurs s'appliquent à tout le site. Vérifiez que le contraste reste suffisant.",
+      "themeLead": "Les couleurs modifiées s'appliquent tout de suite à toutes les pages et aux e-mails envoyés aux membres. Vérifiez que le texte reste bien lisible sur le fond.",
       "token": "Élément",
       "color": "Couleur",
       "tokens": {
@@ -1493,7 +1493,44 @@
         "Theme": "couleurs"
       },
       "changedParts": "Modifié : {parts}",
-      "nothing": "Aucun changement"
+      "nothing": "Aucun changement",
+      "preview": {
+        "show": "Aperçu",
+        "hide": "Fermer l'aperçu",
+        "row": "Aperçu",
+        "title": "Aperçu (non enregistré)",
+        "lead": "Montre vos modifications non enregistrées sur le vrai site. Vous seul voyez cet aperçu.",
+        "close": "Fermer l'aperçu",
+        "page": "Page",
+        "language": "Langue",
+        "device": "Appareil",
+        "desktop": "Ordinateur",
+        "tablet": "Tablette",
+        "phone": "Téléphone",
+        "reload": "Actualiser",
+        "newWindow": "Nouvelle fenêtre",
+        "frameTitle": "Aperçu du site",
+        "pages": {
+          "home": "Accueil",
+          "search": "Occasion",
+          "community": "Communauté",
+          "housing": "Logement",
+          "jobs": "Petits boulots",
+          "safety": "Guide sécurité",
+          "notifications": "Notifications",
+          "myaccount": "Mon compte"
+        }
+      },
+      "mail": {
+        "title": "Aperçu des e-mails",
+        "lead": "Les e-mails envoyés aux membres suivent aussi ces couleurs. Le contenu est un exemple.",
+        "type": "Type d'e-mail",
+        "types": {
+          "verify": "Vérification de l'inscription",
+          "reset": "Réinitialisation du mot de passe",
+          "digest": "Résumé des notifications"
+        }
+      }
     }
   },
   "names": {
@@ -1505,5 +1542,9 @@
   "notice": {
     "close": "Fermer l'annonce",
     "more": "En savoir plus"
+  },
+  "preview": {
+    "bar": "Aperçu administrateur : les modifications non enregistrées sont visibles.",
+    "end": "Quitter l'aperçu"
   }
 }

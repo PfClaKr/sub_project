@@ -132,3 +132,105 @@ export const Swatch = styled.span`
 		font-size: 13px;
 	}
 `;
+
+// The editor and its preview side by side on wide screens, stacked below.
+export const WithPreview = styled.div<{ $open: boolean }>`
+	display: grid;
+	gap: 20px;
+	align-items: start;
+
+	@media (min-width: 1200px) {
+		grid-template-columns: ${p => (p.$open ? "minmax(0, 1fr) minmax(0, 1.15fr)" : "minmax(0, 1fr)")};
+	}
+`;
+
+export const PreviewBox = styled.section`
+	min-width: 0;
+	padding: 12px;
+	border: 1px solid ${palette.border};
+	border-radius: ${radius.lg};
+	background: ${palette.surface};
+
+	@media (min-width: 1200px) {
+		position: sticky;
+		top: 16px;
+	}
+
+	.toolbar {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 8px;
+	}
+	h3 {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin: 0;
+		font-size: 15px;
+	}
+	select {
+		width: auto;
+		padding-top: 6px;
+		padding-bottom: 6px;
+		font-size: 13px;
+	}
+	.toolbar a,
+	.toolbar button {
+		padding: 6px 10px;
+		font-size: 13px;
+	}
+	.devices {
+		display: inline-flex;
+		border: 1px solid ${palette.border};
+		border-radius: ${radius.md};
+		overflow: hidden;
+	}
+	.devices button,
+	.devices button:hover:not(:disabled) {
+		display: inline-flex;
+		padding: 6px 10px;
+		border: none;
+		border-radius: 0;
+		color: ${palette.muted};
+		background: ${palette.bg};
+	}
+	.devices button[aria-pressed="true"] {
+		color: #ffffff;
+		background: ${palette.primary};
+	}
+	.lead {
+		margin: 0 0 8px;
+		font-size: 12px;
+	}
+	.stage {
+		display: flex;
+		justify-content: center;
+		overflow: hidden;
+		border-radius: ${radius.md};
+		background: #e7eaf2;
+	}
+	.stage > div {
+		overflow: hidden;
+	}
+	iframe {
+		display: block;
+		border: 0;
+		background: #ffffff;
+		transform-origin: top left;
+	}
+	.inbox {
+		display: grid;
+		gap: 2px;
+		padding: 10px 12px;
+		margin-bottom: 8px;
+		border-radius: ${radius.md};
+		background: ${palette.bg};
+		font-size: 13px;
+	}
+	.inbox span {
+		color: ${palette.muted};
+	}
+`;

@@ -1460,7 +1460,7 @@
       "uploading": "올리는 중...",
       "chooseImage": "이미지 고르기",
       "useMascot": "기본 고양이로",
-      "themeLead": "바꾼 색은 모든 화면에 바로 적용돼요. 글자와 배경의 대비가 충분한지 확인해주세요.",
+      "themeLead": "바꾼 색은 모든 화면과 회원에게 가는 메일에 바로 적용돼요. 글자와 배경의 대비가 충분한지 확인해주세요.",
       "token": "항목",
       "color": "색",
       "tokens": {
@@ -1493,7 +1493,44 @@
         "Theme": "색상"
       },
       "changedParts": "바뀐 항목: {parts}",
-      "nothing": "변경 없음"
+      "nothing": "변경 없음",
+      "preview": {
+        "show": "미리보기",
+        "hide": "미리보기 닫기",
+        "row": "미리보기",
+        "title": "미리보기 (저장 전)",
+        "lead": "저장하지 않은 변경이 실제 화면에서 어떻게 보이는지 보여줘요. 미리보기는 나에게만 보여요.",
+        "close": "미리보기 닫기",
+        "page": "화면",
+        "language": "언어",
+        "device": "기기",
+        "desktop": "컴퓨터",
+        "tablet": "태블릿",
+        "phone": "휴대폰",
+        "reload": "새로고침",
+        "newWindow": "새 창으로",
+        "frameTitle": "사이트 미리보기",
+        "pages": {
+          "home": "홈",
+          "search": "중고",
+          "community": "커뮤니티",
+          "housing": "집",
+          "jobs": "알바",
+          "safety": "안전 가이드",
+          "notifications": "알림",
+          "myaccount": "내 정보"
+        }
+      },
+      "mail": {
+        "title": "메일 미리보기",
+        "lead": "회원에게 가는 메일도 이 색상을 따라가요. 내용은 예시예요.",
+        "type": "메일 종류",
+        "types": {
+          "verify": "가입 인증",
+          "reset": "비밀번호 재설정",
+          "digest": "알림 모음"
+        }
+      }
     }
   },
   "names": {
@@ -1505,5 +1542,9 @@
   "notice": {
     "close": "공지 닫기",
     "more": "자세히 보기"
+  },
+  "preview": {
+    "bar": "관리자 미리보기 중이에요. 저장하지 않은 변경이 보여요.",
+    "end": "미리보기 끝내기"
   }
 }
