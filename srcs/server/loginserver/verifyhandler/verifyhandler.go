@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"local.com/dynamo"
+	"local.com/i18n"
 	"local.com/jsonresponse"
 	"local.com/mailer"
 
@@ -37,7 +38,8 @@ func newToken() (string, error) {
 
 // Issue stores a fresh verification token on the credential row and
 // mails the activation link.
-func Issue(email string) error {
+// Issue stores a new token and mails the link in lang.
+func Issue(email, lang string) error {
 	token, err := newToken()
 	if err != nil {
 		return err
@@ -59,17 +61,17 @@ func Issue(email string) error {
 		return err
 	}
 
-	return sendVerification(email, token)
+	return sendVerification(email, token, lang)
 }
 
 // sendVerification mails the account activation link.
-func sendVerification(to, token string) error {
+func sendVerification(to, token, lang string) error {
 	link := fmt.Sprintf("%s/account/verify?token=%s", mailer.AppURL(), token)
-	body := fmt.Sprintf(
+	body := i18n.T(lang,
 		"잇냥에 가입해주셔서 감사합니다!\n\n아래 링크를 눌러 이메일 인증을 완료해주세요.\n\n%s\n\n본인이 요청하지 않았다면 이 메일을 무시하셔도 됩니다.\n",
 		link,
 	)
-	return mailer.Send(to, "[잇냥] 이메일 인증을 완료해주세요", body)
+	return mailer.Send(to, i18n.T(lang, "[잇냥] 이메일 인증을 완료해주세요"), body)
 }
 
 // IsVerified reports whether the credential row is activated.
@@ -174,7 +176,7 @@ func ResendHandler(w http.ResponseWriter, r *http.Request) {
 		jsonresponse.New(w, http.StatusOK, map[string]string{"message": "already verified"})
 		return
 	}
-	if err := Issue(email); err != nil {
+	if err := Issue(email, i18n.LangOf(r.Context())); err != nil {
 		jsonresponse.New(w, http.StatusInternalServerError, map[string]string{"error": "failed to send mail"})
 		return
 	}

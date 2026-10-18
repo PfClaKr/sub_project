@@ -105,7 +105,7 @@ func getUser(svc dynamodbiface.DynamoDBAPI, userId string) (dynamo.Item, error) 
 	out, err := svc.GetItem(&dynamodb.GetItemInput{
 		TableName:            aws.String(dynamo.TableUsers),
 		Key:                  dynamo.Item{"UserId": {S: aws.String(userId)}},
-		ProjectionExpression: aws.String("UserId, Email, UserNickname, NotifyPrefs"),
+		ProjectionExpression: aws.String("UserId, Email, UserNickname, NotifyPrefs, Locale"),
 	})
 	if err != nil {
 		return nil, err

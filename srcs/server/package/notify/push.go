@@ -101,12 +101,13 @@ type pushPayload struct {
 	Tag   string `json:"tag"`
 }
 
-func payloadFor(n Notification) []byte {
+// payloadFor writes the push message in the member's language.
+func payloadFor(lang string, n Notification) []byte {
 	link := n.Link
 	if !strings.HasPrefix(link, "/") {
 		link = "/notifications"
 	}
-	b, _ := json.Marshal(pushPayload{Title: Title(n.Type), Body: n.Preview, URL: link, Tag: n.Type + ":" + n.TargetId})
+	b, _ := json.Marshal(pushPayload{Title: TitleIn(lang, n.Type), Body: n.Preview, URL: link, Tag: n.Type + ":" + n.TargetId})
 	return b
 }
 
@@ -116,7 +117,7 @@ var sendPush = func(payload []byte, s *webpush.Subscription, o *webpush.Options)
 }
 
 // deliverPush sends one notification to every device of a member.
-func (n *Notifier) deliverPush(userId string, notif Notification) {
+func (n *Notifier) deliverPush(userId, lang string, notif Notification) {
 	subs, err := dynamo.QueryAll(n.svc, &dynamodb.QueryInput{
 		TableName:                 aws.String(PushTable),
 		KeyConditionExpression:    aws.String("UserId = :u"),
@@ -130,7 +131,7 @@ func (n *Notifier) deliverPush(userId string, notif Notification) {
 	if subject == "" {
 		subject = "mailto:no-reply@itnyang.local"
 	}
-	payload := payloadFor(notif)
+	payload := payloadFor(lang, notif)
 	for _, s := range subs {
 		res, err := sendPush(payload, &webpush.Subscription{
 			Endpoint: dynamo.S(s, "Endpoint"),

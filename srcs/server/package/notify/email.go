@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"local.com/dynamo"
+	"local.com/i18n"
 	"local.com/mailer"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -46,18 +47,18 @@ type Mail struct {
 	Body    string
 }
 
-// composeMail builds the text of one mail: a single headline, or a list
-// when several notifications go out together. unsubscribe is the page
-// link printed at the bottom.
-func composeMail(nickname string, items []Notification, appURL, unsubscribe string) Mail {
+// composeMail builds the text of one mail in the member's language
+// (Users.Locale): a single headline, or a list when several notifications
+// go out together. unsubscribe is the page link printed at the bottom.
+func composeMail(lang, nickname string, items []Notification, appURL, unsubscribe string) Mail {
 	var b strings.Builder
 	name := nickname
 	if name == "" {
-		name = "이웃"
+		name = i18n.T(lang, "이웃")
 	}
-	fmt.Fprintf(&b, "%s님, 잇냥에서 알려드려요.\n\n", name)
+	b.WriteString(i18n.T(lang, "%s님, 잇냥에서 알려드려요.\n\n", name))
 	for _, n := range items {
-		fmt.Fprintf(&b, "■ %s\n", Title(n.Type))
+		fmt.Fprintf(&b, "■ %s\n", TitleIn(lang, n.Type))
 		if n.Preview != "" {
 			fmt.Fprintf(&b, "  %s\n", n.Preview)
 		}
@@ -66,12 +67,12 @@ func composeMail(nickname string, items []Notification, appURL, unsubscribe stri
 		}
 		b.WriteString("\n")
 	}
-	fmt.Fprintf(&b, "알림 설정: %s/myaccount/notifications\n", appURL)
-	fmt.Fprintf(&b, "이메일 알림 끄기: %s\n", unsubscribe)
+	b.WriteString(i18n.T(lang, "알림 설정: %s/myaccount/notifications\n", appURL))
+	b.WriteString(i18n.T(lang, "이메일 알림 끄기: %s\n", unsubscribe))
 
-	subject := "[잇냥] " + Title(items[0].Type)
+	subject := i18n.T(lang, "[잇냥] %s", TitleIn(lang, items[0].Type))
 	if len(items) > 1 {
-		subject = fmt.Sprintf("[잇냥] 새 알림 %d개", len(items))
+		subject = i18n.T(lang, "[잇냥] 새 알림 %d개", len(items))
 	}
 	return Mail{Subject: subject, Body: b.String()}
 }
@@ -139,7 +140,7 @@ func (n *Notifier) mailUser(userId string) error {
 	email := dynamo.S(user, "Email")
 	if len(unread) > 0 && email != "" && PrefsOf(user).EmailEnabled {
 		appURL := mailer.AppURL()
-		mail := composeMail(dynamo.S(user, "UserNickname"), unread, appURL, appURL+"/notifications/unsubscribe?"+unsubscribeQuery(userId))
+		mail := composeMail(dynamo.S(user, "Locale"), dynamo.S(user, "UserNickname"), unread, appURL, appURL+"/notifications/unsubscribe?"+unsubscribeQuery(userId))
 		headers := map[string]string{}
 		// RFC 8058 one-click unsubscribe, when the API URL is known.
 		if api := strings.TrimRight(os.Getenv("PUBLIC_API_URL"), "/"); api != "" {

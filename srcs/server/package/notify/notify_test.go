@@ -133,13 +133,21 @@ func TestPublishSkipsOwnActions(t *testing.T) {
 }
 
 func TestComposeMail(t *testing.T) {
-	one := composeMail("냥이", []Notification{{Type: TypeAccepted, Preview: "CAF 질문", Link: "/community/p1#c-1"}}, "https://itnyang.test", "https://itnyang.test/u")
+	one := composeMail("ko", "냥이", []Notification{{Type: TypeAccepted, Preview: "CAF 질문", Link: "/community/p1#c-1"}}, "https://itnyang.test", "https://itnyang.test/u")
 	if one.Subject != "[잇냥] 내 답변이 채택됐어요" || !strings.Contains(one.Body, "https://itnyang.test/community/p1#c-1") {
 		t.Errorf("single mail = %+v", one)
 	}
-	many := composeMail("", []Notification{{Type: TypeComment}, {Type: TypeReply}}, "https://x", "https://x/u")
+	many := composeMail("", "", []Notification{{Type: TypeComment}, {Type: TypeReply}}, "https://x", "https://x/u")
 	if many.Subject != "[잇냥] 새 알림 2개" || !strings.Contains(many.Body, "이웃님") || !strings.Contains(many.Body, "https://x/u") {
 		t.Errorf("digest mail = %+v", many)
+	}
+	fr := composeMail("fr", "Mina", []Notification{{Type: TypeComment}, {Type: TypeReply}}, "https://x", "https://x/u")
+	if fr.Subject != "[Itnyang] 2 nouvelles notifications" || !strings.Contains(fr.Body, "Bonjour Mina") || !strings.Contains(fr.Body, "Nouvelle réponse à votre commentaire") {
+		t.Errorf("french mail = %+v", fr)
+	}
+	en := composeMail("en", "", []Notification{{Type: TypeAccepted}}, "https://x", "https://x/u")
+	if en.Subject != "[Itnyang] Your answer was accepted" || !strings.Contains(en.Body, "Hi neighbour") {
+		t.Errorf("english mail = %+v", en)
 	}
 }
 
@@ -212,7 +220,7 @@ func TestSettingsDefaultsAndSave(t *testing.T) {
 }
 
 func TestPushPayloadAndCleanup(t *testing.T) {
-	p := string(payloadFor(Notification{Type: TypeChat, Preview: "안녕하세요", Link: "https://evil.example", TargetId: "c1"}))
+	p := string(payloadFor("ko", Notification{Type: TypeChat, Preview: "안녕하세요", Link: "https://evil.example", TargetId: "c1"}))
 	if !strings.Contains(p, `"url":"/notifications"`) || !strings.Contains(p, "새 채팅 메시지") {
 		t.Errorf("payload = %s", p)
 	}
@@ -233,7 +241,7 @@ func TestPushPayloadAndCleanup(t *testing.T) {
 		return dynamo.Item{"Endpoint": {S: aws.String(endpoint)}, "P256dh": {S: aws.String("k")}, "Auth": {S: aws.String("a")}}
 	}
 	f.subs = []dynamo.Item{sub("https://push.test/1"), sub("https://push.test/2")}
-	n.deliverPush("author", Notification{Type: TypeReply, Link: "/community/p"})
+	n.deliverPush("author", "ko", Notification{Type: TypeReply, Link: "/community/p"})
 	if calls != 2 || f.deletes != 1 {
 		t.Errorf("calls %d, deletes %d; want both devices tried and the gone one removed", calls, f.deletes)
 	}

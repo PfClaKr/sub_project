@@ -6,6 +6,7 @@ require (
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/aws/aws-sdk-go v1.54.20
 	local.com/dynamo v0.0.0
+	local.com/i18n v0.0.0
 	local.com/jwt v0.0.0
 	local.com/mailer v0.0.0
 )
@@ -21,3 +22,5 @@ replace local.com/dynamo => ../dynamo
 replace local.com/jwt => ../jwt
 
 replace local.com/mailer => ../mailer
+
+replace local.com/i18n => ../i18n

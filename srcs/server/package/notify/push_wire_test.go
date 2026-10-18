@@ -51,7 +51,7 @@ func TestPushOnTheWire(t *testing.T) {
 		"P256dh":   {S: aws.String(base64.RawURLEncoding.EncodeToString(browserKey.PublicKey().Bytes()))},
 		"Auth":     {S: aws.String(base64.RawURLEncoding.EncodeToString(secret))},
 	}}
-	n.deliverPush("author", Notification{Type: TypeAccepted, Preview: "채택됐어요", Link: "/community/p1"})
+	n.deliverPush("author", "ko", Notification{Type: TypeAccepted, Preview: "채택됐어요", Link: "/community/p1"})
 
 	s := <-got
 	if s.method != http.MethodPost || s.encoding != "aes128gcm" || s.ttl != "86400" || s.size < 100 {
