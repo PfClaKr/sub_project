@@ -39,7 +39,7 @@ type SignupRequest struct {
 
 // TermsVersion is the date of the terms and privacy policy in force
 // (srcs/frontend/libs/legal.ts LEGAL_VERSION); stored with each signup.
-const TermsVersion = "2026-10-17"
+const TermsVersion = "2026-10-18"
 
 // DefaultResidence is used when the form leaves it empty.
 const DefaultResidence = "파리"

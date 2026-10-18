@@ -2,25 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { BottomBar, BottomSpacer, BottomTab } from "@/styles/styledNav";
 import { HOME, SECTIONS, isActive } from "@/libs/sections";
 
 // Phone-only tab bar: home plus the four sections. A chat room hides it so
 // the conversation and its input get the whole screen, as in messengers.
 export default function BottomTabs() {
+	const t = useTranslations("nav");
 	const pathname = usePathname();
 	if (/^\/chat\/[^/]+/.test(pathname)) return null;
 	return (
 		<>
 			<BottomSpacer />
-			<BottomBar aria-label="섹션">
+			<BottomBar aria-label={t("sectionsMenu")}>
 				{[HOME, ...SECTIONS].map(s => {
 					const active = isActive(s, pathname);
 					const Icon = s.icon;
 					return (
 						<BottomTab key={s.href} as={Link} href={s.href} $active={active} aria-current={active ? "page" : undefined}>
 							<Icon size={22} strokeWidth={active ? 2.4 : 1.8} aria-hidden />
-							{s.label}
+							{t(s.key)}
 						</BottomTab>
 					);
 				})}

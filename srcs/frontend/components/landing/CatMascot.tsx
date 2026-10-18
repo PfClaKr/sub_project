@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from "next-intl";
 import styled, { keyframes } from "styled-components";
 import palette from "@/theme/colorPalette";
 
@@ -50,10 +51,11 @@ const Svg = styled.svg`
 
 // 잇냥's mascot: a tabby wearing a Paris beret.
 export function CatMascot() {
+	const t = useTranslations("home.hero");
 	const fur = palette.fur;
 	const dark = palette.furDark;
 	return (
-		<Svg viewBox="0 0 240 240" role="img" aria-label="베레모를 쓴 잇냥 고양이">
+		<Svg viewBox="0 0 240 240" role="img" aria-label={t("mascot")}>
 			<ellipse cx="120" cy="226" rx="70" ry="9" fill="rgba(16,23,80,0.08)" />
 			<path className="tail" d="M168 196 C 214 190, 222 138, 196 118" stroke={dark} strokeWidth="15" strokeLinecap="round" fill="none" />
 			<g className="body">

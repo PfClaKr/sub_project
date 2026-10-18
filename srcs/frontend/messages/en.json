@@ -1,0 +1,176 @@
+{
+  "meta": {
+    "siteName": "Itnyang",
+    "titleTemplate": "%s | Itnyang",
+    "titleDefault": "Itnyang - the Korean community in France",
+    "description": "Itnyang is where Koreans in France buy and sell second-hand, find a room or a job, and help each other with everyday questions."
+  },
+  "nav": {
+    "brand": "Itnyang",
+    "mainMenu": "Main menu",
+    "sectionsMenu": "Sections",
+    "home": "Home",
+    "market": "Market",
+    "community": "Community",
+    "housing": "Housing",
+    "jobs": "Jobs",
+    "admin": "Admin",
+    "login": "Log in",
+    "logout": "Log out",
+    "wishlist": "Saved items",
+    "chat": "Messages",
+    "notifications": "Notifications",
+    "notificationsCount": "{count, plural, one {# notification} other {# notifications}}",
+    "myAccount": "My account"
+  },
+  "write": {
+    "button": "Post",
+    "menuLabel": "What would you like to post?",
+    "sell": "Sell something",
+    "sellHint": "A second-hand listing",
+    "housing": "Room or flat",
+    "housingHint": "Flatshare, studio, sublet",
+    "job": "Job",
+    "jobHint": "Part-time work, tutoring, interpreting",
+    "community": "Question or story",
+    "communityHint": "Everyday Q&A, open board"
+  },
+  "footer": {
+    "siteMenu": "Site menu",
+    "sell": "Sell",
+    "safety": "Safety guide",
+    "legalMenu": "Terms and policies",
+    "terms": "Terms of use",
+    "privacy": "Privacy policy",
+    "legal": "Legal notice",
+    "tagline": "the Korean community in France",
+    "safetyNote": "Meet in person, in a public place. Never send money before you have seen the item or the room.",
+    "language": "Language"
+  },
+  "suspended": {
+    "message": "Because of a rules violation, posting, messaging and photo uploads are blocked on this account.",
+    "messageUntil": "Because of a rules violation, posting, messaging and photo uploads are blocked on this account until {date}."
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "The Korean community in France",
+      "headline": "Life in France:<br></br>need <word>?</word>",
+      "words": "stuff | a room | a job | an answer",
+      "lead": "Second-hand deals, rooms, part-time jobs, residence permits… Koreans who got here first are happy to help.",
+      "perMonth": "€690/mo",
+      "answers": "4 answers",
+      "mascot": "The Itnyang cat in a beret"
+    },
+    "purposes": {
+      "label": "What do you need?",
+      "market": {
+        "title": "Buy and sell",
+        "body": "Moving out or heading home: trade face to face with neighbours.",
+        "count": "{count} for sale",
+        "action": "Sell"
+      },
+      "housing": {
+        "title": "Find a room",
+        "body": "Flatshares, studios, summer sublets. Never pay before a viewing.",
+        "count": "{count, plural, one {# room} other {# rooms}}",
+        "action": "Post a room"
+      },
+      "job": {
+        "title": "Find work",
+        "body": "Restaurants, tutoring, interpreting. Check the pay and contract before applying.",
+        "count": "{count, plural, one {# job} other {# jobs}}",
+        "action": "Post a job"
+      },
+      "community": {
+        "title": "Ask a question",
+        "body": "Residence permit, CAF, banks: people who have been there answer.",
+        "count": "{count, plural, one {# question waiting} other {# questions waiting}}",
+        "action": "Ask"
+      }
+    },
+    "checklist": {
+      "title": "Just arrived in France? ✈︎",
+      "lead": "What to sort out in your first weeks. Stuck? Ask someone who has done it.",
+      "progress": "{done} / {total} done",
+      "allDone": "All done",
+      "dismiss": "Don't show again",
+      "dismissed": "Checklist hidden. You can bring it back from My account.",
+      "undo": "Undo",
+      "markDone": "Mark “{step}” as done",
+      "markUndone": "Mark “{step}” as not done",
+      "related": "See questions →",
+      "transportQuery": "navigo",
+      "steps": {
+        "visa": {
+          "title": "Residence permit",
+          "body": "Depending on your visa, you need to validate it online or apply for a residence permit (ANEF) after arriving."
+        },
+        "bank": {
+          "title": "Bank account",
+          "body": "Rent, salary and CAF all need a RIB (bank details)."
+        },
+        "phone": {
+          "title": "Phone plan",
+          "body": "Many start with a prepaid SIM and switch to a monthly plan."
+        },
+        "caf": {
+          "title": "Housing and CAF",
+          "body": "Once housed, check whether you can get housing benefit (APL)."
+        },
+        "health": {
+          "title": "Health insurance",
+          "body": "Register with Ameli and choose a GP (médecin traitant)."
+        },
+        "transport": {
+          "title": "Transport",
+          "body": "Get a Navigo pass; students under 26 can get the Imagine R discount."
+        }
+      }
+    },
+    "feed": {
+      "title": "Latest from neighbours",
+      "lead": "Questions, stories, rooms and jobs, newest first.",
+      "empty": "Nothing new in this area yet.",
+      "emptyAction": "Write the first post.",
+      "housing": "Housing",
+      "job": "Job",
+      "solved": "Solved",
+      "answers": "{count, plural, one {# answer} other {# answers}}",
+      "comments": "{count, plural, one {# comment} other {# comments}}"
+    },
+    "recent": {
+      "title": "New listings",
+      "lead": "Moving-out sales and more, newest first.",
+      "more": "See more",
+      "empty": "Nothing listed yet.",
+      "first": "List the first item"
+    },
+    "trust": {
+      "title": "Built for trust",
+      "lead": "Problems are hard to fix abroad, so we focus on preventing them.",
+      "guide": "Safety guide",
+      "verified": {
+        "title": "Verified members",
+        "body": "Only members with a verified email can post and chat. Housing and job posts open after 7 days."
+      },
+      "reports": {
+        "title": "Reports act fast",
+        "body": "A post reported 3 times is hidden until a moderator checks it, and you can block anyone in chat."
+      },
+      "scams": {
+        "title": "Scam warnings",
+        "body": "Advance payments, moving to other messengers, pay below minimum wage: we warn you as you post."
+      }
+    },
+    "cta": {
+      "title": "Meet Koreans across France",
+      "lead": "Signing up takes a minute. Everything is free.",
+      "button": "Sign up for free"
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "It may have been deleted, or the address is wrong.",
+    "home": "Back to home"
+  }
+}

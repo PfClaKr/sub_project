@@ -102,7 +102,7 @@ export function PrivacyFr() {
 
 			<h2 id="8">8. Cookies et stockage local</h2>
 			<p>
-				Le Service n&apos;utilise qu&apos;un cookie, strictement nécessaire au maintien de la connexion (token, 24 heures), dispensé de consentement. Le filtre de région
+				Le Service n&apos;utilise que deux cookies, dispensés de consentement : celui qui maintient la connexion (token, 24 heures) et, si vous choisissez la langue de l&apos;interface, celui qui retient ce choix (itnyang.locale, 1 an). Le filtre de région
 				choisi et la liste d&apos;installation de l&apos;accueil (étapes cochées, liste masquée) sont enregistrés dans le stockage local du navigateur (localStorage), sans être envoyés au serveur, pour être retrouvés à la visite suivante. Aucun cookie publicitaire ou de mesure d&apos;audience n&apos;est utilisé.
 			</p>
 

@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import ProductGrid from "@/components/product/ProductGrid";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { NeighborFeed, NewcomerChecklist, PurposeCards, TrustAndJoin, type HomeCounts } from "@/components/landing/HomeSections";
@@ -35,6 +36,7 @@ export default async function HomePage() {
 		openQuestions: data?.open?.Total ?? null,
 	};
 	const products = data?.recentProducts ?? [];
+	const t = await getTranslations("home.recent");
 
 	return (
 		<div>
@@ -46,16 +48,16 @@ export default async function HomePage() {
 			<section aria-labelledby="recent">
 				<SectionHead>
 					<div>
-						<h2 id="recent">새로 올라온 물건</h2>
-						<p>귀국 정리, 이사 짐. 방금 올라온 물건부터 보여드려요.</p>
+						<h2 id="recent">{t("title")}</h2>
+						<p>{t("lead")}</p>
 					</div>
-					<LinkButton href="/search" $ghost>더 보기</LinkButton>
+					<LinkButton href="/search" $ghost>{t("more")}</LinkButton>
 				</SectionHead>
 				{error && <ErrorText role="alert">{error}</ErrorText>}
 				{!error && products.length === 0 ? (
 					<EmptyState>
-						<p>아직 올라온 물건이 없어요.</p>
-						<LinkButton href="/sell">첫 물건 올리기</LinkButton>
+						<p>{t("empty")}</p>
+						<LinkButton href="/sell">{t("first")}</LinkButton>
 					</EmptyState>
 				) : (
 					<Reveal><ProductGrid products={products} preview /></Reveal>
