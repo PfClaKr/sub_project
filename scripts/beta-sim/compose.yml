@@ -1,0 +1,45 @@
+# Overlay for the beta simulation (scripts/beta-sim/run.sh), on top of the
+# production rehearsal (deploy/docker-compose.prod.yml + rehearsal.yml):
+# - ddbmeter meters DynamoDB request units between the services and
+#   DynamoDB Local (DYNAMODB_ENDPOINT=http://ddbmeter:8000);
+# - what runs on the Lightsail server shares two CPUs (cpuset), like the
+#   2 vCPU plan; DynamoDB, S3 (MinIO) and SES (MailHog) stand for managed
+#   services and get the other cores.
+services:
+  ddbmeter:
+    image: golang:1.22
+    working_dir: /src
+    command: go run .
+    volumes:
+      # Relative paths resolve from deploy/ (the first compose file).
+      - ../scripts/beta-sim/ddbmeter:/src:ro
+    environment:
+      GOFLAGS: -mod=mod
+      GOCACHE: /tmp/gocache
+    ports:
+      - "8100:8000"
+    depends_on:
+      dynamodb:
+        condition: service_started
+
+  caddy:
+    cpuset: "0,1"
+  nextjs:
+    cpuset: "0,1"
+  apiserver:
+    cpuset: "0,1"
+    depends_on:
+      ddbmeter:
+        condition: service_started
+  loginserver:
+    cpuset: "0,1"
+  chatserver:
+    cpuset: "0,1"
+  elasticsearch:
+    cpuset: "0,1"
+  dynamodb:
+    cpuset: "2-5"
+  minio:
+    cpuset: "2-5"
+  mailhog:
+    cpuset: "2-5"

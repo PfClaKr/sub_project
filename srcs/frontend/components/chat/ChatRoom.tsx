@@ -13,6 +13,7 @@ import { formatDate, formatTime, imageUrl, toMs } from "@/libs/format";
 import { subjectHref, subjectOf, subjectTitle } from "@/libs/subjects";
 import type { Message, Room, Session } from "@/libs/types";
 import { useTranslations } from "next-intl";
+import { ThumbImg } from "@/components/ui/ThumbImg";
 
 const MAX_LENGTH = 1000;
 
@@ -122,7 +123,7 @@ function Conversation({ chatId, session }: { chatId: string; session: Session })
 	return (
 		<div>
 			<ChatHeader>
-				{thumb ? <img src={thumb} alt="" /> : <div />}
+				{thumb ? <ThumbImg src={thumb} alt="" /> : <div />}
 				<div style={{ minWidth: 0 }}>
 					<strong>{partner}</strong>
 					<small>

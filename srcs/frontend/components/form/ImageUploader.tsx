@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, DragEvent } from "react";
 import { ImagePlus, Plus, Star, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { MAX_IMAGES, MAX_IMAGE_BYTES } from "@/libs/constants";
+import { MAX_IMAGES, MAX_SOURCE_BYTES } from "@/libs/constants";
 import {
 	AddTile, CoverBadge, DropIcon, DropZone, PhotoTile, TileButton, TileGrid, Uploading, UploaderFoot,
 } from "@/styles/styledUploader";
@@ -37,7 +37,7 @@ export function ImageUploader({ photos, onChange, uploading }: {
 
 	const addFiles = (files: FileList | File[]) => {
 		const list = Array.from(files);
-		const rejected = list.filter(f => !ACCEPT.includes(f.type) || f.size > MAX_IMAGE_BYTES);
+		const rejected = list.filter(f => !ACCEPT.includes(f.type) || f.size > MAX_SOURCE_BYTES);
 		const room = MAX_IMAGES - photos.length;
 		const accepted = list.filter(f => !rejected.includes(f)).slice(0, room);
 

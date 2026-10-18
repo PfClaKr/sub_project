@@ -743,11 +743,11 @@
     "labelPlaceholder": "예: Paris 15e · 보지라르역"
   },
   "uploader": {
-    "rejected": "{count}장은 jpg·png·gif·webp가 아니거나 5MB를 넘어서 뺐어요.",
+    "rejected": "{count}장은 jpg·png·gif·webp가 아니거나 30MB를 넘어서 뺐어요.",
     "max": "사진은 최대 {max}장까지예요.",
     "add": "사진 추가",
     "drop": "사진을 끌어다 놓거나 눌러서 추가하세요",
-    "limits": "최대 {max}장 · jpg, png, gif, webp · 한 장에 5MB 이하",
+    "limits": "최대 {max}장 · jpg, png, gif, webp · 큰 사진은 자동으로 줄여서 올려요",
     "list": "등록할 사진",
     "photo": "사진 {n}",
     "cover": "대표",

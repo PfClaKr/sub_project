@@ -11,6 +11,7 @@ import { apiQuery, param, type SearchParams } from "@/libs/adminParams";
 import { CATEGORIES, STATUSES } from "@/libs/constants";
 import { formatDate, formatPrice, imageUrl } from "@/libs/format";
 import { EmptyRow, Panel, Table, TableWrap, Thumb, Who } from "@/styles/styledAdmin";
+import { ThumbImg } from "@/components/ui/ThumbImg";
 
 export const generateMetadata = pageMetadata("admin.products");
 
@@ -59,7 +60,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
 								<tr key={p.ProductId}>
 									<td>
 										<Who>
-											{thumb ? <Thumb src={thumb} alt="" /> : <Thumb as="span" />}
+											{thumb ? <Thumb as={ThumbImg} src={thumb} alt="" /> : <Thumb as="span" />}
 											<div>
 												<Link href={`/product/${p.ProductId}`}>{p.ProductName}</Link>
 												<small>{p.PreferedLocation}</small>

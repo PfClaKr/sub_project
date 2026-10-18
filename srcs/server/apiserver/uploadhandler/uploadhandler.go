@@ -118,8 +118,9 @@ var allowedTypes = map[string]string{
 	"image/webp": ".webp",
 }
 
-// UploadHandler accepts multipart "image" files and returns public URLs.
-// Must be wrapped with jwt.Middleware.
+// UploadHandler accepts multipart "image" files and returns their public
+// URLs, plus the URLs of their thumbnails (process). Must be wrapped with
+// jwt.Middleware.
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize*maxFiles)
 	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
@@ -133,7 +134,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urls := []string{}
+	urls, thumbs := []string{}, []string{}
 	for _, fh := range files {
 		f, err := fh.Open()
 		if err != nil {
@@ -148,31 +149,58 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		contentType := http.DetectContentType(data)
-		ext, ok := allowedTypes[contentType]
-		if !ok {
+		if _, ok := allowedTypes[contentType]; !ok {
 			http.Error(w, "only jpeg/png/gif/webp images are allowed", http.StatusBadRequest)
 			return
 		}
+		img, err := process(data, contentType)
+		if err != nil {
+			http.Error(w, "unreadable or too large image", http.StatusBadRequest)
+			return
+		}
 
-		key := uuid.NewString() + ext
-		if _, err := s3Client.PutObject(&s3.PutObjectInput{
-			Bucket:      aws.String(bucket),
-			Key:         aws.String(key),
-			Body:        bytes.NewReader(data),
-			ContentType: aws.String(contentType),
-			// Keys are random and never overwritten, so browsers can
-			// keep images forever (fewer S3 GETs and transfer).
-			CacheControl: aws.String("public, max-age=31536000, immutable"),
-		}); err != nil {
+		id := uuid.NewString()
+		if err := put(id+img.ext, img.data, img.contentType); err != nil {
 			log.Printf("failed to store image: %v", err)
 			http.Error(w, "failed to store image", http.StatusInternalServerError)
 			return
 		}
-		urls = append(urls, publicBase+"/"+key)
+		if err := put(id+img.thumbExt, img.thumb, img.thumbType); err != nil {
+			log.Printf("failed to store thumbnail: %v", err)
+			http.Error(w, "failed to store image", http.StatusInternalServerError)
+			return
+		}
+		urls = append(urls, publicBase+"/"+id+img.ext)
+		thumbs = append(thumbs, publicBase+"/"+id+img.thumbExt)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string][]string{"urls": urls})
+	json.NewEncoder(w).Encode(map[string][]string{"urls": urls, "thumbs": thumbs})
+}
+
+func put(key string, data []byte, contentType string) error {
+	_, err := s3Client.PutObject(&s3.PutObjectInput{
+		Bucket:      aws.String(bucket),
+		Key:         aws.String(key),
+		Body:        bytes.NewReader(data),
+		ContentType: aws.String(contentType),
+		// Keys are random and never overwritten, so browsers can keep
+		// images forever (fewer S3 GETs and transfer).
+		CacheControl: aws.String("public, max-age=31536000, immutable"),
+	})
+	return err
+}
+
+// thumbKey is the thumbnail stored next to an uploaded image key.
+func thumbKey(key string) string {
+	dot := strings.LastIndex(key, ".")
+	if dot < 0 || strings.Contains(key, "_t.") {
+		return ""
+	}
+	if ext := key[dot:]; ext == ".png" || ext == ".gif" {
+		return key[:dot] + "_t.png"
+	}
+	return key[:dot] + "_t.jpg"
 }
 
 // DeleteImages removes uploaded files by their public URLs, for content
@@ -186,8 +214,14 @@ func DeleteImages(urls ...string) {
 		if !ok || key == "" {
 			continue
 		}
-		if _, err := s3Client.DeleteObject(&s3.DeleteObjectInput{Bucket: aws.String(bucket), Key: aws.String(key)}); err != nil {
-			log.Printf("delete image %s: %v", key, err)
+		// The thumbnail goes too (missing for images older than it).
+		for _, k := range []string{key, thumbKey(key)} {
+			if k == "" {
+				continue
+			}
+			if _, err := s3Client.DeleteObject(&s3.DeleteObjectInput{Bucket: aws.String(bucket), Key: aws.String(k)}); err != nil {
+				log.Printf("delete image %s: %v", k, err)
+			}
 		}
 	}
 }

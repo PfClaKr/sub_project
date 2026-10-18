@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { LEGAL_VERSION } from "./legal";
 import { colors } from "@/theme/colorPalette";
 import {
-	CATEGORIES, EMPLOYMENT_TYPES, FREE_TOPICS, HOUSING_KINDS, JOB_LANGUAGES, JOB_SECTORS, QNA_TOPICS, REGIONS, REPORT_REASONS, STATUSES, STATUS_SELLING,
+	MAX_IMAGE_SIDE, CATEGORIES, EMPLOYMENT_TYPES, FREE_TOPICS, HOUSING_KINDS, JOB_LANGUAGES, JOB_SECTORS, QNA_TOPICS, REGIONS, REPORT_REASONS, STATUSES, STATUS_SELLING,
 } from "./constants";
 
 // Values the frontend and the apiserver must agree on. Reading the Go
@@ -66,5 +66,10 @@ describe("frontend ↔ apiserver contract", () => {
 		expect(fields).toEqual({
 			Primary: colors.primary, Heading: colors.heading, Text: colors.text, Muted: colors.muted, Surface: colors.surface, Border: colors.border,
 		});
+	});
+
+	it("shrinks photos to the same size as the upload handler", () => {
+		const images = readFileSync(fileURLToPath(new URL("../../server/apiserver/uploadhandler/images.go", import.meta.url)), "utf8");
+		expect(Number(images.match(/MaxSide\s*=\s*(\d+)/)?.[1])).toBe(MAX_IMAGE_SIDE);
 	});
 });

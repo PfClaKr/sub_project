@@ -11,6 +11,7 @@ import { Meta, Tag } from "@/styles/styledCommunity";
 import type { ListingType } from "@/libs/constants";
 import type { Post } from "@/libs/types";
 import { TimeAgo } from "@/components/ui/TimeAgo";
+import { ThumbImg } from "@/components/ui/ThumbImg";
 
 export function ListingRow({ post }: { post: Post }) {
 	const t = useTranslations("listing.row");
@@ -22,7 +23,7 @@ export function ListingRow({ post }: { post: Post }) {
 	const j = post.Job;
 	return (
 		<ListingCard as={Link} href={`${LISTING_PATH[type]}/${post.PostId}`} $closed={post.Deal === "closed"}>
-			{thumb ? <img className="thumb" src={thumb} alt="" loading="lazy" /> : <span className="icon"><Icon size={22} aria-hidden /></span>}
+			{thumb ? <ThumbImg className="thumb" src={thumb} alt="" loading="lazy" /> : <span className="icon"><Icon size={22} aria-hidden /></span>}
 			<div>
 				<Meta>
 					<Tag>{L.mode(type, h?.Mode ?? j?.Mode)}</Tag>

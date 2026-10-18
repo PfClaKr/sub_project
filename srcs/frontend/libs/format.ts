@@ -89,3 +89,12 @@ export function formatRelative(ts: number | undefined, now = Date.now(), locale:
 export function imageUrl(url: string | undefined | null): string | null {
 	return url && /^https?:\/\//.test(url) ? url : null;
 }
+
+// thumbUrl is the small copy the apiserver stores next to each uploaded
+// photo (<id>_t.jpg, or .png for PNG and GIF; uploadhandler/images.go),
+// for lists and cards. Null for other URLs (Google avatars, placeholders).
+export function thumbUrl(url: string | undefined | null): string | null {
+	const m = imageUrl(url)?.match(/^(.+\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.(jpe?g|png|gif|webp)$/i);
+	if (!m) return null;
+	return `${m[1]}_t.${/^(png|gif)$/i.test(m[2]) ? "png" : "jpg"}`;
+}

@@ -743,11 +743,11 @@
     "labelPlaceholder": "Ex. : Paris 15e · Vaugirard"
   },
   "uploader": {
-    "rejected": "{count, plural, one {# photo écartée : format autre que jpg, png, gif ou webp, ou plus de 5 Mo.} other {# photos écartées : format autre que jpg, png, gif ou webp, ou plus de 5 Mo.}}",
+    "rejected": "{count, plural, one {# photo écartée : format autre que jpg, png, gif ou webp, ou plus de 30 Mo.} other {# photos écartées : format autre que jpg, png, gif ou webp, ou plus de 30 Mo.}}",
     "max": "{max} photos maximum.",
     "add": "Ajouter des photos",
     "drop": "Glissez vos photos ici ou touchez pour en ajouter",
-    "limits": "{max} max. · jpg, png, gif, webp · 5 Mo par photo",
+    "limits": "{max} max. · jpg, png, gif, webp · les grandes photos sont réduites automatiquement",
     "list": "Photos à publier",
     "photo": "Photo {n}",
     "cover": "Principale",
